@@ -58,7 +58,7 @@ TO DO:
 
 GENERAL:
 
-- committen und pushen, pullen, Hans_jürgens zeug einbauen (settings.py: coordinates_file: aus section settings_CCLM statt settings)
+- pullen, Hans_jürgens zeug einbauen (settings.py: coordinates_file: aus section settings_CCLM statt settings)
 - input pfad: soll beliebig sein bis variablen als subdirectories, momentan CCLM/historical struktur vorgegeben
 - neue funktion: existierenden output überschreiben 
 - bei QV850p Fehler: wenn nicht vorhanden bricht er ab
