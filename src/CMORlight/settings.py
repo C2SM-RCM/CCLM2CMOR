@@ -50,9 +50,12 @@ def init(varfile):
     
     global FMT
     FMT = '%Y-%m-%d %H:%M:%S'
+
+    global vertices_file
+    vertices_file = ("%s/%s" % (DirProg,config.get_config_value('settings_CCLM', 'vertices_file')))
     
     global coordinates_file
-    coordinates_file = ("%s/%s" % (DirProg,config.get_config_value('settings', 'coordinates_file')))
+    coordinates_file = ("%s/%s" % (DirProg,config.get_config_value('settings_CCLM', 'coordinates_file')))
     
 ## get list of variables to rotate
 #def get_input_path(var):
