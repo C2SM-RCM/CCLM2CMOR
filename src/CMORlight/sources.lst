@@ -1,0 +1,63 @@
+# list of files and directories
+sources.lst
+
+# git directotrx
+.git
+
+# setup files
+bootstrap.py
+buildout.cfg
+setup.py
+setup.cfg
+
+# read the docs | sphinx documentation directories
+_build
+_static
+Makefile
+make.bat
+conf.py
+index.rst
+
+# binaries for this packages
+bin
+
+# cmorlight source files
+CHANGES
+INSTALL
+README
+VERSION
+__init__.py
+_compat.py
+control_cmor2.ini
+qa.task
+tools.py
+configuration.py
+cmorlight2.py
+settings.py
+convert_csv_to_json.py
+
+# cmorlight configuration (steering) files
+Config
+Config/CORDEX_CMOR_CCLM_variables_table.json
+Config/CORDEX_CMOR_WRF_variables_table.csv
+Config/CORDEX_CMOR_CCLM_variables_table.csv
+Config/coordinates_cordex_eur11.nc
+
+# cmorlight old versions and test files
+examples
+examples/control_cmor.ini
+examples/UV_derotation.sh
+examples/cordex_process_5_years.ksh
+examples/test.py
+examples/cmor.py
+examples/qa_reklies-ci.task
+examples/merge_mon.sh
+examples/merge_sem.sh
+examples/cmorlight.py
+examples/merge_day.sh
+examples/merge_3hr.sh
+examples/CORDEX_CMOR_CCLM_variables_table_SAV.csv
+examples/script_make_season_means.ksh
+examples/merge_6hr.sh
+examples/REKLIES_CMOR_indices_table.csv
+examples/config.py
