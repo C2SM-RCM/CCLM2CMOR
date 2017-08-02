@@ -1,0 +1,79 @@
+#----------------------------------------
+PROJECT=CORDEX
+
+#----------------------------------------
+# PROJECT_DATA=/mnt/lustre01/work/kd0956/CORDEX/data/cordex/output/
+# PROJECT_DATA=/mnt/lustre01/work/bb0931/daten_torsten/cordex/output/
+PROJECT_DATA=/mnt/lustre01/work/bb0931/indizes/ReKliEs-DWD/output/
+#PROJECT_DATA=/mnt/lustre01/work/bb0931/CMOR/output_daten_cmor/cordex/output/
+# PROJECT_DATA=/mnt/lustre01/work/kd0956/CORDEX/data/cordex/output/
+
+#----------------------------------------
+# GERICS
+# SELECT EUR-11/GERICS/CNRM-CERFACS-CNRM-CM5/historical/
+
+# UHOH
+# SELECT=EUR-11/UHOH/MPI-M-MPI-ESM-LR/historical/r1i1p1/UHOH-WRF361H/v1/
+
+# CLMcom
+#SELECT EUR-11/CLMcom/MIROC-MIROC5/
+#SELECT EUR-11/CLMcom/CCCma-CanESM2/
+# SELECT EUR-11/CLMcom/CCCma-CanESM2/historical/r1i1p1/CLMcom-CCLM4-8-17/v1/day=mrfso_*
+# SELECT EUR-11/CLMcom/CCCma-CanESM2/rcp85/r0i0p0/
+# SELECT EUR-11/CLMcom/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/CLMcom-CCLM4-8-17/v1/
+# SELECT EUR-11/CLMcom/ICHEC-EC-EARTH/rcp26/r12i1p1/CLMcom-CCLM4-8-17/v1/
+
+# STAT
+# SELECT EUR-11/PIK/
+SELECT EUR-11/CEC/CCCma-CanESM2/historical/r1i1p1/CEC-WETTREG2013/v1-r1/yr/pr/v20170510
+
+#----------------------------------------
+# QA_RESULTS=/mnt/lustre01/work/kd0956/QA_Results/cordex/CLMcom
+#QA_RESULTS=/mnt/lustre01/work/bb0931/QA_Results/CLMcom2
+QA_RESULTS=/mnt/lustre01/work/bb0931/QA_Results/STAT2
+# QA_RESULTS=/mnt/lustre01/work/bb0931/QA_Results/REMO
+
+#----------------------------------------
+LOG_PATH_INDEX=0,1,2,3,5
+PT_PATH_INDEX=0,1,2,5
+LOG_PATH_BASE=EUR-11
+#LOG_PATH_BASE=cordex
+
+#----------------------------------------
+# LOCK AFR-44/CLMcom/MPI-ESM-LR/historical/r1i1p1/CCLM4-8-17=not_
+# LOCK .*/v20
+NUM_EXEC_THREADS=3
+
+#----------------------------------------
+# Send a summary of notifications and checked periods of variables
+# to this (list of) email recipients after each finished QC session.
+# Default: no email is sent.
+# Note: this is different from EMAIL_TO.
+EMAIL_SUMMARY=ramthun@dkrz.de
+
+#----------------------------------------
+# In case of notification: send e-mails to this comma-separated-list.
+MAIL_TO=ramthun@dkrz.de #[disabled]
+
+#----------------------------------------
+# The QC checks meta data, time data and data (of variables), where
+# for the latter two the records are inspected.
+# Modes can be enabled by key-words: meta, time, data.
+# Note: data includes meta and time; time includes meta.
+CHECK_MODE=data  #[data]
+
+#----------------------------------------
+#  CHECKSUM
+NOTE_LEVEL_LIMIT=L1
+
+#----------------------------------------
+# USE_STRICT
+# embedded path to another qc configuration file with lower priority
+# PROJECT=CORDEX
+QA_CONF=CORDEX_qa.conf
+
+#----------------------------------------
+NOTE=1_3b,D
+# NOTE={pr,3_6,D},{pr,3_7,D}
+#----------------------------------------
+

@@ -1,0 +1,110 @@
+# -*- coding: utf-8 -*-
+"""
+What's done and what's to do
+
+@author: mgoebel
+"""
+
+DONE:
+    configuration.py:
+        - replaced readfp by read_file
+
+
+    settings.py:
+        - use_alt_units
+
+
+
+TO DO:
+    
+    cmorlight.py:
+        - change optparse to argparse
+        - (important parsed arguments in extra text file (e.g. csv))
+        - what is paramfile?
+        - line207: superfluent, done before
+        
+        
+        
+    control_cmor2.ini:
+        - CLEAN and DOCUMENT
+        
+    settings.py:
+        - some parameters set here?: Format, version, use_alt_units (changed)
+
+    
+    variables_table:
+        - label columns
+        - decimal point: replace kommas with period
+        
+    
+    
+    post.job.tmpl:
+        - make more general, clean up? ->  read variables to process from IO file; Process all variables?
+      	- folder strucure YYYY/output/out01 -> should not be hardcoded maybe?
+
+    CCLM sh:
+
+        - first timestep of next month included in concatenation? (line 185) --> cannot use last year (in our case)!
+        - why 31 days, we use 30 -> problem?
+        - accu_list and inst_list vervollständigen
+
+
+    tools.py:
+        - remove reslist from test_var
+        - derotate: strange paths
+        
+
+
+
+GENERAL:
+
+- committen und pushen, pullen, Hans_jürgens zeug einbauen (settings.py: coordinates_file: aus section settings_CCLM statt settings)
+- input pfad: soll beliebig sein bis variablen als subdirectories, momentan CCLM/historical struktur vorgegeben
+- neue funktion: existierenden output überschreiben 
+- bei QV850p Fehler: wenn nicht vorhanden bricht er ab
+- alles aus tabelle verarbeiten ,welche auflösung für welche variable aber trotzdem auch reslist falls was schief läuft
+- wenn nur für einzelne variablen: dann cmor namen + name aus modell soll möglich -> schaue in tabelle nach
+- zwei wege welche var prozessiert werden sollen:
+  1. schau in tabelle und mach alle die tatsächlich vorhanden sind, warning für fehlende
+  2. schau in order und prozessiere alle die in tabelle sind, warning für fehlende in tabelle bzw fehlende in ordner
+- benennung von subdaily falsch: zwei varianten time bounds anfang ende, oder intervall mitten anfang ende -> Hans macht gemischt -> ändern
+
+
+- checken ob akkumulierte daten in mitte abgelegt wurden -> vielleicht schon drin in CMORlight?
+- In tabelle: levelvalue: es muss height bzw plev als attribut für jede variable gesetzt werden außer bei zweien und bei 0 (auch leer)
+  W_SO:  statt levelvalue muss anzahl der schichten zur integration angegeben werden -> setzt negativ zur unterscheidung von obigem 
+- rlon rlat in coordinates_cordex_eur11.nc nachschauen wenn nicht vorhanden
+- wo kommt land-sea mask info her, nicht in coordinates_cordex_eur11.nc mit drin im Gegensatz zu orog
+- 4.spalte in tabelle als comment hinzufügen
+- dimension bounds steht noch drin bei instantanen variablen obwohl überflüssig ->  bei inputdaten mit ncks -x rausschneiden (evtl. vorher mit ncatted bearbeiten)
+  -> bei akk. und averag. daten neu setzen mit links rechts von zeitstempel
+- wenn mehrere reslist angegeben: erst hohe auflösung dann niedrigere -> kann mit hoher.temp weiterrechnen um rechenzeit zu sparen, muss nicht mehr auf rohdaten zugreifen: teilweise realsiert für day, mon; nicht für 6hr, day
+- wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
+
+
+
+INFO
+
+rote variablen: wolkendichte nicht ausgegeben da CORDEX nicht definiert hat was höhen bedeuten
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+check ob lon lat verfügbar fehlt , deutlicher dass es sich um programmabbruch handelt
+
+
+CCLM subversion in attributen angeben

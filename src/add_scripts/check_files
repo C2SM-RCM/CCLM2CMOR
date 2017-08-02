@@ -1,0 +1,19 @@
+#!/bin/sh
+
+path="/project/pr04/mgoebel/CMOR/cclm/outputpost/HadGEM2-ES_Hist_RCP85/Hist"
+DIRS=$(ls ${path})
+#echo ${DIRS}
+num=0
+for d in ${DIRS}
+do
+num_prev=${num}
+num=$(ls ${path}/${d}/ | wc -l)
+YY=d | cut -c1-4
+if [ ${num} -ne ${num_prev} ]
+#if [ ${num} -le 82 ]
+then
+echo ${path}/${d}/
+echo ${num}
+fi
+
+done

@@ -1,0 +1,426 @@
+#######################
+März 2017
+
+for installation please refer to the INSTALL file
+
+#########################################
+settings in my .bashrc
+
+module load oracle_instantclient
+module load ncview/2.1.4-gcc48
+module load jdk/1.8.0_20
+
+export PATH=/sw/rhel6-x64/python/python-2.7-ve0-gcc49/bin:/sw/rhel6-x64/db/oracle_instantclient-12.1.0.2.0/bin:/sw/rhel6-x64/netcdf/netcdf_c-4.3.2-gcc48/bin:/sw/rhel6-x64/hpss/pftp-7.4.3.2-0/bin:/sw/rhel6-x64/graphics/imagemagick-6.9.1-7-gcc48/bin:/sw/rhel6-x64/cdo/cdo-1.7.0-magicsxx-gcc48/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin
+
+export LD_LIBRARY_PATH=/sw/rhel6-x64/db/oracle_instantclient-12.1.0.2.0/lib
+
+module unload cdo/1.7.0-magicsxx-gcc48
+module load cdo/1.7.2-magicsxx-gcc48
+module load nco/4.5.0-gcc48
+module load netcdf_c/4.3.2-gcc48
+module load ncview/2.1.4-gcc48
+
+# cdo setting
+export IGNORE_ATT_COORDINATES=1
+
+# my source code on mistral
+# cd /mnt/lustre01/work/bb0931/CMOR/cmorlight
+
+# additional settings
+export LD_LIBRARY_PATH=/home/dkrz/k204145/local/lib:/lib:/usr/lib:/usr/lib64:/sw/rhel6-x64/db/oracle_instantclient-12.1.0.2.0/lib
+export PATH=/home/dkrz/k204081/QA-DKRZ/scripts:/sw/rhel6-x64/nco/nco-4.5.0-gcc48/bin:/sw/rhel6-x64/cdo/cdo-1.7.2-magicsxx-gcc48/bin:/sw/rhel6-x64/python/python-2.7-ve0-gcc49/bin:/sw/rhel6-x64/db/oracle_instantclient-12.1.0.2.0/bin:/sw/rhel6-x64/netcdf/netcdf_c-4.3.2-gcc48/bin:/sw/rhel6-x64/hpss/pftp-7.4.3.2-0/bin:/sw/rhel6-x64/graphics/imagemagick-6.9.1-7-gcc48/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/sw/rhel6-x64/ncview-2.1.4-gcc48/bin
+
+##########################################
+
+##########################################
+
+cmorlight v7.1, DKRZ, 2016,2017
+
+SOURCES: please refer to the file sources.lst in this directory
+
+python cmorlight2.py --help
+######################################
+Call: python cmorlight2.py --help
+Usage: cmorlight2.py [options]
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -p PARAMFILE, --param=PARAMFILE
+                        model parameter file
+  -i INIFILE, --ini=INIFILE
+                        script ini file
+  -r RESLIST, --resolution=RESLIST
+                        process output resolution
+  -v VARLIST, --varlist=VARLIST
+                        process variable
+  -a, --all             process all vars
+  -c, --chunk-var       go call chunking for the variable list
+  -s, --seasonal-mean   go calculate seasonal mean from aggregated monthly
+                        data
+  -n USE_VERSION, --use-version=USE_VERSION
+                        version for drs (default: today in format YYYYMMDD)
+  -d, --derotate-uv     derotate all u and v avariables
+  -t, --test-var        test possible resolutione for all vars
+  -k, --corr-var        correct variable by corr_key
+  -o CORR_KEY, --corr-key=CORR_KEY
+                        correct key to select a function
+  -y ALT_START_YEAR, --alt-start-year=ALT_START_YEAR
+                        use alternate start year
+  -u, --use-alt-units   use alternate units for input data (only day and mon)
+  -m ACT_MODEL, --model=ACT_MODEL
+                        set used model (supported: [default: CCLM],WRF)
+  -g ACT_GCM, --gcm_driving_model=ACT_GCM
+                        set used driving model
+  -x ACT_EXP, --experiment=ACT_EXP
+                        set used experiment [default: historical]
+  -e ACT_ENS, --ensemble=ACT_ENS
+                        set used ensemble [default: r1i1p1]
+######################################
+
+-------------------------
+V7.0 
+new options
+  -g ACT_GCM, --gcm_driving_model=ACT_GCM
+                        set used driving model
+  -x ACT_EXP, --experiment=ACT_EXP
+                        set used experiment [default: historical]
+  -e ACT_ENS, --ensemble=ACT_ENS
+                        set used ensemble [default: r1i1p1]
+old option values must exist in inpt_data path
+
+set from outside the program, overrides settings in ini file (control_cmor.ini)
+
+replace old option '-l n' which refers to the ini file list of input data
+
+removed '-g' option (started the program)
+
+settings.py for all global variables
+
+_compat.py for check on python version
+
+tools.py: script for all functions
+
+other logging parameter
+
+actual list of supported correction keys:
+['correct_fillvalue','convert_to_float','add_coordinates','climatology','missing_value','missing_value_set','add_plev_height','division_1000','division_6','remove_height']:
+for description see tools.py function
+!!!!!!!!!!Please check correct function BEFORE USE!!!
+
+-------------------------
+V6.2 new options
+set lon/lat attributes
+- supported '-k' options: 'missing_value','missing_value_set','add_plev_height','remove_height','division_1000','division_6'
+
+new output time resolutions: 1hr, 12hr
+more input check on times
+
+-------------------------
+V6.0 new options to correct some problems in output files
+
+------------------------------------------
+add 'plev' or 'height'
+  -e, --add-var         add var plev or height to output files of resolution 
+
+------------------------------------------
+more correction functions
+  -o CORR_KEY, --corr-key=CORR_KEY
+                        correct key to select a function
+
+------------------------------------------
+use an other time unit (from configuration file control_cmor.ini) instead of time unit from input file
+  -u, --use-alt-units   use alternate units for input data (only day and mon)
+  
+------------------------------------------
+new option to set the used model: CCLM,WRF
+actual are only CCLM and WRF supported
+  -m ACT_MODEL, --model=ACT_MODEL
+                        set used model (CCLM,WRF)
+
+###############
+# all: option '-l 0' takes the value '0' form the list in config file
+# used for select the correct input and generate the output path
+###############
+
+# values differ between RCM models (CCLM or WRF)
+# model_list=ECMWF-ERAINT,MIROC-MIROC5,MIROC-MIROC5,CCCma-CAN-ESM2,CCCma-CAN-ESM2,MPI-M-MPI-ESM-LR
+# exp_list=evaluation,historical,rcp85,historical,rcp85,rcp26
+# ens_list=r1i1p1,r1i1p1,r1i1p1,r1i1p1,r1i1p1,r1i1p1
+
+###############
+!!!!!!!!!!!!!!!!!!!!# befor you start please use the derotate function for u and v variables
+###############
+# run for derotate all variables from the list 'var_list_rotated'
+python cmorlight.py -l 0 -d
+
+# Output e.g. in /mnt/lustre01/work/bb0931/CMOR/output_derotated/CCLM/ECMWF-ERAINT/evaluation/U925p/
+# gaps are filled! 
+# skip existing output files
+
+
+###############
+# examples
+###############
+# process all variables and create daily and monthly files (for version:v20170126)
+python cmorlight.py -l 0 -a -r day,mon -g -n 20170126
+
+Comment: without '-n 20170126' the actual date would be used for the creation of the directory name (used later for ESGF publication)
+python cmorlight.py -l 0 -a -r day,mon -g
+
+###############
+# process seasonal data form daily data (version directory:v20170126)
+python cmorlight.py -l 0 -a -r sem -s -n 20170126
+
+Comment: without '-n 20170126' the actual date would be used for the creation of the directory name (used later for ESGF publication)
+python cmorlight.py -l 0 -a -r sem -s -n 20170126
+
+
+###############
+# process daily data for the variable 'prsn'
+python cmorlight.py -v prsn -r day -g
+
+###############
+# process monthl data for the variable 'prsn'
+python cmorlight.py -v prsn -r mon -g
+
+or create both:
+python cmorlight.py -v prsn -r day,mon -g
+
+###############
+# process for the variable 'prsn' seasonal mean from daily data (must exist!)
+python cmorlight.py -v prsn -r sem -s
+
+###############
+# process chunking for the variable 'prsn' for daily data (must exist)
+python cmorlight.py -v prsn -r day -c
+
+###############
+# process chunking for the variable 'prsn' for monthly data (must exist)
+python cmorlight.py -v prsn -r mon -c
+
+or chunking for both:
+python cmorlight.py -v prsn -r day,mon -c
+
+
+For any variable exist one row in the parameter file.
+
+
+All CCLM input data are yearly data created by a second post processing step (by Klaus Keuler script).
+
+
+All pathes and other setting are from the control_cmor[2].ini file.
+
+
+Each RCM has its own steering file:
+
+CCLM: ./Config/CORDEX_CMOR_CCLM_variables_table.csv
+WRF: ./Config/CORDEX_CMOR_WRF_variables_table.csv
+
+Both are created based on the CORDEX archive design matrix (Excel file).
+
+
+###################################################################
+# actiual property file (July 2017)
+###################################################################
+#
+# property file to control
+# 
+# 2016,2017 DKRZ, Hans Ramthun
+#
+
+################################################################################################
+################################################################################################
+# all the settings in tis section should be set to appropriate values before start processing
+# list of keys
+[settings]
+# float: f
+missing_value=1.e+20
+units=days since 1949-12-01 00:00:00
+#use_alt_units=False
+#alt_units=days since 1950-01-01 00:00:00
+alt_units=days since 2005-12-01 00:00:00
+alt_units_cdo_date=1950-01-01
+alt_units_cdo_time=00:00:00
+; model=WRF
+; institute_id=UHOH
+model=CCLM
+
+# default: True
+#vertices=True
+vertices=False
+# NUST always be TRUE!!!!!
+# not longer used
+#use_factor=False
+cdo_nctype=nc4c
+# default: True
+nc_compress=True
+# default: False
+test_only_one_file=False
+
+# only DWD!!!
+# default(other): False
+add_policy=False
+#NCO_PATH=/sw/rhel6-x64/nco/nco-4.5.0-gcc48/bin
+#CDO_PATH=/sw/rhel6-x64/cdo/cdo-1.7.1-magicsxx-gcc48/bin
+
+# path settings
+# base path for all other directories
+BasePath=/mnt/lustre01/work/bb0931/CMOR
+#BasePath=/home/k204081/sandbox/CMOR
+DirBase=output_daten_cmor
+# all input data are linked in to the correct directory
+var_dir=input_daten_cmor
+var_dir_rotated=output_derotated
+DirProg=cmorlight
+DirConfig=Config
+DirWork=temp
+LOG_BASE=logs
+# not used!
+#DirVardef=Variable_Definitions
+
+# variable settings
+#inst_var_3hr=clt huss ps psl sfcWind tas
+#mean_var_3hr=hfls hfss pr prc rlds rlus rsds rsus sund
+#inst_var_6hr=clivi hus850 mrros snd snm ta200 ta500 ta850 ts ua200 ua500 ua850 va200 va500 va850 zg200 zg500 zmla
+#mean_var_6hr=clwvi evspsbl mrfso mrro mrso prw rlut rsdt rsut snc snd uas vas
+
+var_list_rotate_u=ua200 ua500 ua850 ua925 uas
+var_list_rotate_v=va200 va500 va850 va925 vas
+var_list_rotated=ua200 ua500 ua850 ua925 uas va200 va500 va850 va925 vas
+
+#var_list_plev=ua200,ua500,ua850,ua925,va200,va500,va850,va925
+#var_list_height=huss,hurs,psl,sfcWindmax,tas,uas,vas,wsgsmax
+
+# used all 3 varlists for the '-a' option to process all variables
+#varlist_3hr=clt,hfls,hfss,hurs,huss,pr,prc,ps,psl,rlds,rlus,rsds,rsus,sfcWind,sund,tas
+#varlist_6hr=clivi,hus850,mrros,snc,snd,snm,ta200,ta500,ta850,ts,ua200,ua500,ua850,va200,va500,va850,zg200,zg500,zmla
+#varlist_min_max=prhmax,prsn,sfcWindmax,tasmax,tasmin,wsgsmax
+varlist_reject=pressure,height_2m,height_10m,height_toa,soil1,soil1_bnds,height,plev,nb2,time_bnds_2,x_2,x,y
+#,vertices,lon_vertices,lat_vertices
+
+# only workaround to correct the list files of each variable (because of some more timesteps in input
+# default: False
+use_search_string=False
+# search for this string in filename and create new
+# here: only process last year in list
+search_input_string=_2100
+
+# time settings
+reslist=day,mon
+# only used: 'units' (see above)
+REF_YEAR=1949
+REF_MONTH=12
+REF_DAY=1
+PModelType=PressureLevel
+MModelType=ModelLevel
+
+################################################################################################
+################################################################################################
+
+
+[settings_CCLM]
+# file with vertices [and perhaps lon/lat]
+vertices_file=Config/coordinates_cordex_eur11.nc
+# file with lon/lat [and perhaps vertices]
+coordinates_file=Config/coordinates_cordex_eur11.nc
+
+# settings for calculations
+# each set consists of one model+one experiment+one driving_model_ensemble_member
+# the index runs from 0,1...count-1 means: model_list[0]+exp_list[0]+ens_list[0],model_list[1]+...
+#          0           ,1           ,2           ,3            ,4            ,5               ,6
+model_list=ECMWF-ERAINT,MIROC-MIROC5,MIROC-MIROC5,CCCma-CanESM2,CCCma-CanESM2,MPI-M-MPI-ESM-LR,ICHEC-EC-EARTH
+#        0         ,1         ,2    ,3         ,4    ,5    ,6
+exp_list=evaluation,historical,rcp85,historical,rcp85,rcp26,rcp26
+#        0     ,1     ,2     ,3     ,4     ,5     ,6
+ens_list=r1i1p1,r1i1p1,r1i1p1,r1i1p1,r1i1p1,r1i1p1,r1i1p1
+#proc_list=[['ECMWF-ERAINT','evaluation','r1i1p1'],['MIROC-MIROC5','historical','r1i1p1'],['MIROC-MIROC5','rcp85','r1i1p1'],['CCCma-CAN-ESM2','historical','r1i1p1'],['CCCma-CAN-ESM2','rcp85','r1i1p1']]
+var_list_fixed=orog,sftlf
+
+#######################
+# global attributes CCLM
+#######################
+contact=cordex-cclm@dkrz.de
+project_id=CORDEX
+CORDEX_domain=EUR-11
+institute_id=CLMcom
+# DWD model
+; model_id=CLMcom-CCLM4-8-18
+; source=CLMcom-CCLM4-8-18
+# BTU model
+model_id=CLMcom-CCLM4-8-17
+source=CLMcom-CCLM4-8-17
+rcm_version_id=v1
+modeling_realm=atmos
+product=output
+Conventions=CF-1.4
+
+institution=Climate Limited-area Modelling Community (CLM-Community)
+comment=CORDEX Europe RCM CCLM 0.11 deg EUR-11
+initialization_method=1
+physics_version=1
+table_id=Table day (Sept 2013) 0cf1782745489246c9ff07bd6619f558
+#title=CLMcom-CCLM4-8-17 model output prepared for CORDEX
+title=model output prepared for CORDEX
+policy=The Deutscher Wetterdienst (DWD) is the producer of the data. The General Terms and Conditions of Business and Delivery apply for services provided by DWD (http://www.dwd.de/EN/service/terms/terms.html).
+attr_skip_list=btu_run_id,conventionsURL,model_id
+var_corr_list=evspsbl,mrro,mrros,snm
+
+
+[settings_WRF]
+# for compatibility test
+var_dir=testdaten_viktoria/MIROC5_hist
+# file with vertices [and perhaps lon/lat]
+vertices_file=Config/coordinates_cordex_eur11.nc
+# file with lon/lat [and perhaps vertices]
+coordinates_file=Config/coordinates_cordex_eur11.nc
+# settings for calculations
+# each set consists of one model+one experiment+one driving_model_ensemble_member
+# the index runs from 0,1...count-1 means: model_list[0]+exp_list[0]+ens_list[0],model_list[1]+...
+#          0           ,1           ,2               ,3               ,4               ,5              ,6              ,7             ,8
+model_list=MIROC-MIROC5,MIROC-MIROC5,MPI-M-MPI-ESM-LR,MPI-M-MPI-ESM-LR,MPI-M-MPI-ESM-LR,MOHC-HadGEM2-ES,MOHC-HadGEM2-ES,ICHEC-EC-EARTH,ICHEC-EC-EARTH
+#        0         ,1    ,2         ,3    ,4    ,5         ,6    ,7         ,8
+exp_list=historical,rcp85,historical,rcp26,rcp85,historical,rcp85,historical,rcp85
+#        0     ,1     ,2     ,3     ,4     ,5     ,6     ,7      ,8
+ens_list=r1i1p1,r1i1p1,r1i1p1,r1i1p1,r1i1p1,r1i1p1,r1i1p1,r12i1p1,r12i1p1
+; proc_list=[['MIROC-MIROC5','historical','r1i1p1'],\
+;            ["MIROC-MIROC5,rcp85,r1i1p1",\
+;            ["MPI-MPI-ESM-LR,historical,r1i1p1",\
+;            ["MPI-MPI-ESM-LR,rcp26,r1i1p1",\
+;            [["MPI-MPI-ESM-LR,rcp85,r1i1p1",\
+;            ["MOHC-HadGEM2-ES,histrical,r1i1p1",\
+;            ["MOHC-HadGEM2-ES,rcp85,r1i1p1",\
+;            ["ICHEC-EC-EARTH,historical,r12i1p1",\
+;            ["ICHEC-EC-EARTH,rcp85,r12i1p1",\
+;            ['ECMWF-ERAINT','evaluation','r1i1p1"]]
+var_list_fixed=orog,sftlf
+
+#######################
+# global attributes WRF
+#######################
+contact=Viktoria Mohr (viktoria.mohr@uni-hohenheim.de)
+project_id=CORDEX
+CORDEX_domain=EUR-11
+institute_id=UHOH
+#model_id=UHOH-WRF361H
+#source=UHOH-WRF361H
+model_id=UHOH-WRF361H
+source=UHOH-WRF361H
+rcm_version_id=v01
+modeling_realm=atmos
+product=output
+Conventions=CF-1.4
+
+# correct?
+institution=Climate Limited-area Modelling Community (WRF-Community)
+comment=CORDEX Europe RCM WRF361H 0.11 deg EUR-11
+initialization_method=1
+physics_version=1
+table_id=
+#??Table day (Sept 2013) 0cf1782745489246c9ff07bd6619f558
+title=model output prepared for CORDEX
+
+attr_skip_list=run_id,conventionsURL
+# actual not used, exist for compatibility reason
+var_corr_list=
+policy=
