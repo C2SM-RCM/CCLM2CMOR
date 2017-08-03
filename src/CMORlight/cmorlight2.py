@@ -18,7 +18,7 @@ from datetime import datetime
 # command line parser
 from optparse import OptionParser
 
-# configuration 
+# configuration
 import configuration as config
 
 # temp file functions
@@ -42,9 +42,9 @@ log = logging.getLogger('cmorlight')
 # -----------------------------------------------------------------------------
 def process_resolution(params,reslist):
     ''' '''
-    # get cdf variable name 
+    # get cdf variable name
     var = params[config.get_config_value('index','INDEX_VAR')]
-    
+    varRCM=params[config.get_config_value('index','INDEX_RCM_NAME')]
     # get cell method for the resolution
     # process resolution with the cell method: cm_...
 
@@ -69,8 +69,8 @@ def process_resolution(params,reslist):
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
         for f in sorted(filenames):
-            if f.find("%s_" % var) == 0 or f.find("%s_" % params[config.get_config_value('index','INDEX_RCM_NAME')]) == 0 \
-                    or f.find("%s_" % params[config.get_config_value('index','INDEX_RCM_NAME')][:params[config.get_config_value('index','INDEX_RCM_NAME')].find('p')]) == 0:
+            if f.find("%s_" % var) == 0 or f.find("%s_" % varRCM) == 0 \
+                    or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
                 in_file = "%s/%s" % (dirpath,f)
                 if os.path.isfile(in_file):
                     # workaround for error in last input files of CCLM data from DWD
@@ -82,8 +82,8 @@ def process_resolution(params,reslist):
                     if os.access(in_file, os.R_OK) == False:
                         log.error("Could not read file '%s', no permission!" % in_file)
                     else:
-                        log.info("############################### %s" % (str(var in config.get_model_value('settings','var_list_fixed'))))
-                        if var in config.get_model_value('settings','var_list_fixed'):
+                        log.info("############################### %s" % (str(var in config.get_model_value('settings_CCLM','var_list_fixed'))))
+                        if var in config.get_model_value('settings_CCLM','var_list_fixed'):
                             tools.process_file_fix(params,in_file)
                         else:
                             tools.process_file(params,in_file,var,reslist)
@@ -94,9 +94,9 @@ def process_resolution(params,reslist):
                         or f.find("%s" % params[config.get_config_value('index','INDEX_RCM_NAME')][:params[config.get_config_value('index','INDEX_RCM_NAME')].find('p')]) == 0:
                     in_file = "%s/%s" % (dirpath,f)
                     if os.path.isfile(in_file):
-                        if var in config.get_model_value('settings','var_list_fixed'):
+                        if var in config.get_model_value('settings_CCLM','var_list_fixed'):
                             tools.proc_file_fix(params,in_file)
-               
+
             # stop after one file with all chosen resolutions if set
             if config.get_config_value('boolean','test_only_one_file') == True:
                 sys.exit()
@@ -105,23 +105,23 @@ def process_resolution(params,reslist):
 
 # -----------------------------------------------------------------------------
 def main():
-    ''' main program, first read command line parameter ''' 
+    ''' main program, first read command line parameter '''
 
     parser = OptionParser(version="%prog "+base.__version__) #VERSION)
-    parser.add_option("-p", "--param", 
-                            action="store", dest = "paramfile", default = config.get_config_value('init','paramfile'), 
+    parser.add_option("-p", "--param",
+                            action="store", dest = "paramfile", default = config.get_config_value('init','paramfile'),
                             help = "model parameter file")
-    parser.add_option("-i", "--ini", 
-                            action="store", dest = "inifile", default = config.get_config_value('init','inifile'), 
+    parser.add_option("-i", "--ini",
+                            action="store", dest = "inifile", default = config.get_config_value('init','inifile'),
                             help = "script ini file")
-    parser.add_option("-r", "--resolution", 
-                            action="store", dest = "reslist", default = "", 
+    parser.add_option("-r", "--resolution",
+                            action="store", dest = "reslist", default = "",
                             help = "process output resolution")
-    parser.add_option("-v", "--varlist", 
-                            action="store", dest = "varlist", default = "pr", 
+    parser.add_option("-v", "--varlist",
+                            action="store", dest = "varlist", default = "pr",
                             help = "process variable")
-    parser.add_option("-a", "--all", 
-                            action="store_true", dest = "all_vars", default = False, 
+    parser.add_option("-a", "--all",
+                            action="store_true", dest = "all_vars", default = False,
                             help = "process all vars")
     parser.add_option("-c", "--chunk-var",
                             action="store_true", dest="chunk_var", default = False,
@@ -129,11 +129,11 @@ def main():
     parser.add_option("-s", "--seasonal-mean",
                             action="store_true", dest="seasonal_mean", default=False,
                             help="go calculate seasonal mean from aggregated monthly data")
-    parser.add_option("-n", "--use-version", 
-                            action="store", dest = "use_version", default = tools.new_dataset_version(), 
+    parser.add_option("-n", "--use-version",
+                            action="store", dest = "use_version", default = tools.new_dataset_version(),
                             help = "version for drs (default: today in format YYYYMMDD)")
-    parser.add_option("-d", "--derotate-uv", 
-                            action="store_true", dest = "derotate_uv", default=False, 
+    parser.add_option("-d", "--derotate-uv",
+                            action="store_true", dest = "derotate_uv", default=False,
                             help = "derotate all u and v avariables")
     parser.add_option("-t", "--test-var",
                             action="store_true", dest="test_var", default = False,
@@ -164,13 +164,13 @@ def main():
                             help="set used ensemble")
     parser.add_option("-O", "--overwrite",
                             action="store_true", dest="overwrite", default = False,
-                            help="Overwrite existent output files")                        
+                            help="Overwrite existent output files")
 
     (options, args) = parser.parse_args()
 
     # not longer used
     #proc_list_item = int(options.use_proc_list)
-    
+
     if options.act_model not in ['CCLM','WRF']:
         log.error("Model ist not supported: '%s'" % (options.act_model))
         # end programm
@@ -189,12 +189,12 @@ def main():
     # now read paramfile for all variables for this RCM ([CCLM]|WRF|...)
     fileName = ("CORDEX_CMOR_%s_variables_table.csv" % (config.get_config_value('init','model')))
     varfile = ("%s/%s" % (config.get_config_value('settings','DirConfig'),fileName))
-    
+
     # read some values from parameter file
     settings.init(varfile)
 
     # create logger
-    LOG_BASE = settings.DirLog 
+    LOG_BASE = settings.DirLog
     if os.path.isdir(LOG_BASE) == False:
         print("Logging directory does not exist: %s" % LOG_BASE)
         os.makedirs(LOG_BASE)
@@ -210,16 +210,16 @@ def main():
 
     # get model name
     config.set_config_value('init','model',options.act_model)
-    
+
     # creating working directory if not exist
     if not os.path.isdir(settings.DirWork):
         log.warning("Working directory does not exist, creating: %s" % (settings.DirWork))
         os.makedirs(settings.DirWork)
-  
+
     if not os.path.isdir(settings.DirOut):
         log.info("Output directory does not exist, creating: %s" % (settings.DirOut))
         os.makedirs(settings.DirOut)
-  
+
     # assing some new parameter
     settings.use_version = "v%s" % (options.use_version)
     settings.use_alt_units = options.use_alt_units
@@ -228,7 +228,7 @@ def main():
     if options.derotate_uv == True:
         tools.derotate_uv(process_list)
         return
-    
+
     if options.all_vars == False:
         varlist = options.varlist.split(',')
     else:
@@ -258,7 +258,7 @@ def main():
     #print settings.Global_attributes
     #print settings.netCDF_attributes
     #return
-    
+
     # process all var in varlist with input model and input experiment for proc_list item
     for var in varlist:
         if settings.param.has_key(var) == False:
@@ -271,20 +271,20 @@ def main():
         if params:
             # set global attributes in the dictionary
             tools.set_attributes(params,process_list)
-                       
+
             # skip fixed fields from chunking, makes no sense to chunk
-            if options.chunk_var == True and not var in config.get_model_value('settings','var_list_fixed'):
+            if options.chunk_var == True and not var in config.get_model_value('settings_CCLM','var_list_fixed'):
                 tools.proc_chunking(params,reslist)
 
             # seasonal mean
             elif options.seasonal_mean == True:
                 tools.proc_seasonal_mean(params)
-            
+
             # some procs for correction or cleanup files later
             elif options.corr_var == True:
                 for res in reslist:
                     tools.proc_corr_var(params,res,key=options.corr_key)
-       
+
             # process all vars from varlist with all output resolutions from reslist
             else:
                 for res in reslist:
@@ -292,7 +292,7 @@ def main():
                         # next var
                         continue
                     else:
-                        process_resolution(params,reslist)
+                        process_resolution(params,res)
 
 
 #########################################################
@@ -300,7 +300,7 @@ def main():
 #########################################################
 if __name__ == "__main__":
     ''' main program '''
-    
+
     # call main function
     main()
     log = logging.getLogger('cmorlight')

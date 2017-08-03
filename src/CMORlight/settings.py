@@ -93,7 +93,9 @@ def init(varfile):
         reader = csv.reader(csvfile,delimiter=';')
         for row in reader:
             if row[config.get_config_value('index','INDEX_RCM_NAME_ORG')] != '' and row[config.get_config_value('index','INDEX_VAR')] != '':
-                param[row[config.get_config_value('index','INDEX_VAR')]] = row
+                #create dictionary entries for variables names of CORDEX as well as of the RCM 
+                param[row[config.get_config_value('index','INDEX_VAR')]] = row 
+                param[row[config.get_config_value('index','INDEX_RCM_NAME')]] = row
             #if row[config.INDEX_VAR] == variable:
                 #return row
                 
