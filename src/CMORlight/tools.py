@@ -61,7 +61,6 @@ def get_input_path(var):
     else:
 
         retVal = settings.DirIn
-  #  return ("%s/%s" % (retVal,config.get_config_value('init','model')) )
     return retVal
 
 # -----------------------------------------------------------------------------
@@ -439,7 +438,9 @@ def proc_chunking(params,reslist):
 #                        print outpath
                         # cat files to aggregation file
                         # skip if exist
-                        if not os.path.isfile(outpath):
+                        if (not os.path.isfile(outpath)) or config.get_config_value('boolean','overwrite'):
+                            if config.get_config_value('boolean','overwrite'):
+                                log.info("Output file exist: %s, overwriting..." % (outpath))
                             retval = shell("ncrcat -h -O %s %s " % (flist,outpath))                   
                         
                             # remove source files
@@ -466,7 +467,9 @@ def proc_chunking(params,reslist):
                         flist = ("%s %s " % (flist,y))
 
                     # cat files to aggregation file
-                    if not os.path.isfile(outpath):
+                    if (not os.path.isfile(outpath)) or config.get_config_value('boolean','overwrite'):
+                        if config.get_config_value('boolean','overwrite'):
+                            log.info("Output file exist: %s, overwriting..." % (outpath))
                         retval = shell("ncrcat -h -O %s %s " % (flist,outpath))                   
 
                         # remove source files
@@ -723,10 +726,14 @@ def process_file_fix(params,in_file):
     outfile = create_filename(var,'fx','','')
     # create complete outpath: outdir + outfile
     outpath = "%s/%s" % (outdir,outfile)
-    # skip file if exist
-    if os.path.isfile(outpath):
-        log.info("Output file exists: %s, returning..." % (outpath))
-        return
+    # skip file if exists or overwrite
+    if os.path.isfile(outpath) and (not config.get_config_value('boolean','overwrite')):
+        log.info("Output file exists: %s" % (outpath))
+        if not config.get_config_value('boolean','overwrite'):
+            log.info("Returning...")
+            return
+        else:
+            log.info("Overwriting..")
     log.info("Output to: %s" % (outpath))
 
     # create object for output file
@@ -1075,10 +1082,10 @@ def proc_test_var(process_list,varlist,reslist):
             #print var,reslist
 
         #for res in reslist:
-        in_dir = "%s/%s/%s/%s" % (get_input_path(var),settings.Global_attributes['driving_model_id'],settings.Global_attributes['driving_experiment_name'],params[config.get_config_value('index','INDEX_RCM_NAME')])
+        in_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
         log.info("Looking for input dir: %s" % (in_dir))
         if os.path.isdir(in_dir) == False:
-            in_dir = "%s/%s/%s/%s" % (get_input_path(var),settings.Global_attributes['driving_model_id'],settings.Global_attributes['driving_experiment_name'],params[config.get_config_value('index','INDEX_RCM_NAME')].replace('p',''))
+            in_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')].replace('p',''))
             log.info("Looking for input dir: %s" % (in_dir))
         if os.path.isdir(in_dir) == True:
             log.info("###############################################################")
@@ -1370,7 +1377,7 @@ def derotate_uv(proc_list=None):
     for var in var_list_rotated:
         params = settings.param[var]
         #print params
-        out_dir = "%s/%s/%s/%s" % (get_input_path(var),path_model,path_exp,params[config.get_config_value('index','INDEX_RCM_NAME')])
+        out_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
         #print out_dir
         if os.path.isdir(out_dir) == False:
             log.info("Output directory does not exist: %s" % out_dir)
@@ -1381,16 +1388,16 @@ def derotate_uv(proc_list=None):
         #params = config._read_params(var)
         params = settings.param[var]
         log.debug(params)
-        out_dir = "%s/%s/%s/%s/%s" % (get_input_path(var),config.get_config_value('init','model'),path_model,path_exp,params[config.get_config_value('index','INDEX_RCM_NAME')])
+        out_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
         in_dir_base = ("%s/%s" % (settings.BasePath,settings.DirIn))
 #        in_dir = get_input_path(var)
 
         in_var_u = params[config.get_config_value('index','INDEX_RCM_NAME')]
-        in_dir_u = "%s/%s/%s/%s/%s" % (in_dir_base,config.get_config_value('init','model'),path_model,path_exp,in_var_u)
+        in_dir_u = "%s/%s" % (in_dir_base,in_var_u)
         in_var_v = params[config.get_config_value('index','INDEX_RCM_NAME')].replace('U','V')
-        in_dir_v = "%s/%s/%s/%s/%s" % (in_dir_base,config.get_config_value('init','model'),path_model,path_exp,in_var_v)
-        out_dir_u = "%s/%s/%s/%s" % (get_input_path(var),path_model,path_exp,in_var_u)
-        out_dir_v = "%s/%s/%s/%s" % (get_input_path(var),path_model,path_exp,in_var_v)
+        in_dir_v = "%s/%s" % (in_dir_base,in_var_v)
+        out_dir_u = "%s/%s" % (get_input_path(var),in_var_u)
+        out_dir_v = "%s/%s" % (get_input_path(var),in_var_v)
         
         print in_dir_u
         print in_dir_v
@@ -1651,9 +1658,14 @@ def process_file(params,in_file,var,reslist):
             # create complete outpath: outdir + outfile
             outpath = "%s/%s" % (outdir,outfile)
             # skip file if exist
+
             if os.path.isfile(outpath):
-                log.info("Output file exists: %s, skipping..." % (outpath))
-                continue
+                log.info("Output file exists: %s" % (outpath))
+                if not config.get_config_value('boolean','overwrite'):
+                    log.info("Skipping...")
+                    continue
+                else:
+                    log.info("Overwriting..")
             log.info("Output to: %s" % (outpath))
             
             # set step wide of cdo command

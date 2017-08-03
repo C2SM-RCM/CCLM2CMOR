@@ -58,9 +58,7 @@ TO DO:
 
 GENERAL:
 
-- pullen, Hans_jürgens zeug einbauen (settings.py: coordinates_file: aus section settings_CCLM statt settings)
-- input pfad: soll beliebig sein bis variablen als subdirectories, momentan CCLM/historical struktur vorgegeben
-- neue funktion: existierenden output überschreiben 
+- Hans_jürgens zeug einbauen und seine Kommentare ausprobieren, beheben
 - bei QV850p Fehler: wenn nicht vorhanden bricht er ab
 - alles aus tabelle verarbeiten ,welche auflösung für welche variable aber trotzdem auch reslist falls was schief läuft
 - wenn nur für einzelne variablen: dann cmor namen + name aus modell soll möglich -> schaue in tabelle nach
@@ -81,6 +79,9 @@ GENERAL:
 - wenn mehrere reslist angegeben: erst hohe auflösung dann niedrigere -> kann mit hoher.temp weiterrechnen um rechenzeit zu sparen, muss nicht mehr auf rohdaten zugreifen: teilweise realsiert für day, mon; nicht für 6hr, day
 - wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
 
+- check ob lon lat verfügbar fehlt 
+- deutlicher dass es sich um programmabbruch handelt
+- CCLM subversion in attributen angeben
 
 
 INFO
@@ -88,23 +89,3 @@ INFO
 rote variablen: wolkendichte nicht ausgegeben da CORDEX nicht definiert hat was höhen bedeuten
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-check ob lon lat verfügbar fehlt , deutlicher dass es sich um programmabbruch handelt
-
-
-CCLM subversion in attributen angeben

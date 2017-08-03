@@ -49,22 +49,23 @@ def process_resolution(params,reslist):
     # process resolution with the cell method: cm_...
 
     # create path to input files from basedir,model,driving_model
-    in_dir = "%s/%s/%s/%s" % (tools.get_input_path(var),settings.Global_attributes['driving_model_id'],settings.Global_attributes['driving_experiment_name'],params[config.get_config_value('index','INDEX_RCM_NAME')])
+    in_dir = "%s/%s" % (tools.get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
     log.info("Looking for input dir(1): %s" % (in_dir))
     if os.path.isdir(in_dir) == False:
-        log.info("Input directory does not exist(0): %s" % in_dir)
-        if params[config.get_config_value('index','INDEX_RCM_NAME')].find('p') > 0:
-            in_dir = "%s/%s" % (config.get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')][:params[config.get_config_value('index','INDEX_RCM_NAME')].find('p')])
-            log.info("Now looking for input dir: %s" % (in_dir))
-            if os.path.isdir(in_dir) == False:
-                log.info("Input directory does not exist(1): %s" % in_dir)
+      log.info("Input directory does not exist(0): %s \n \t Change directory in .ini file or create directory! " % in_dir)
+      return
+       # if params[config.get_config_value('index','INDEX_RCM_NAME')].find('p') > 0:
+        #    in_dir = "%s/%s" % (config.get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')][:params[config.get_config_value('index','INDEX_RCM_NAME')].find('p')])
+         #   log.info("Now looking for input dir: %s" % (in_dir))
+          #  if os.path.isdir(in_dir) == False:
+              # log.info("Input directory does not exist(1): %s" % in_dir)
                 #return
-    if os.path.isdir(in_dir) == False:
-        in_dir = "%s/%s/%s" % (tools.get_input_path(var),settings.Global_attributes['driving_model_id'],settings.Global_attributes['driving_experiment_name'])
-        log.info("Looking for input dir(2): %s" % (in_dir))
-    if os.path.isdir(in_dir) == False:
-        log.warning("Input directory does not exist(2): %s" % in_dir)
-        return
+   # if os.path.isdir(in_dir) == False:
+   #     in_dir = "%s" % (tools.get_input_path(var))
+    #    log.info("Looking for input dir(2): %s" % (in_dir))
+    #if os.path.isdir(in_dir) == False:
+     #   log.warning("Input directory does not exist(2): %s" % in_dir)
+      #  return
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
         for f in sorted(filenames):
@@ -161,6 +162,9 @@ def main():
     parser.add_option("-e", "--ensemble",
                             action="store", dest="act_ens", default = config.get_config_value('settings_CCLM','ens'),
                             help="set used ensemble")
+    parser.add_option("-O", "--overwrite",
+                            action="store_true", dest="overwrite", default = False,
+                            help="Overwrite existent output files")                        
 
     (options, args) = parser.parse_args()
 
@@ -180,6 +184,7 @@ def main():
 
     # store ensemble value
     config.set_config_value('init','ensemble',options.act_ens)
+    config.set_config_value('boolean','overwrite',str(options.overwrite))
 
     # now read paramfile for all variables for this RCM ([CCLM]|WRF|...)
     fileName = ("CORDEX_CMOR_%s_variables_table.csv" % (config.get_config_value('init','model')))

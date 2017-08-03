@@ -96,4 +96,7 @@ def load_configuration(cfgfiles=None):
     CONFIG.set('init', 'inifile', 'control_cmor2.ini')
     CONFIG.set('init', 'model', 'CCLM')
     CONFIG.readfp(open(pkg_resources.resource_filename(__name__,CONFIG.get('init','inifile'))))
+    if CONFIG.get('boolean','add_gcm_exp_to_DirIn')=='True':
+      DirIn=CONFIG.get('settings','DirIn')+'/'+CONFIG.get('settings_CCLM','gcm')+'/'+CONFIG.get('settings_CCLM','exp')
+      CONFIG.set('settings','DirIn',DirIn)
 
