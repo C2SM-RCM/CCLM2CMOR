@@ -16,7 +16,7 @@ DONE:
 
 
 TO DO:
-    
+
     cmorlight.py:
         - change optparse to argparse
         - (important parsed arguments in extra text file (e.g. csv))
@@ -24,22 +24,22 @@ TO DO:
         - line207: superfluent, done before
         - paramfile cannot be parsed as the parsed argument is never used
         - only ',' as delimiter for reslist, varlist allowed
-        - 
-        
-        
+        -
+
+
     control_cmor2.ini:
         - CLEAN and DOCUMENT
-        
+
     settings.py:
         - some parameters set here?: Format, version, use_alt_units (changed)
 
-    
+
     variables_table:
         - label columns
         - decimal point: replace kommas with period
-        
-    
-    
+
+
+
     post.job.tmpl:
         - make more general, clean up? ->  read variables to process from IO file; Process all variables?
       	- folder strucure YYYY/output/out01 -> should not be hardcoded maybe?
@@ -54,7 +54,7 @@ TO DO:
     tools.py:
         - remove reslist from test_var
         - derotate: strange paths
-        
+
 
 
 
@@ -73,7 +73,7 @@ GENERAL:
 
 - checken ob akkumulierte daten in mitte abgelegt wurden -> vielleicht schon drin in CMORlight?
 - In tabelle: levelvalue: es muss height bzw plev als attribut für jede variable gesetzt werden außer bei zweien und bei 0 (auch leer)
-  W_SO:  statt levelvalue muss anzahl der schichten zur integration angegeben werden -> setzt negativ zur unterscheidung von obigem 
+  W_SO:  statt levelvalue muss anzahl der schichten zur integration angegeben werden -> setzt negativ zur unterscheidung von obigem
 - rlon rlat in coordinates_cordex_eur11.nc nachschauen wenn nicht vorhanden
 - wo kommt land-sea mask info her, nicht in coordinates_cordex_eur11.nc mit drin im Gegensatz zu orog
 - 4.spalte in tabelle als comment hinzufügen
@@ -82,10 +82,10 @@ GENERAL:
 - wenn mehrere reslist angegeben: erst hohe auflösung dann niedrigere -> kann mit hoher.temp weiterrechnen um rechenzeit zu sparen, muss nicht mehr auf rohdaten zugreifen: teilweise realsiert für day, mon; nicht für 6hr, day
 - wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
 
-- check ob lon lat verfügbar fehlt 
+- check ob lon lat verfügbar fehlt
 - deutlicher dass es sich um programmabbruch handelt
 - CCLM subversion in attributen angeben
-
+- check what happens if inifile not existent
 
 INFO
 

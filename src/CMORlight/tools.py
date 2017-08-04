@@ -1115,7 +1115,7 @@ def proc_test_var(process_list,varlist,reslist):
                 i = 0
                 for f in sorted(filenames):
                     in_file = "%s/%s" % (dirpath,f)
-                    print "Infile: ",in_file #,params[config.INDEX_MODEL_LEVEL]
+                    print("Infile: ",in_file) #,params[config.INDEX_MODEL_LEVEL]
                     f_in = Dataset(in_file,'r')
 #                    print params[config.get_config_value('index','INDEX_RCM_NAME')],f_out.variables
                     if params[config.get_config_value('index','INDEX_RCM_NAME')] in f_in.variables.keys():
@@ -1175,7 +1175,7 @@ def proc_test_var(process_list,varlist,reslist):
                     # by setting time:units to: "days since 1949-12-01T00:00:00Z"
                     # now get the difference in time.units for refdate: start point for all settings in time and time_bnds
                     num_refdate_diff = date2num(date_start,units=config.get_config_value('settings','units'),calendar=in_calendar)
-                    print type(num_refdate_diff)
+                    print(type(num_refdate_diff))
                     num_refdate_diff = float(int(num_refdate_diff))
                     # show some numbers
                     log.info("num_refdate_diff: %s" % str(num_refdate_diff))
@@ -1237,32 +1237,32 @@ def proc_corr_var(params,res,key):
                     if 'lat' in f_in.variables.keys():
                         f_lat = f_in['lat']
                         if f_lat.datatype == 'float32':
-                            print f_lat.name,"Float"
+                            print(f_lat.name,"Float")
                         else:
-                            print "###########################################"
-                            print f_lat.name,"Double" #,f_var.datatype == 'float64'
+                            print("###########################################")
+                            print(f_lat.name,"Double") #,f_var.datatype == 'float64'
                     if 'lon' in f_in.variables.keys():
                         f_lon = f_in['lon']
                         if f_lon.datatype == 'float32':
-                            print f_lon.name,"Float"
+                            print(f_lon.name,"Float")
                         else:
-                            print "###########################################"
-                            print f_lon.name,"Double" #,f_var.datatype == 'float64'
+                            print("###########################################")
+                            print(f_lon.name,"Double") #,f_var.datatype == 'float64'
                     f_var = f_in[var]
                     if f_var.name in [var]: #,'lon','lat','height','plev']:
                         if f_var.datatype == 'float32':
-                            print f_var.name,"Float"
+                            print(f_var.name,"Float")
                         else:
-                            print "###########################################"
-                            print f_var.name,"Double" #,f_var.datatype == 'float64'
+                            print("###########################################")
+                            print(f_var.name,"Double") #,f_var.datatype == 'float64'
 
                             tmpfile = "%s/%s" % (settings.DirWork,f)
                             cmd = "mv %s %s" % (infile,tmpfile)
-                            print cmd
+                            print(cmd)
                             retval = shell(cmd)
                             # now conert to float
                             cmd = "ncap2 -s '%s=float(%s)' %s %s" % (var,var,tmpfile,infile)
-                            print cmd
+                            print(cmd)
                             retval = shell(cmd)
                             if os.path.isfile(tmpfile) and os.path.isfile(infile):
                                 os.remove(tmpfile)
@@ -1287,16 +1287,16 @@ def proc_corr_var(params,res,key):
             elif key == 'climatology':
                 f_in = Dataset(infile,'r')
                 f_var = f_in.variables[var]
-                print f_var.ncattrs()
+                print(f_var.ncattrs())
                 f_in.close()
 
             # correct missing_value from negative to positive value
             elif key == 'missing_value':
                 cmd = "ncatted -h -O -a missing_value,%s,m,f,-1.e20 -a _FillValue,%s,m,f,-1.e20 %s" %  (var,var,infile)
-                print cmd
+                print(cmd)
                 retval = shell(cmd)
                 cmd = "ncatted -h -O -a missing_value,%s,m,f,1.e20 -a _FillValue,%s,m,f,1.e20 %s" %  (var,var,infile)
-                print cmd
+                print(cmd)
                 retval = shell(cmd)
 
             # set missing_value
@@ -1383,12 +1383,10 @@ def proc_corr_var(params,res,key):
 
 
 # -----------------------------------------------------------------------------
-def derotate_uv(proc_list=None):
+def derotate_uv():
     """
     derotate u and v variables
     """
-    path_model = proc_list[0]
-    path_exp = proc_list[1]
 
     var_list_rotate_u = get_derotate_vars(flt='u')
     var_list_rotate_v = get_derotate_vars(flt='v')
@@ -1420,13 +1418,13 @@ def derotate_uv(proc_list=None):
         out_dir_u = "%s/%s" % (get_input_path(var),in_var_u)
         out_dir_v = "%s/%s" % (get_input_path(var),in_var_v)
 
-        print in_dir_u
-        print in_dir_v
-        print out_dir_v
-        print out_dir_u
+        print(in_dir_u)
+        print(in_dir_v)
+        print(out_dir_v)
+        print(out_dir_u)
         for dirpath,dirnames,filenames in os.walk(in_dir_u, followlinks=True):
             for f in sorted(filenames):
-                print f
+                print(f)
                 start_range = f[f.rindex('_')+1:f.rindex('.')]
                 in_file_u = "%s/%s" % (in_dir_u,f)
                 in_file_v = "%s/%s" % (in_dir_v,f.replace('U','V'))
@@ -1442,7 +1440,7 @@ def derotate_uv(proc_list=None):
                             cmd = "cdo merge %s %s %s" % (in_file_u,in_file_v,out_file)
                             retval = shell(cmd)
                         # only these two have the names as CCLM variable in the file
-                        print in_var_u,in_var_v
+                        print(in_var_u,in_var_v)
                         if in_var_u == "U_10M" or in_var_v == "V_10M":
                             if os.path.isfile(out_file) and not os.path.isfile(out_file_derotate):
                                 cmd = "cdo rotuvb,%s,%s %s %s" % (in_var_u,in_var_v,out_file,out_file_derotate)

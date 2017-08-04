@@ -52,7 +52,7 @@ def process_resolution(params,reslist):
     in_dir = "%s/%s" % (tools.get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
     log.info("Looking for input dir(1): %s" % (in_dir))
     if os.path.isdir(in_dir) == False:
-      log.info("Input directory does not exist(0): %s \n \t Change directory in .ini file or create directory! " % in_dir)
+      log.info("Input directory does not exist(0): %s \n \t Change base path in .ini file or create directory! " % in_dir)
       return
        # if params[config.get_config_value('index','INDEX_RCM_NAME')].find('p') > 0:
         #    in_dir = "%s/%s" % (config.get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')][:params[config.get_config_value('index','INDEX_RCM_NAME')].find('p')])
@@ -69,8 +69,7 @@ def process_resolution(params,reslist):
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
         for f in sorted(filenames):
-            if f.find("%s_" % var) == 0 or f.find("%s_" % varRCM) == 0 \
-                    or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
+            if f.find("%s_" % var) == 0 or f.find("%s_" % varRCM) == 0 or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
                 in_file = "%s/%s" % (dirpath,f)
                 if os.path.isfile(in_file):
                     # workaround for error in last input files of CCLM data from DWD
@@ -89,13 +88,12 @@ def process_resolution(params,reslist):
                             tools.process_file(params,in_file,var,reslist)
                 else:
                     log.error("File '%s' not found!" % in_file)
-            else:
-                if f.find("%s" % var) == 0 or f.find("%s" % params[config.get_config_value('index','INDEX_RCM_NAME')]) == 0 \
-                        or f.find("%s" % params[config.get_config_value('index','INDEX_RCM_NAME')][:params[config.get_config_value('index','INDEX_RCM_NAME')].find('p')]) == 0:
-                    in_file = "%s/%s" % (dirpath,f)
-                    if os.path.isfile(in_file):
-                        if var in config.get_model_value('settings_CCLM','var_list_fixed'):
-                            tools.proc_file_fix(params,in_file)
+#            else:
+#                if f.find("%s" % var) == 0 or f.find("%s" % varRCM) == 0 or f.find("%s" % varRCM[:varRCM.find('p')]) == 0:
+#                    in_file = "%s/%s" % (dirpath,f)
+#                    if os.path.isfile(in_file):
+#                        if var in config.get_model_value('settings_CCLM','var_list_fixed'):
+#                            tools.proc_file_fix(params,in_file)
 
             # stop after one file with all chosen resolutions if set
             if config.get_config_value('boolean','test_only_one_file') == True:
@@ -108,12 +106,13 @@ def main():
     ''' main program, first read command line parameter '''
 
     parser = OptionParser(version="%prog "+base.__version__) #VERSION)
-    parser.add_option("-p", "--param",
-                            action="store", dest = "paramfile", default = config.get_config_value('init','paramfile'),
-                            help = "model parameter file")
+
     parser.add_option("-i", "--ini",
-                            action="store", dest = "inifile", default = config.get_config_value('init','inifile'),
+                            action="store", dest = "inifile", default = "control_cmor2.ini",
                             help = "script ini file")
+    parser.add_option("-p", "--param",
+                            action="store", dest = "paramfile", default = "",
+                            help = "model parameter file")
     parser.add_option("-r", "--resolution",
                             action="store", dest = "reslist", default = "",
                             help = "process output resolution")
@@ -151,46 +150,43 @@ def main():
                             action="store_true", dest="use_alt_units", default = False,
                             help="use alternate units for input data (only day and mon)")
     parser.add_option("-m", "--model",
-                            action="store", dest="act_model", default = 'CCLM',
-                            help="set used model (supported: [default: CCLM],WRF)")
+                           action="store", dest="act_model", default = 'CCLM',
+                          help="set used model (supported: [default: CCLM],WRF)")
     parser.add_option("-g", "--gcm_driving_model",
-                            action="store", dest="act_gcm", default = config.get_config_value('settings_CCLM','gcm'),
+                            action="store", dest="driving_model_id", default = "",
                             help="set used driving model")
     parser.add_option("-x", "--experiment",
-                            action="store", dest="act_exp", default = config.get_config_value('settings_CCLM','exp'),
+                            action="store", dest="driving_experiment_name", default = "",
                             help="set used experiment")
     parser.add_option("-e", "--ensemble",
-                            action="store", dest="act_ens", default = config.get_config_value('settings_CCLM','ens'),
+                            action="store", dest="driving_model_ensemble_member", default = "",
                             help="set used ensemble")
     parser.add_option("-O", "--overwrite",
                             action="store_true", dest="overwrite", default = False,
                             help="Overwrite existent output files")
 
     (options, args) = parser.parse_args()
+    options_dict=vars(options)
+    config.load_configuration(options.inifile)
 
-    # not longer used
-    #proc_list_item = int(options.use_proc_list)
+#    if options.act_model not in ['CCLM','WRF']:
+ #       log.error("Model ist not supported: '%s'" % (options.act_model))
+  #      # end programm
+   #     return
 
-    if options.act_model not in ['CCLM','WRF']:
-        log.error("Model ist not supported: '%s'" % (options.act_model))
-        # end programm
-        return
+   #store parsed arguments in config
+    setval=["paramfile","driving_model_id","driving_experiment_name","driving_model_ensemble_member"]
 
-    # set ini filename
-    config.set_config_value('init','inifile',options.inifile)
+    for val in setval:
+        if options_dict[val]!="":
+            config.set_config_value('settings_CCLM',val,options_dict[val])
 
-    # store model value
     config.set_config_value('init','model',options.act_model)
-
-    # store ensemble value
-    config.set_config_value('init','ensemble',options.act_ens)
     config.set_config_value('boolean','overwrite',str(options.overwrite))
 
-    # now read paramfile for all variables for this RCM ([CCLM]|WRF|...)
-    fileName = ("CORDEX_CMOR_%s_variables_table.csv" % (config.get_config_value('init','model')))
-    varfile = ("%s/%s" % (config.get_config_value('settings','DirConfig'),fileName))
-
-    # read some values from parameter file
+    process_list=[config.get_config_value('settings_CCLM','driving_model_id'),config.get_config_value('settings_CCLM','driving_experiment_name'),config.get_config_value('settings_CCLM','driving_model_ensemble_member')]
+    # now read paramfile for all variables for this RCM
+    varfile = ("%s/%s" % (config.get_config_value('settings','DirConfig'),config.get_config_value('settings_CCLM','paramfile')))
     settings.init(varfile)
 
     # create logger
@@ -205,11 +201,6 @@ def main():
     # get logger and assign logging filename
     log = base.setup_custom_logger(settings.logger_name,filename=LOG_FILENAME)
 
-    # set global attributes in the dictionary
-    process_list = [options.act_gcm,options.act_exp,options.act_ens]
-
-    # get model name
-    config.set_config_value('init','model',options.act_model)
 
     # creating working directory if not exist
     if not os.path.isdir(settings.DirWork):
@@ -223,10 +214,9 @@ def main():
     # assing some new parameter
     settings.use_version = "v%s" % (options.use_version)
     settings.use_alt_units = options.use_alt_units
-
     # derotate u and v
     if options.derotate_uv == True:
-        tools.derotate_uv(process_list)
+        tools.derotate_uv()
         return
 
     if options.all_vars == False:
@@ -236,6 +226,11 @@ def main():
         varlist.extend(tools.get_var_lists(flt=None))
 
     reslist = options.reslist.split(',')
+    #TODO: allow for whitespace separation -> need to change in optparse
+    #reslist = options.reslist.replace(" ",",") #to allow for space as delimiter
+    #reslist=list(filter(None,reslist.split(','))) #split string and remove empty strings
+
+
     # if nothing is set: exit the program
     if len(reslist) == 1 and reslist[0] == '' and options.seasonal_mean == False and options.test_var == False:
         log.error("No output resolution/aggregation set, exiting...")
@@ -250,14 +245,6 @@ def main():
     log.info("Variable(s): %s " % varlist)
     log.info("Requested time output resolution(s): %s " % reslist)
     log.info("Used RCM: %s" % config.get_config_value('init','model'))
-
-    # for test only
-    #tools.test_log()
-    #params = settings.param['pr']
-    #tools.set_attributes(params,process_list)
-    #print settings.Global_attributes
-    #print settings.netCDF_attributes
-    #return
 
     # process all var in varlist with input model and input experiment for proc_list item
     for var in varlist:
@@ -289,10 +276,9 @@ def main():
             else:
                 for res in reslist:
                     if tools.check_resolution(params,res) == False:
-                        # next var
-                        continue
-                    else:
-                        process_resolution(params,res)
+                        reslist.remove(res) #remove unsupported resolution from list
+
+                process_resolution(params,reslist)
 
 
 #########################################################

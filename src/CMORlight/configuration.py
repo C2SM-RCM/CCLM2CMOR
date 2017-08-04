@@ -22,10 +22,12 @@ else:
 RAW_OPTIONS = [('logging', 'format'), ]
 
 CONFIG = None
-LOGGER = logging.getLogger("cmorlight")
+#LOGGER = logging.getLogger("cmorlight")
 
 # -----------------------------------------------------------------------------
-def get_config_value(section, option):
+
+
+def get_config_value(section, option, inifile=None):
     """Get desired value from  configuration files
     :param section: section in configuration files
     :type section: string
@@ -35,7 +37,8 @@ def get_config_value(section, option):
     """
 
     if not CONFIG:
-        load_configuration()
+        print("Load configuration file first! Exiting...")
+        exit
 
     value = ''
 
@@ -68,17 +71,19 @@ def get_model_value(section,option):
 
 
 # -----------------------------------------------------------------------------
-def set_config_value(section, option, value):
+def set_config_value(section, option, value,inifile=None):
     ''' '''
     if not CONFIG:
-        load_configuration()
+        print("Load configuration file first! Exiting...")
+        exit
+
     if not CONFIG.has_section(section):
         CONFIG.add_section(section)
     CONFIG.set(section, option, value)
-    
+
 
 # -----------------------------------------------------------------------------
-def load_configuration(cfgfiles=None):
+def load_configuration(inifile):
     """Load PyWPS configuration from configuration files.
     The later configuration file in the array overwrites configuration
     from the first.
@@ -86,17 +91,17 @@ def load_configuration(cfgfiles=None):
     """
     global CONFIG
 
-    LOGGER.info('loading configuration')
+  #  LOGGER.info('loading configuration from %s' % inifile)
     if PY2:
         CONFIG = ConfigParser.SafeConfigParser()
     else:
         CONFIG = configparser.ConfigParser()
 
     CONFIG.add_section('init')
-    CONFIG.set('init', 'inifile', 'control_cmor2.ini')
-    CONFIG.set('init', 'model', 'CCLM')
-    CONFIG.readfp(open(pkg_resources.resource_filename(__name__,CONFIG.get('init','inifile'))))
-    if CONFIG.get('boolean','add_gcm_exp_to_DirIn')=='True':
-      DirIn=CONFIG.get('settings','DirIn')+'/'+CONFIG.get('settings_CCLM','gcm')+'/'+CONFIG.get('settings_CCLM','exp')
+    CONFIG.set("init","inifile",inifile)
+    CONFIG.readfp(open(pkg_resources.resource_filename(__name__,inifile)))
+    #Extend input path if respective option is set:
+    if CONFIG.get('boolean','extend_DirIn')=='True':
+      DirIn=CONFIG.get('settings','DirIn')+'/'+CONFIG.get('settings_CCLM','driving_model_id')+'/'+CONFIG.get('settings_CCLM','driving_experiment_name')
       CONFIG.set('settings','DirIn',DirIn)
 
