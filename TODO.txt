@@ -59,16 +59,20 @@ TO DO:
 
 
 GENERAL:
+- W_SNOW und TOT_PREC kommen doppelt in Tabelle vor! -> aus gleicher variable berechnet? -> sollte in vorherigem script passieren;
+-> in settingsy.py wird params dict dann überschrieben -> parsing von TOT_PREC nimmt immer prhmax!
 
 - Hans_jürgens Kommentare ausprobieren, beheben
 - bei QV850p Fehler: wenn nicht vorhanden bricht er ab
 - alles aus tabelle verarbeiten ,welche auflösung für welche variable aber trotzdem auch reslist falls was schief läuft
-- wenn nur für einzelne variablen: dann cmor namen + name aus modell soll möglich -> schaue in tabelle nach
+-
 - zwei wege welche var prozessiert werden sollen:
   1. schau in tabelle und mach alle die tatsächlich vorhanden sind, warning für fehlende
   2. schau in order und prozessiere alle die in tabelle sind, warning für fehlende in tabelle bzw fehlende in ordner
 - benennung von subdaily falsch: zwei varianten time bounds anfang ende, oder intervall mitten anfang ende -> Hans macht gemischt -> ändern
 
+
+- error bei compressing output
 - does seasonal proc. work?
 
 - checken ob akkumulierte daten in mitte abgelegt wurden -> vielleicht schon drin in CMORlight?

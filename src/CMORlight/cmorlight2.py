@@ -225,7 +225,12 @@ def main():
         varlist = [] #config.varlist['3hr'] + config.varlist['6hr']
         varlist.extend(tools.get_var_lists(flt=None))
 
-    reslist = options.reslist.split(',')
+
+    if options.reslist=="": #if output resolutions not given in command -> take from inifile
+        reslist=config.get_config_value('settings','reslist').replace(" ",",") #to allow for space as delimiter
+        reslist=list(filter(None,reslist.split(','))) #split string and remove empty strings
+    else:
+        reslist = options.reslist.split(',')
     #TODO: allow for whitespace separation -> need to change in optparse
     #reslist = options.reslist.replace(" ",",") #to allow for space as delimiter
     #reslist=list(filter(None,reslist.split(','))) #split string and remove empty strings

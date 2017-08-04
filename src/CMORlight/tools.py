@@ -920,7 +920,7 @@ def process_file_fix(params,in_file):
 
 # -----------------------------------------------------------------------------
 def proc_seasonal_mean(params):
-    ''' create seasonal mean form monthly data '''
+    ''' create seasonal mean from monthly data '''
 
     # get cdf variable name
     var = params[config.get_config_value('index','INDEX_VAR')]
