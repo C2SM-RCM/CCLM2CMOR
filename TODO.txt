@@ -49,7 +49,7 @@ GENERAL:
 - W_SNOW und TOT_PREC kommen doppelt in Tabelle vor! -> aus gleicher variable berechnet? -> sollte in vorherigem script passieren;
 -> in settingsy.py wird params dict dann überschrieben -> parsing von TOT_PREC nimmt immer prhmax!
 
-- Hans_jürgens Kommentare ausprobieren,  beheben
+- Hans_jürgens Kommentare ausprobieren, beheben
 - bei QV850p Fehler: wenn nicht vorhanden bricht er ab
 
 - zwei wege welche var prozessiert werden sollen:
