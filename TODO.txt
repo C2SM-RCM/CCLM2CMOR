@@ -5,26 +5,12 @@ What's done and what's to do
 @author: mgoebel
 """
 
-DONE:
-    configuration.py:
-        - replaced readfp by read_file
-
-
-    settings.py:
-        - use_alt_units
-
-
 
 TO DO:
 
     cmorlight.py:
         - change optparse to argparse
-        - (important parsed arguments in extra text file (e.g. csv))
-        - what is paramfile?
-        - line207: superfluent, done before
-        - paramfile cannot be parsed as the parsed argument is never used
         - only ',' as delimiter for reslist, varlist allowed
-        -
 
 
     control_cmor2.ini:
@@ -43,7 +29,8 @@ TO DO:
     post.job.tmpl:
         - make more general, clean up? ->  read variables to process from IO file; Process all variables?
       	- folder strucure YYYY/output/out01 -> should not be hardcoded maybe?
-
+        - some variables have been saved in twice in different outXX streams (W_SO, W_SNOW) for different resolutions: script overwrites
+        -> should check for each file if already there and then skip or similar
     CCLM sh:
 
         - first timestep of next month included in concatenation? (line 185) --> cannot use last year (in our case)!
@@ -54,7 +41,7 @@ TO DO:
     tools.py:
         - remove reslist from test_var
         - derotate: strange paths
-
+        - proc_test_var fertig machen (reslist) oder entfernen
 
 
 
@@ -64,8 +51,7 @@ GENERAL:
 
 - Hans_jürgens Kommentare ausprobieren, beheben
 - bei QV850p Fehler: wenn nicht vorhanden bricht er ab
-- alles aus tabelle verarbeiten ,welche auflösung für welche variable aber trotzdem auch reslist falls was schief läuft
--
+
 - zwei wege welche var prozessiert werden sollen:
   1. schau in tabelle und mach alle die tatsächlich vorhanden sind, warning für fehlende
   2. schau in order und prozessiere alle die in tabelle sind, warning für fehlende in tabelle bzw fehlende in ordner
@@ -73,9 +59,8 @@ GENERAL:
 
 
 - error bei compressing output
-- does seasonal proc. work?
+- Reduce logger output, maybe verbose option
 
-- checken ob akkumulierte daten in mitte abgelegt wurden -> vielleicht schon drin in CMORlight?
 - In tabelle: levelvalue: es muss height bzw plev als attribut für jede variable gesetzt werden außer bei zweien und bei 0 (auch leer)
   W_SO:  statt levelvalue muss anzahl der schichten zur integration angegeben werden -> setzt negativ zur unterscheidung von obigem
 - rlon rlat in coordinates_cordex_eur11.nc nachschauen wenn nicht vorhanden
@@ -86,10 +71,18 @@ GENERAL:
 - wenn mehrere reslist angegeben: erst hohe auflösung dann niedrigere -> kann mit hoher.temp weiterrechnen um rechenzeit zu sparen, muss nicht mehr auf rohdaten zugreifen: teilweise realsiert für day, mon; nicht für 6hr, day
 - wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
 
-- check ob lon lat verfügbar fehlt
 - deutlicher dass es sich um programmabbruch handelt
 - CCLM subversion in attributen angeben
+
+
+
+
+TESTS:
+- check ob lon lat verfügbar fehlt
+- does seasonal proc. work?
+- checken ob akkumulierte daten in mitte abgelegt wurden -> vielleicht schon drin in CMORlight?
 - check what happens if inifile not existent
+- check if error message works if conversion factor not set or set to 0
 
 INFO
 

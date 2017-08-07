@@ -4,6 +4,7 @@
 import os
 import sys
 
+import numpy as np
 # netcdf4 Library
 from netCDF4 import Dataset
 from netCDF4 import num2date
@@ -27,6 +28,7 @@ import uuid
 # support logging
 import logging
 log = logging.getLogger('cmorlight')
+
 
 
 # -----------------------------------------------------------------------------
@@ -556,30 +558,38 @@ def add_vertices(f_out):
 
 
 # -----------------------------------------------------------------------------
-def check_resolution(params,res):
+def check_resolution(params,res,process_table_only):
     '''
-    check whether requested resolution is supported or not
+    check whether requested resolution is in table or not
     '''
-    if res == '1hr' and str(params[config.get_config_value('index','INDEX_FRE_SUB')]) != '' and int(params[config.get_config_value('index','INDEX_FRE_SUB')]) >= 24:
-        return True
-    elif res == '3hr' and str(params[config.get_config_value('index','INDEX_FRE_SUB')]) != '' and int(params[config.get_config_value('index','INDEX_FRE_SUB')]) >= 8:
-        return True
-    elif res == '6hr' and str(params[config.get_config_value('index','INDEX_FRE_SUB')]) != '' and int(params[config.get_config_value('index','INDEX_FRE_SUB')]) >= 4:
-        return True
-    elif res == '12hr' and str(params[config.get_config_value('index','INDEX_FRE_SUB')]) != '' and int(params[config.get_config_value('index','INDEX_FRE_SUB')]) >= 2:
-        return True
-    elif res == 'day' and (str(params[config.get_config_value('index','INDEX_FRE_DAY')]) != '' and int(params[config.get_config_value('index','INDEX_FRE_DAY')]) >= 1):
-        return True
-    elif res == 'mon' and str(params[config.get_config_value('index','INDEX_FRE_MON')]) != '' and int(params[config.get_config_value('index','INDEX_FRE_MON')]) >= 1:
-        return True
+    if res in ["1hr","3hr","6hr","12hr"]:
+        res_hr=(float(res[:-2])) #extract time resolution in hours
+        freq_table=params[config.get_config_value('index','INDEX_FRE_SUB')]
+        freq=24./res_hr
+    elif res=="day":
+        res_hr=24.
+        freq_table=params[config.get_config_value('index','INDEX_FRE_DAY')]
+        freq=1. #requested samples per day
+    elif res=="mon":
+        res_hr= 28*24.  #minimum number of hours per month
+        freq_table=params[config.get_config_value('index','INDEX_FRE_MON')]
+        freq=1. #requested samples per month
     elif res == 'fx':
         return True
     else:
-        log.warning("Time resolution (%s) is not supported, skipping(2)..." % res)
+        log.warning("Time resolution (%s) is not supported, skipping..." % res)
         return False
+
+    #if process_table_only is set: check if requested time resolution is declared in table
+    if (freq_table=="" or float(freq_table) != freq) and process_table_only:
+        log.warning("Requested time resolution (%s) not declared in parameter table. Skipping.." % res)
+        return False
+    else:
+        return True
 
 
 # -----------------------------------------------------------------------------
+
 def get_attr_list(var_name):
     '''
     TODO: ATTR_SETTING
@@ -755,9 +765,13 @@ def process_file_fix(params,in_file):
     if config.get_config_value('boolean','add_vertices') == True:
         f_out.createDimension('vertices',4)
 
-    if float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.')) != 0 and float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.')) != 1:
+    try:
         mulc_factor = float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.'))
-    else:
+    except ValueError:
+        log.warning("No conversion factor set for %s in parameter table. Setting it to 1..." % params[config.get_config_value('index','INDEX_RCM_NAME')])
+        mulc_factor = 1.0
+    if mulc_factor == 0:
+        log.warning("Conversion factor for %s is set to 0 in parameter table. Setting it to 1..." % params[config.get_config_value('index','INDEX_RCM_NAME')])
         mulc_factor = 1.0
     log.debug(f_in.variables.iteritems())
 #    sys.exit()
@@ -1091,18 +1105,12 @@ def proc_test_var(process_list,varlist,reslist):
     '''
     log.info("Start Test")
     for var in varlist:
-        #if var != 'evspsbl':
-            #continue
+
         if var in config.get_model_value('settings_CCLM','var_list_fixed'):
             continue
         params = settings.param[var]
         set_attributes(params,process_list)
 
-        cm_type = params[config.get_config_value('index','INDEX_VAR_CM_DAY')]
-        #if check_resolution(params,res) == True:
-            #print var,reslist
-
-        #for res in reslist:
         in_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
         log.info("Looking for input dir: %s" % (in_dir))
         if os.path.isdir(in_dir) == False:
@@ -1110,14 +1118,13 @@ def proc_test_var(process_list,varlist,reslist):
             log.info("Looking for input dir: %s" % (in_dir))
         if os.path.isdir(in_dir) == True:
             log.info("###############################################################")
-            log.info("Input directory for cf variable '%s' exist: %s" % (var,in_dir))
+            log.info("Input directory for cf variable '%s' exists: %s" % (var,in_dir))
             for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
                 i = 0
                 for f in sorted(filenames):
                     in_file = "%s/%s" % (dirpath,f)
                     print("Infile: ",in_file) #,params[config.INDEX_MODEL_LEVEL]
                     f_in = Dataset(in_file,'r')
-#                    print params[config.get_config_value('index','INDEX_RCM_NAME')],f_out.variables
                     if params[config.get_config_value('index','INDEX_RCM_NAME')] in f_in.variables.keys():
                         f_var = f_in.variables[params[config.get_config_value('index','INDEX_RCM_NAME')]]
                     elif params[config.get_config_value('index','INDEX_RCM_NAME_ORG')] in f_in.variables.keys():
@@ -1159,28 +1166,24 @@ def proc_test_var(process_list,varlist,reslist):
                     a = datetime.strptime(str(dt_in1), settings.FMT)
                     b = datetime.strptime(str(dt_in2), settings.FMT)
                     tdelta = b - a
-                    time_step = (tdelta.seconds / 3600) + (24 * tdelta.days)
+                    time_step = (24 * tdelta.days)+(tdelta.seconds / 3600)
+                    log.info("Time step interval: %s h" % time_step)
                     dt_in_max = num2date(time_in[len(time_in)-1],time_in_units,calendar=in_calendar)
                     log.info("Last time step: %s" % (str(dt_in_max)))
 
-                    dt_in_year = num2date(time_in[0],time_in_units,calendar=in_calendar).year
                     for n in range(len(time_in)):
-                        if num2date(time_in[n],time_in_units,calendar=in_calendar).year == dt_in_year:
+                        if num2date(time_in[n],time_in_units,calendar=in_calendar).year == dt_in1_year:
                             data_max_len = n
                     # add one count
                     data_max_len = data_max_len + 1
-                    date_start = num2date(time_in[0],time_in_units,in_calendar)
 
                     # move the reference date to 1949-12-01T00:00:00Z
                     # by setting time:units to: "days since 1949-12-01T00:00:00Z"
                     # now get the difference in time.units for refdate: start point for all settings in time and time_bnds
-                    num_refdate_diff = date2num(date_start,units=config.get_config_value('settings','units'),calendar=in_calendar)
-                    print(type(num_refdate_diff))
+                    num_refdate_diff = date2num(dt_in1,units=config.get_config_value('settings','units'),calendar=in_calendar)
                     num_refdate_diff = float(int(num_refdate_diff))
                     # show some numbers
                     log.info("num_refdate_diff: %s" % str(num_refdate_diff))
-
-                    # show some numbers
                     log.info("Startdate for time settings: %s, %s" % (str(num_refdate_diff),str(num2date(num_refdate_diff,units=config.get_config_value('settings','units'),calendar=in_calendar))))
 
                     f_in.close()
@@ -1481,7 +1484,7 @@ def process_file(params,in_file,var,reslist):
 
     call with:
         var: variable name (cf notification)
-        res: resolution: 3hr,6h3,day,mon,cm_sem
+        res: resolution: 3hr,6hr,day,mon,cm_sem
         cm_type: cell method: sum,mean,max,min,...
         in_file: path to in file
         outdir: output directory (where the complete data goes
@@ -1541,9 +1544,6 @@ def process_file(params,in_file,var,reslist):
             elif name not in config.get_config_value('settings','global_attr_list'):
                 settings.Global_attributes[name] = str(f_in.getncattr(name))
 
-    # get year of data without any modifications
-    dt_in_year_chk = num2date(time_in[0],time_in.units,calendar=in_calendar).year
-
     # mark for use another time unit
     if settings.use_alt_units: ## and dt_in_year_chk < settings.alt_start_year: # or possible use of: config.use_alt_units:
         time_in_units = config.ALT_UNITS
@@ -1563,10 +1563,6 @@ def process_file(params,in_file,var,reslist):
     # add one count
     data_max_len = data_max_len + 1
 
-    #if settings.alt_start_year <= num2date(time_in[0],time_in.units,calendar=in_calendar).year:
-        #time_in_units = time_in.units
-    #else:
-        #time_in_units = config.ALT_UNITS
 
     if switch_infile == True: ## and dt_in_year_chk < settings.alt_start_year:
         in_file_new = "%s/%s-%s" % (config.DirWork,str(uuid.uuid1()),os.path.basename(in_file))
@@ -1602,8 +1598,6 @@ def process_file(params,in_file,var,reslist):
         data_max_len = data_max_len + 1
 
     ## get start and stop date from in_file
-    #print dt_in[0],dt_in[1],dt_in[2],dt_in[3]
-    #print dt_bnds_in[0],dt_bnds_in[1],dt_bnds_in[2],dt_bnds_in[3]
 
     # get first value of array time
     dt_start_in = str(dt_in[0])
@@ -1614,21 +1608,16 @@ def process_file(params,in_file,var,reslist):
     dt_stop_in = dt_stop_in[:dt_stop_in.index(' ')].replace('-','')
     log.info("Start: %s, stop: %s" % (dt_start_in,dt_stop_in))
 
-#    sys.exit()
     # now create the corretc filenale in temp directory
-    # calculate time difference between first two time steos (in hours)
+    # calculate time difference between first two time steps (in hours)
     # in hours: should be 1 or 3 or 6
-    #print dt[1], dt[0]
-    #FMT = '%Y-%m-%d %H:%M:%S'
     a = datetime.strptime(str(dt_in[0]), settings.FMT)
     b = datetime.strptime(str(dt_in[1]), settings.FMT)
     log.info("First time step in input file: %s" % (str(a)))
 
     tdelta = b - a
     tdelta_seconds = tdelta.seconds
-    input_time_step = tdelta_seconds / 3600
-    # if difference is 24 hours or more use tdelta.days
-    input_time_step = input_time_step + (tdelta.days * 24)
+    input_time_step = tdelta_seconds / 3600 + (tdelta.days * 24)
     log.info("Input data time interval: %shourly" % (str(input_time_step)))
 
     # difference one day: seconds of time delta are '0'!
@@ -1640,31 +1629,27 @@ def process_file(params,in_file,var,reslist):
     in_file_help = ""
     in_file_org = ""
 
+    new_reslist=list(reslist) #remove resolutions from this list that are higher than the input data resolution
     # process all requested resolutions
     for res in reslist:
-        if res == '1hr' and str(params[config.get_config_value('index','INDEX_FRE_SUB')]) != '' and int(params[config.get_config_value('index','INDEX_FRE_SUB')]) >= 24:
+
+        if res in ["1hr","3hr","6hr","12hr"]:
+            res_hr=(float(res[:-2])) #extract time resolution in hours
             cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SUB')]
-        elif res == '3hr' and str(params[config.get_config_value('index','INDEX_FRE_SUB')]) != '' and int(params[config.get_config_value('index','INDEX_FRE_SUB')]) >= 8:
-            cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SUB')]
-        elif res == '6hr' and str(params[config.get_config_value('index','INDEX_FRE_SUB')]) != '' and int(params[config.get_config_value('index','INDEX_FRE_SUB')]) >= 4:
-            cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SUB')]
-        elif res == '12hr' and str(params[config.get_config_value('index','INDEX_FRE_SUB')]) != '' and int(params[config.get_config_value('index','INDEX_FRE_SUB')]) >= 2:
-            cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SUB')]
-        elif res == 'day' and (str(params[config.get_config_value('index','INDEX_FRE_DAY')]) != ''    and int(params[config.get_config_value('index','INDEX_FRE_DAY')]) >= 1):
+        elif res=="day":
+            res_hr=24.
             cm_type = params[config.get_config_value('index','INDEX_VAR_CM_DAY')]
-        elif res == 'mon' and str(params[config.get_config_value('index','INDEX_FRE_MON')]) != '' and int(params[config.get_config_value('index','INDEX_FRE_MON')]) >= 1:
+        elif res=="mon":
+            res_hr= 28*24.  #minimum number of hours per month
             cm_type = params[config.get_config_value('index','INDEX_VAR_CM_MON')]
-        else:
-            cmd = "Time resolution (%s) is not supported, skipping(1)..." % res
-            log.warning(cmd)
-            # next in list
+
+        #check if requested time resolution is possible given the input time resolution
+        if res_hr < input_time_step:
+            log.warning("Requested time resolution (%s) is higher than time resolution of input data (%s hr). Skip this resolution for all following files.." % (res,input_time_step))
+            new_reslist.remove(res)
             continue
 
-        log.info("Input2: %s" % (in_file))
-        # set to default
-        #correct_fillvalue = False
-
-        # process only it cell method is definded in input matrix
+        # process only if cell method is definded in input matrix
         if cm_type != '':
             log.info("#########################")
             log.info("resolution: '%s'\ncell method: '%s'\ncalendar: '%s'" % (res,cm_type,in_calendar))
@@ -2274,8 +2259,7 @@ def process_file(params,in_file,var,reslist):
 
     # close input file
     f_in.close()
-    log.info("Input4: %s" % (in_file))
     # ready message
     log.info("Variable '%s' finished!" % (var))
-    return
+    return new_reslist
 

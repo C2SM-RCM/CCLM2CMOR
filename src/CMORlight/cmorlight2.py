@@ -81,11 +81,13 @@ def process_resolution(params,reslist):
                     if os.access(in_file, os.R_OK) == False:
                         log.error("Could not read file '%s', no permission!" % in_file)
                     else:
+
                         log.info("############################### %s" % (str(var in config.get_model_value('settings_CCLM','var_list_fixed'))))
                         if var in config.get_model_value('settings_CCLM','var_list_fixed'):
                             tools.process_file_fix(params,in_file)
                         else:
-                            tools.process_file(params,in_file,var,reslist)
+                            reslist=tools.process_file(params,in_file,var,reslist)
+
                 else:
                     log.error("File '%s' not found!" % in_file)
 #            else:
@@ -164,6 +166,10 @@ def main():
     parser.add_option("-O", "--overwrite",
                             action="store_true", dest="overwrite", default = False,
                             help="Overwrite existent output files")
+    parser.add_option("-T", "--table_only",
+                            action="store_true", dest="process_table_only", default = False,
+                            help="Process variable at specific resolution only if this resolution is declared in the parameter table")
+
 
     (options, args) = parser.parse_args()
     options_dict=vars(options)
@@ -280,10 +286,12 @@ def main():
             # process all vars from varlist with all output resolutions from reslist
             else:
                 for res in reslist:
-                    if tools.check_resolution(params,res) == False:
-                        reslist.remove(res) #remove unsupported resolution from list
-
-                process_resolution(params,reslist)
+                    if tools.check_resolution(params,res,options.process_table_only) == False:
+                        reslist.remove(res) #remove resolution from list if it is not in table or if it is not supported
+                if reslist!=[]:
+                    process_resolution(params,reslist)
+                else:
+                    log.error("None of the given resolutions appears in the table! Skipping variable...")
 
 
 #########################################################
