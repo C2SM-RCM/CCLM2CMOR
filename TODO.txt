@@ -12,7 +12,6 @@ TO DO:
         - change optparse to argparse
         - only ',' as delimiter for reslist, varlist allowed
 
-
     control_cmor2.ini:
         - CLEAN and DOCUMENT
 
