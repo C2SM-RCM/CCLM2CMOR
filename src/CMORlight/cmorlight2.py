@@ -82,8 +82,8 @@ def process_resolution(params,reslist):
                         log.error("Could not read file '%s', no permission!" % in_file)
                     else:
 
-                        log.info("############################### %s" % (str(var in config.get_model_value('settings_CCLM','var_list_fixed'))))
-                        if var in config.get_model_value('settings_CCLM','var_list_fixed'):
+                        log.info("############################### %s" % (str(var in config.get_model_value('var_list_fixed'))))
+                        if var in config.get_model_value('var_list_fixed'):
                             tools.process_file_fix(params,in_file)
                         else:
                             reslist=tools.process_file(params,in_file,var,reslist)
@@ -94,7 +94,7 @@ def process_resolution(params,reslist):
 #                if f.find("%s" % var) == 0 or f.find("%s" % varRCM) == 0 or f.find("%s" % varRCM[:varRCM.find('p')]) == 0:
 #                    in_file = "%s/%s" % (dirpath,f)
 #                    if os.path.isfile(in_file):
-#                        if var in config.get_model_value('settings_CCLM','var_list_fixed'):
+#                        if var in config.get_model_value('var_list_fixed'):
 #                            tools.proc_file_fix(params,in_file)
 
             # stop after one file with all chosen resolutions if set
@@ -185,14 +185,14 @@ def main():
 
     for val in setval:
         if options_dict[val]!="":
-            config.set_config_value('settings_CCLM',val,options_dict[val])
+            config.set_config_value('settings_',val,options_dict[val])
 
-    config.set_config_value('init','model',options.act_model)
+    config.set_config_value('settings','model',options.act_model)
     config.set_config_value('boolean','overwrite',str(options.overwrite))
 
-    process_list=[config.get_config_value('settings_CCLM','driving_model_id'),config.get_config_value('settings_CCLM','driving_experiment_name'),config.get_config_value('settings_CCLM','driving_model_ensemble_member')]
+    process_list=[config.get_model_value('driving_model_id'),config.get_model_value('driving_experiment_name'),config.get_model_value('driving_model_ensemble_member')]
     # now read paramfile for all variables for this RCM
-    varfile = ("%s/%s" % (config.get_config_value('settings','DirConfig'),config.get_config_value('settings_CCLM','paramfile')))
+    varfile = ("%s/%s" % (config.get_config_value('settings','DirConfig'),config.get_model_value('paramfile')))
     settings.init(varfile)
 
     # create logger
@@ -255,7 +255,7 @@ def main():
     log.info("Configuration read from: %s" % os.path.abspath(varfile))
     log.info("Variable(s): %s " % varlist)
     log.info("Requested time output resolution(s): %s " % reslist)
-    log.info("Used RCM: %s" % config.get_config_value('init','model'))
+    log.info("Used RCM: %s" % config.get_config_value('settings','model'))
 
     # process all var in varlist with input model and input experiment for proc_list item
     for var in varlist:
@@ -271,7 +271,7 @@ def main():
             tools.set_attributes(params,process_list)
 
             # skip fixed fields from chunking, makes no sense to chunk
-            if options.chunk_var == True and not var in config.get_model_value('settings_CCLM','var_list_fixed'):
+            if options.chunk_var == True and not var in config.get_model_value('var_list_fixed'):
                 tools.proc_chunking(params,reslist)
 
             # seasonal mean

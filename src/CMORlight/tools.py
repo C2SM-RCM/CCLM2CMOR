@@ -85,16 +85,10 @@ def set_attributes(params,proc_list=None):
     fill dictionary with additional netcdf attributes
 
     '''
-    # global Global_attributes
-    #global_attributes_list = config.get_config_value('settings','global_attributes_list').split(',')
     # get attributes for actual model: CCLM or WRF
-    for name in settings.global_attr_list:
-        #print name.strip()
-        if config.get_model_value('settings',name.strip()) != '':
-            settings.Global_attributes[name.strip()] = config.get_model_value('settings',name.strip())
-            #print name.strip(),Global_attributes[name.strip()]
-    #print Global_attributes['model_id']
-    #print "proc_list (set_attributes): ",proc_list
+    for name in settings.global_attr_list :
+        if config.get_model_value(name.strip()) != '':
+            settings.Global_attributes[name.strip()] = config.get_model_value(name.strip())
     if proc_list:
         settings.Global_attributes['driving_model_id'] = proc_list[0]
         settings.Global_attributes['driving_experiment_name'] = proc_list[1]
@@ -105,13 +99,13 @@ def set_attributes(params,proc_list=None):
 
     settings.Global_attributes['title'] = "%s %s" % (settings.Global_attributes['title'],proc_list[1])
 
+    #Invariant attributes
+    settings.Global_attributes['project_id']="CORDEX"
+    settings.Global_attributes['product']="output"
+
     # set policy for DWD, to add set add_policy to 'True' in control_cmor.ini
     if config.get_config_value('settings', 'add_policy'):
-        settings.Global_attributes['data_policy'] = config.get_model_value('settings','policy')
-
-    #Global_attributes['contact'] = config.CONTACT
-    #Global_attributes['modeling_realm'] =  params[config.INDEX_REALM]
-    #print settings.Global_attributes
+        settings.Global_attributes['data_policy'] = config.get_model_value('policy')
 
     # set addtitional netcdf attributes
     settings.netCDF_attributes['RCM_NAME'] = params[0]
@@ -123,8 +117,6 @@ def set_attributes(params,proc_list=None):
     settings.netCDF_attributes['missing_value'] = config.get_config_value('settings','missing_value')
     settings.netCDF_attributes['_FillValue'] = config.get_config_value('settings','missing_value')
 
-    #print settings.netCDF_attributes
-    #sys.exit()
 
 
 # -----------------------------------------------------------------------------
@@ -154,7 +146,7 @@ def create_outpath(res,var):
     if res == 'fx':
         # cordex/output/EUR-11/CLMcom/MIROC-MIROC5/historical/r1i1p1/r0i0p0/v1/fx/orog/v20170227
         result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
-                    (settings.Global_attributes["project_id"].lower(),
+                    (settings.Global_attributes["project_id"],
                      settings.Global_attributes["product"],
                      settings.Global_attributes["CORDEX_domain"],
                      settings.Global_attributes["institute_id"],
@@ -169,7 +161,7 @@ def create_outpath(res,var):
                     )
     else:
         result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
-                    (settings.Global_attributes["project_id"].lower(),
+                    (settings.Global_attributes["project_id"],
                      settings.Global_attributes["product"],
                      settings.Global_attributes["CORDEX_domain"],
                      settings.Global_attributes["institute_id"],
@@ -703,34 +695,13 @@ def process_file_fix(params,in_file):
     f_in = Dataset(in_file,"r")
     log.info("Input1: %s" % in_file)
 
-    # first get model_id from each file
-    name = "model_id"
-    if name in f_in.ncattrs():
-        log.debug("NAME: %s" % (name))
-        settings.Global_attributes[name] = str(f_in.getncattr(name))
+    for name in f_in.ncattrs():
+        if name in settings.global_attr_file: #only take attribute from file if in this list
+            settings.Global_attributes[name] = str(f_in.getncattr(name))
 
     #TODO: ist this fix?
     name = "driving_model_ensemble_member"
     settings.Global_attributes[name] = 'r0i0p0'
-
-    # copy or set all global attributes of source
-    for name in f_in.ncattrs():
-        if name == "institute_id":
-            settings.Global_attributes[name] = config.get_model_value('settings_CCLM','institute_id')
-        elif name == "title":
-            settings.Global_attributes[name] = "%s %s" % (settings.Global_attributes['model_id'],config.get_model_value('settings_CCLM','title'))
-        elif name == "Conventions":
-            settings.Global_attributes[name] = config.get_model_value('settings_CCLM','Conventions')
-        #elif name == "driving_model_ensemble_member":
-            #settings.Global_attributes[name] = 'r0i0p0'
-        # skip settings in netcdf file for those two attributes
-        elif name in config.attr_skip_list: #['btu_run_id','conventionsURL']:
-            continue
-        else:
-            ## keep 'driving_model_id' from ini file settings
-            if name not in config.get_config_value('settings','global_attr_list'):
-                settings.Global_attributes[name] = str(f_in.getncattr(name))
-                log.debug("%s, %s" % (name,settings.Global_attributes[name]))
 
     # out directory
     outdir = get_temp_dir(var,'fx','fx')
@@ -1106,7 +1077,7 @@ def proc_test_var(process_list,varlist,reslist):
     log.info("Start Test")
     for var in varlist:
 
-        if var in config.get_model_value('settings_CCLM','var_list_fixed'):
+        if var in config.get_model_value('var_list_fixed'):
             continue
         params = settings.param[var]
         set_attributes(params,process_list)
@@ -1496,10 +1467,8 @@ def process_file(params,in_file,var,reslist):
     f_in = Dataset(in_file,"r")
     log.info("Input1: %s" % in_file)
 
-    # first get model_id from each file, actual not for WRF (different model_id in files!)
-    if config.get_config_value('settings','use_model_id_file') == True:
-        name = "model_id"
-        if name in f_in.ncattrs():
+    for name in f_in.ncattrs():
+        if name in settings.global_attr_file: #only take attribute from file if in this list
             settings.Global_attributes[name] = str(f_in.getncattr(name))
 
     # get time variable from input
@@ -1524,25 +1493,6 @@ def process_file(params,in_file,var,reslist):
                 in_calendar = 'standard'
         else:
             in_calendar = 'standard'
-
-    # copy or set all global attributes of source
-    for name in f_in.ncattrs():
-#        if name in config.global_attributes_list:
-        if name == "institute_id":
-            settings.Global_attributes[name] = config.get_model_value('settings','institute_id')
-        elif name == "title":
-            settings.Global_attributes[name] = "%s %s" % (settings.Global_attributes['model_id'],config.get_model_value('settings','title'))
-        elif name == "Conventions":
-            settings.Global_attributes[name] = config.get_model_value('settings','Conventions')
-        # attributes to skip
-        elif name in config.get_model_value('settings','attr_skip_list'): #['btu_run_id','conventionsURL']:
-            continue
-        else:
-            ## keep 'driving_model_id' from ini file settings
-            if name == "model_id" and config.get_config_value('init','model') == "WRF":
-                continue
-            elif name not in config.get_config_value('settings','global_attr_list'):
-                settings.Global_attributes[name] = str(f_in.getncattr(name))
 
     # mark for use another time unit
     if settings.use_alt_units: ## and dt_in_year_chk < settings.alt_start_year: # or possible use of: config.use_alt_units:
@@ -1654,9 +1604,9 @@ def process_file(params,in_file,var,reslist):
             log.info("#########################")
             log.info("resolution: '%s'\ncell method: '%s'\ncalendar: '%s'" % (res,cm_type,in_calendar))
             log.info("#########################")
-
             # out directory
             outdir = get_temp_dir(var,res,cm_type)
+
             # get file name
             outfile = create_filename(var,res,dt_start_in,dt_stop_in)
             # create complete outpath: outdir + outfile

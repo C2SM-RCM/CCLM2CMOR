@@ -64,9 +64,9 @@ def get_config_value(section, option, inifile=None):
 
 
 # -----------------------------------------------------------------------------
-def get_model_value(section,option):
+def get_model_value(option):
     ''' Get value from model section '''
-    model = get_config_value('init','model')
+    model = get_config_value('settings','model')
     return get_config_value("settings_%s" % (model), option)
 
 
@@ -77,8 +77,11 @@ def set_config_value(section, option, value,inifile=None):
         print("Load configuration file first! Exiting...")
         exit
 
+    if section=="settings_":  #add model value to section
+        section=section+get_config_value('init','model')
     if not CONFIG.has_section(section):
         CONFIG.add_section(section)
+
     CONFIG.set(section, option, value)
 
 
@@ -102,6 +105,6 @@ def load_configuration(inifile):
     CONFIG.readfp(open(pkg_resources.resource_filename(__name__,inifile)))
     #Extend input path if respective option is set:
     if CONFIG.get('boolean','extend_DirIn')=='True':
-      DirIn=CONFIG.get('settings','DirIn')+'/'+CONFIG.get('settings_CCLM','driving_model_id')+'/'+CONFIG.get('settings_CCLM','driving_experiment_name')
+      DirIn=CONFIG.get('settings','DirIn')+'/'+ get_model_value('driving_model_id')+'/'+ get_model_value('driving_experiment_name')
       CONFIG.set('settings','DirIn',DirIn)
 
