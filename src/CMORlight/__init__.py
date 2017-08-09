@@ -1,4 +1,4 @@
-#import logging
+import logging
 #import logging.handlers
 #import settings
 
@@ -29,18 +29,26 @@ logfile = 'CMORlight.'+datetime.datetime.now().strftime("%d-%m-%Y")+'.log'
 
 #log.addHandler(handler)
 
-import logging
-def setup_custom_logger(name,filename='/dev/null'):
+def setup_custom_logger(name,filename='/dev/null',propagate=False,normal_log=True,verbose_log=False):
     #formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
-    formatter = logging.Formatter(fmt='%(asctime)s %(process)s %(levelname)s:%(message)s')
+    if verbose_log:
+        level=logging.DEBUG
+    elif normal_log:
+        level=logging.INFO
+    else:
+        level=logging.WARNING
+
+    formatter = logging.Formatter(fmt='%(levelname)s:  %(message)s')
+   # formatter = logging.Formatter(fmt='%(asctime)s %(module)s %(levelname)s:  %(message)s',datefmt='%H:%M:%S')
+    #formatter = logging.Formatter(fmt='%(asctime)s %(process)s %(levelname)s:%(message)s')
     log = logging.getLogger(name)
-    log.setLevel(logging.DEBUG)
+    log.setLevel(level)
+    logging.addLevelName(35,"")
     #if filename:
         #logging.basicConfig(filename=filename, level=logging.DEBUG, format='%(asctime)s %(process)s %(levelname)s:%(message)s')
     handler = logging.FileHandler(filename)
-    handler.setFormatter(formatter)      
+    handler.setFormatter(formatter)
     log.addHandler(handler)
-    #print log
-    log.propagate = False
+    log.propagate = propagate
     return log
 

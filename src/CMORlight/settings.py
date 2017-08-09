@@ -9,7 +9,7 @@ def init(varfile):
         set global variables
     '''
     global logger_name
-    logger_name = 'cmorlight'
+    logger_name = config.get_config_value('settings', 'logger_name')
 
     # base path for all other path
     global BasePath
@@ -48,6 +48,9 @@ def init(varfile):
     global varlist_reject
     varlist_reject =  config.get_config_value('settings', 'varlist_reject').split(',')
 
+    global var_skip_list
+    var_skip_list =  config.get_config_value('settings', 'var_skip_list').split(',')
+
     global search_input_string
     search_input_string = config.get_config_value('settings','search_input_string')
 
@@ -59,19 +62,6 @@ def init(varfile):
 
     global coordinates_file
     coordinates_file = ("%s/%s" % (DirProg,config.get_model_value('coordinates_file')))
-
-## get list of variables to rotate
-#def get_input_path(var):
-    #''' '''
-    #if var in var_list_rotated:
-        #DirBase_In = ("%s/%s/%s" % (BasePath,_parser.get('settings','var_dir_rotated'),_get_model()))
-    #else:
-        #DirBase_In = ("%s/%s/%s" % (BasePath,_parser.get('settings','var_dir'),_get_model()))
-    ##else:
-        ##DirBase_In = ("%s/%s" % (BasePath,_parser.get(('settings_%s' % (_get_model())), 'var_dir')))
-##        DirBase_In = ("/mnt/lustre01/work/bb0931/%s/" % (_parser.get(('settings_%s' % (_get_model())), 'var_dir')))
-
-    #return DirBase_In
 
     # dictionary for global attributes
     global Global_attributes

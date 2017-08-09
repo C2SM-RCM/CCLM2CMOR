@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-what's to do
-
-@author: mgoebel
-"""
-
 
 bash scripts:
 
@@ -31,10 +24,6 @@ CMORLIGHT:
         - CLEAN and DOCUMENT
         - update model_id and rcm_version_id
 
-    settings.py:
-        - some parameters set here?: Format, version, use_alt_units (changed)
-
-
     variables_table:
         - label columns?
 
@@ -49,11 +38,16 @@ CMORLIGHT:
 
 
     GENERAL
-    - Reduce logger output, maybe verbose/silent option
-    - bei QV850p Fehler: wenn nicht vorhanden bricht er ab?
-    - Hans_jürgens Kommentare ausprobieren,  beheben
     - benennung von subdaily falsch: zwei varianten time bounds anfang ende, oder intervall mitten anfang ende -> Hans macht gemischt -> ändern
+
+    - Fehler bei mrso,mrfso: speziell da schichten im boden anzugeben
+    - fehler bei derotierten var
+    - constant variables FR_LAND and HSURF don't exist -> are in c.nc file -> load from there
+
+    - Hans_jürgens Kommentare ausprobieren,  beheben
+
     - last folder (in variable folder): day of post-processing -> needed?
+
     - W_SNOW und TOT_PREC kommen doppelt in Tabelle vor! -> aus gleicher variable berechnet? -> sollte in vorherigem script passieren;
     -> in settingsy.py wird params dict dann überschrieben -> parsing von TOT_PREC nimmt immer prhmax!
 
@@ -62,11 +56,13 @@ CMORLIGHT:
       1. schau in tabelle und mach alle die tatsächlich vorhanden sind, warning für fehlende
       2. schau in order und prozessiere alle die in tabelle sind, warning für fehlende in tabelle bzw fehlende in ordner
 
+    - error bei compressing output?s
+    - Reduce logger output
+    - bei QV850p Fehler: wenn nicht vorhanden bricht er ab?
 
-    - error bei compressing output
     - which attributes does cordex allow? How should they look like
     - In tabelle: levelvalue: es muss height bzw plev als attribut für jede variable gesetzt werden außer bei zweien und bei 0 (auch leer)
-      W_SO:  statt levelvalue muss anzahl der schichten zur integration angegeben werden -> setzt negativ zur unterscheidung von obigem
+      W_SO:  statt levelvalue muss anzahl der schichten zur integration angegeben werden -> setzt negativ zur unterscheidung von obigem?
     - rlon rlat in coordinates_cordex_eur11.nc nachschauen wenn nicht vorhanden
     - wo kommt land-sea mask info her, nicht in coordinates_cordex_eur11.nc mit drin im Gegensatz zu orog
     - 4.spalte in tabelle als comment hinzufügen
@@ -78,7 +74,7 @@ CMORLIGHT:
     - deutlicher dass es sich um programmabbruch handelt
     - CCLM subversion in attributen angeben
 
-
+    - was ist INDEX_RCM_NAME_ORG -> wir in settings.param verlangt
 
 
     TESTS:
