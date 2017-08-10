@@ -82,7 +82,7 @@ def init(varfile):
 
     global param
     param = {}
-    with open(varfile,'rb') as csvfile:
+    with open(varfile,'rt') as csvfile:
         reader = csv.reader(csvfile,delimiter=';')
         for row in reader:
             if row[config.get_config_value('index','INDEX_RCM_NAME_ORG')] != '' and row[config.get_config_value('index','INDEX_VAR')] != '':

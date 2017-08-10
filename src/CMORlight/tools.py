@@ -164,12 +164,29 @@ def create_filename(var,res,dt_start,dt_stop):
 
     # cut off the day in time range
     # TODO workaround: add times in case of 3hr and 6hr (better_ get from real time value)
+
+    #File naming different for instantaneous and interval representing (average,min,max) variables
+    agg=settings.param[var][config.get_config_value('index','INDEX_FRE_AGG')] #subdaily aggregation method: average or instantaneous
+
+    if res in ["1hr","3hr","6hr"]:
+        if agg=="i":
+            bounds=[["0000","2300"],["0000","2100"],["0000","1800"]]
+        elif agg=="a":
+            bounds=[["0030","2330"],["0130","2230"],["0300","2100"]]
+        else:
+            #TODO: do check of parameter table before to rule out this case
+            bounds=[["0000","2100"],["0000","1800"]]
+            log.error("Subdaily aggregation method in column %s of parameter table must be 'i' or 'a'! Assumed instantaneous..." % config.get_config_value('index','INDEX_FRE_AGG'))
+
+    if res == "1hr":
+        dt_start = "%s%s" % (dt_start,bounds[0][0])
+        dt_stop = "%s%s" % (dt_stop,bounds[0][1])
     if res == "3hr":
-        dt_start = "%s%s" % (dt_start,'0000')
-        dt_stop = "%s%s" % (dt_stop,'2100')
+        dt_start = "%s%s" % (dt_start,bounds[1][0])
+        dt_stop = "%s%s" % (dt_stop,bounds[1][1])
     elif res == "6hr":
-        dt_start = "%s%s" % (dt_start,'00')
-        dt_stop = "%s%s" % (dt_stop,'18')
+        dt_start = "%s%s" % (dt_start,bounds[2][0])
+        dt_stop = "%s%s" % (dt_stop,bounds[2][1])
     elif res == "day":
         dt_start = dt_start[:8]
         dt_stop = dt_stop[:8]
@@ -393,7 +410,6 @@ def proc_chunking(params,reslist):
                     f_list.append("%s/%s" % (outdir,f))
                     # use year of stop date for chunk border
                     act_yr = int(f[idx+1:f.index(".nc")][:4])
-                    # outfile = create_filename(var,res,str(start_yr),str(stop_yr))
                     if act_yr % max_agg == 0:
                         # TODO: correct this to first step and last step
                         # generate input filelist
@@ -542,7 +558,8 @@ def check_resolution(params,res,process_table_only):
         freq_table=params[config.get_config_value('index','INDEX_FRE_MON')]
         freq=1. #requested samples per month
     elif res == 'fx':
-        return True
+        freq_table=params[config.get_config_value('index','INDEX_FX')]
+        freq=0.
     else:
         log.warning("Time resolution (%s) is not supported, skipping..." % res)
         return False
@@ -605,12 +622,7 @@ def copy_var(f_in,f_out,var_name):
             for k in var_in.ncattrs():
                 if config.get_config_value('boolean','add_vertices') == False and k == 'bounds':
                     continue
-                #TODO: unicode is not a variable. Does it work as a string?
-                print(type(var_in.getncattr(k)))
-                if isinstance(var_in.getncattr(k),"unicode"):
-                    att_lst[k] = str(var_in.getncattr(k))
-                else:
-                    att_lst[k] = var_in.getncattr(k)
+                att_lst[k] = str(var_in.getncattr(k))
         var_out.setncatts(att_lst)
         # copy content to new datatype
         var_out[:] = var_in[:]
@@ -664,6 +676,7 @@ def process_file_fix(params,in_file):
         outdir: output directory (where the complete data goes
     '''
     # get cdf variable name
+
     var = params[config.get_config_value('index','INDEX_VAR')]
     # fixed
     res = 'fx'
@@ -699,7 +712,7 @@ def process_file_fix(params,in_file):
     f_out = Dataset(outpath,'w')
 
     # create dimensions in target file
-    for name, dimension in f_in.dimensions.iteritems():
+    for name, dimension in f_in.dimensions.items():
         # skip dimension
         if name in settings.varlist_reject or name in ['bnds','time']:
             continue
@@ -720,9 +733,10 @@ def process_file_fix(params,in_file):
     if mulc_factor == 0:
         log.warning("Conversion factor for %s is set to 0 in parameter table. Setting it to 1..." % params[config.get_config_value('index','INDEX_RCM_NAME')])
         mulc_factor = 1.0
-    log.debug(f_in.variables.iteritems())
+    log.debug(f_in.variables.items())
 #    sys.exit()
-    for var_name, variable in f_in.variables.iteritems():
+    for var_name, variable in f_in.variables.items():
+        print(var_name,"line 743")
         # don't copy time_bnds if cm == point or variable time_bnds
         log.debug("VAR: %s" % (var_name))
         if var_name in ['time','time_bnds','bnds']:
@@ -735,7 +749,6 @@ def process_file_fix(params,in_file):
             data_type = 'd'
         elif var_name in settings.varlist_reject:
             continue
-            #data_type = 'i8'
         else:
             data_type = var_in.datatype
         # at variable creation set fill_vlue, later is impossible
@@ -770,6 +783,8 @@ def process_file_fix(params,in_file):
             else:
                 var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims)
         # set all as character converted with str() function
+
+        print(f_out.variables)
         if var_name in ['lat','lon']:
             att_lst = get_attr_list(var_name)
         else:
@@ -780,10 +795,7 @@ def process_file_fix(params,in_file):
                 if k in ['coordinates']:
                     continue
                 if k != '_FillValue':
-                    if isinstance(var_in.getncattr(k),"unicode"):
-                        att_lst[k] = str(var_in.getncattr(k))
-                    else:
-                        att_lst[k] = var_in.getncattr(k)
+                    att_lst[k] = str(var_in.getncattr(k))
             if var_name == 'rlon':
                 att_lst['axis'] = 'X'
                 att_lst['long_name'] = 'longitude in rotated pole grid'
@@ -1530,7 +1542,7 @@ def process_file(params,in_file,var,reslist):
     dt_stop_in = dt_stop_in[:dt_stop_in.index(' ')].replace('-','')
     log.info("Start: %s, stop: %s" % (dt_start_in,dt_stop_in))
 
-    # now create the corretc filenale in temp directory
+    # now create the correct filename in temp directory
     # calculate time difference between first two time steps (in hours)
     # in hours: should be 1 or 3 or 6
     a = datetime.strptime(str(dt_in[0]), settings.FMT)
@@ -1760,7 +1772,7 @@ def process_file(params,in_file,var,reslist):
             f_out = Dataset(outpath,'w')
 
             # create dimensions in target file
-            for name, dimension in f_tmp.dimensions.iteritems():
+            for name, dimension in f_tmp.dimensions.items():
                 # skip list items
                 if name in settings.varlist_reject:
                     continue
@@ -1827,10 +1839,7 @@ def process_file(params,in_file,var,reslist):
                     att_lst = {}
                     for k in var_in.ncattrs():
                         if k != '_FillValue':
-                            if isinstance(var_in.getncattr(k),'unicode'):
-                                att_lst[k] = str(var_in.getncattr(k))
-                            else:
-                                att_lst[k] = var_in.getncattr(k)
+                            att_lst[k] = str(var_in.getncattr(k))
                 var_out.setncatts(att_lst)
 
                 # copy content to new datatype
@@ -1878,10 +1887,7 @@ def process_file(params,in_file,var,reslist):
                     else:
                         att_lst = {}
                         for k in var_in.ncattrs():
-                            if isinstance(var_in.getncattr(k),'unicode'):
-                                att_lst[k] = str(var_in.getncattr(k))
-                            else:
-                                att_lst[k] = var_in.getncattr(k)
+                            att_lst[k] = str(var_in.getncattr(k))
                     var_out.setncatts(att_lst)
                     # copy content to new datatype
                     var_out[:] = var_in[:]

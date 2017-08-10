@@ -45,8 +45,6 @@ def process_resolution(params,reslist):
     # get cdf variable name
     var = params[config.get_config_value('index','INDEX_VAR')]
     varRCM=params[config.get_config_value('index','INDEX_RCM_NAME')]
-    # get cell method for the resolution
-    # process resolution with the cell method: cm_...
 
     # create path to input files from basedir,model,driving_model
     in_dir = "%s/%s" % (tools.get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
@@ -69,33 +67,24 @@ def process_resolution(params,reslist):
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
         for f in sorted(filenames):
-            if f.find("%s_" % var) == 0 or f.find("%s_" % varRCM) == 0 or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
+            if f.find("%s_" % var) == 0 or f.find("%s.nc" % var) == 0 or f.find("%s_" % varRCM) == 0 or f.find("%s.nc" % varRCM) == 0 or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
                 in_file = "%s/%s" % (dirpath,f)
-                if os.path.isfile(in_file):
-                    # workaround for error in last input files of CCLM data from DWD
-                    # use only file with e.g. _2100 in filename (only if USE_SEARCH==True)
-                    if config.get_config_value('boolean', 'use_search_string') and in_file.find(settings.search_input_string) < 0:
-                        continue
-                    log.info("Input from: %s" % (in_file))
-                    #try:
-                    if os.access(in_file, os.R_OK) == False:
-                        log.error("Could not read file '%s', no permission!" % in_file)
-                    else:
-
-                        log.info("\n###########################################################") #%s" % (str(var in config.get_model_value('var_list_fixed'))))
-                        if var in config.get_model_value('var_list_fixed'):
-                            tools.process_file_fix(params,in_file)
-                        else:
-                            reslist=tools.process_file(params,in_file,var,reslist)
-
+                # workaround for error in last input files of CCLM data from DWD
+                # use only file with e.g. _2100 in filename (only if USE_SEARCH==True)
+                if config.get_config_value('boolean', 'use_search_string') and in_file.find(settings.search_input_string) < 0:
+                    continue
+                log.info("Input from: %s" % (in_file))
+                if os.access(in_file, os.R_OK) == False:
+                    log.error("Could not read file '%s', no permission!" % in_file)
                 else:
-                    log.error("File '%s' not found!" % in_file)
-#            else:
-#                if f.find("%s" % var) == 0 or f.find("%s" % varRCM) == 0 or f.find("%s" % varRCM[:varRCM.find('p')]) == 0:
-#                    in_file = "%s/%s" % (dirpath,f)
-#                    if os.path.isfile(in_file):
-#                        if var in config.get_model_value('var_list_fixed'):
-#                            tools.proc_file_fix(params,in_file)
+
+                    log.info("\n###########################################################") #%s" % (str(var in config.get_model_value('var_list_fixed'))))
+                    if var in config.get_model_value('var_list_fixed'):
+                        tools.process_file_fix(params,in_file)
+                    else:
+                        reslist=tools.process_file(params,in_file,var,reslist)
+            else:
+                log.info("File %s does match the file name conventions for this variable. File not processed...")
 
             # stop after one file with all chosen resolutions if set
             if config.get_config_value('boolean','test_only_one_file') == True:
@@ -282,7 +271,7 @@ def main():
     for var in varlist:
         reslist_act=list(reslist) #new copy of reslist
 
-        if settings.param.has_key(var) == False:
+        if var not in settings.param:
             log.warning("Variable '%s' not supported!" % (var))
             continue
         else:
@@ -290,7 +279,7 @@ def main():
             params = settings.param[var]
             varCCLM = params[config.get_config_value('index','INDEX_VAR')]
             varRCM= params[config.get_config_value('index','INDEX_RCM_NAME')]
-            log.log(35,"\n\n\n##################################\n# Var in work: %s / %s\n##################################" % (varCCLM, varRCM))
+            log.log(35,"\n\n\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (varCCLM, varRCM))
 
             log.debug("Used parameter for variable '%s': %s" % (var,params))
         if params:
