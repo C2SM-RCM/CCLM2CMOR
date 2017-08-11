@@ -709,7 +709,9 @@ def process_file_fix(params,in_file):
     log.info("Output to: %s" % (outpath))
 
     # create object for output file
-    f_out = Dataset(outpath,'w')
+    global f_out
+
+    f_out = Dataset(outpath,'w') #to make sure file is closed if error occurs
 
     # create dimensions in target file
     for name, dimension in f_in.dimensions.items():
@@ -733,20 +735,20 @@ def process_file_fix(params,in_file):
     if mulc_factor == 0:
         log.warning("Conversion factor for %s is set to 0 in parameter table. Setting it to 1..." % params[config.get_config_value('index','INDEX_RCM_NAME')])
         mulc_factor = 1.0
-    log.debug(f_in.variables.items())
 #    sys.exit()
     for var_name, variable in f_in.variables.items():
-        print(var_name,"line 743")
         # don't copy time_bnds if cm == point or variable time_bnds
         log.debug("VAR: %s" % (var_name))
+
         if var_name in ['time','time_bnds','bnds']:
             continue
         var_in = f_in.variables[var_name]
         # create output variable
         if var_name in ['rlon','rlat']:
             data_type = 'd'
-        elif var_name in ['lon','lat']:
+        elif var_name in ['lon','lat']:#already added as variables further down
             data_type = 'd'
+            continue
         elif var_name in settings.varlist_reject:
             continue
         else:
@@ -767,6 +769,9 @@ def process_file_fix(params,in_file):
                 my_lst.append(dim)
         var_dims = tuple(my_lst)
         log.info("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
+
+
+  #      if var_name not in f_out.variables:
         if var_name in [var,settings.netCDF_attributes['RCM_NAME_ORG']]:
             # TODO:test on FillValue for variables: mrfso,mrso,mrro
             # could be negativ!
@@ -782,9 +787,10 @@ def process_file_fix(params,in_file):
                 var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims,complevel=4)
             else:
                 var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims)
+
+
         # set all as character converted with str() function
 
-        print(f_out.variables)
         if var_name in ['lat','lon']:
             att_lst = get_attr_list(var_name)
         else:
@@ -805,6 +811,7 @@ def process_file_fix(params,in_file):
                 att_lst['long_name'] = 'latitude in rotated pole grid'
 
         var_out.setncatts(att_lst)
+
 
         # copy content to new datatype
         if var_name in ['rlon','rlat','rotated_pole']:
@@ -853,7 +860,8 @@ def process_file_fix(params,in_file):
     f_var.units = settings.netCDF_attributes['units']
 
     #add coordinates attribute to fx-variables
-    f_var.coordinates = settings.netCDF_attributes['coordinates']
+    #TODO coordinates attribute never defined anywhere
+   # f_var.coordinates = settings.netCDF_attributes['coordinates']
     #if params[config.get_config_value('index','INDEX_CM_AREA')]=='':
         #f_var.cell_methods = "time: %s" % (cm_type)
     #else:
@@ -872,8 +880,9 @@ def process_file_fix(params,in_file):
     # commit changes
     f_out.sync()
 
-    # close output file
+    #close output file
     f_out.close()
+
 
     # set attributes: frequency,tracking_id,creation_date
     set_attributes_create(outpath,res)
@@ -1551,12 +1560,12 @@ def process_file(params,in_file,var,reslist):
 
     tdelta = b - a
     tdelta_seconds = tdelta.seconds
-    input_time_step = tdelta_seconds / 3600 + (tdelta.days * 24)
+    input_time_step = tdelta_seconds / 3600. + (tdelta.days * 24.)
     log.info("Input data time interval: %shourly" % (str(input_time_step)))
 
     # difference one day: seconds of time delta are '0'!
     if tdelta_seconds == 0:
-        tdelta_seconds = tdelta.days * 24 * 3600
+        tdelta_seconds = tdelta.days * 24 * 3600.
     log.info("Time starts at: %s, %s, difference (in seconds) is: %s" % (str(a),str(b),str(tdelta.seconds)))
 
     # define variables for storing the pathes for mrfso and mrso
@@ -1609,29 +1618,29 @@ def process_file(params,in_file,var,reslist):
             # set step wide of cdo command
             if res == '1hr':
                 selhour = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23"
-                nstep = 1 / (tdelta_seconds/3600)
+                nstep = 1. / (tdelta_seconds/3600.)
             elif res == '3hr':
                 selhour = "0,3,6,9,12,15,18,21"
-                nstep = 3 / (tdelta_seconds/3600)
+                nstep = 3. / (tdelta_seconds/3600.)
             # 6 hourly data
             elif res == '6hr':
                 selhour = "0,6,12,18"
-                nstep = 6 / (tdelta_seconds/3600)
+                nstep = 6. / (tdelta_seconds/3600.)
             # 12 hourly data
             elif res == '12hr':
                 selhour = "0,12"
-                nstep = 12 / (tdelta_seconds/3600)
+                nstep = 12. / (tdelta_seconds/3600.)
             # daily data
             elif res == 'day':
-                nstep = 24 / (tdelta_seconds/3600)
+                nstep = 24. / (tdelta_seconds/3600.)
             # yearly data, consider calendar!!
             elif res == 'mon':
                 if in_calendar in ('standard','gregorian','proleptic_gregorian','noleap','365_day','julian'):
-                    nstep = 365 * 24 / (tdelta_seconds/3600)
+                    nstep = 365. * 24. / (tdelta_seconds/3600.)
                 elif in_calendar == '360_day':
-                    nstep = 360 * 24 / (tdelta_seconds/3600)
+                    nstep = 360. * 24. / (tdelta_seconds/3600.)
                 elif in_calendar in ('366_day','all_leap'):
-                    nstep = 366 * 24 / (tdelta_seconds/3600)
+                    nstep = 366. * 24. / (tdelta_seconds/3600.)
             # TODO
             # sem is in extra proc: _proc_seasonal_mean
             #elif res == 'sem':
@@ -1723,7 +1732,7 @@ def process_file(params,in_file,var,reslist):
                 if cm == 'point':
                     cmd = "cdo -f %s -s selhour,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),selhour,cmd_mul,in_file,ftmp_name)
                 else:
-                    cmd = "cdo -f %s -s timsel%s,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,nstep,cmd_mul,in_file,ftmp_name)
+                    cmd = "cdo -f %s -s timsel%s,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,int(nstep),cmd_mul,in_file,ftmp_name)
             # daily data
             elif res == 'day':
                 if cm in ['maximum','minimum']:
@@ -1838,12 +1847,15 @@ def process_file(params,in_file,var,reslist):
                 else:
                     att_lst = {}
                     for k in var_in.ncattrs():
-                        if k != '_FillValue':
+                        if k in ['_FillValue','missing_value']:
+                            att_lst[k] = var_in.getncattr(k)
+                        else:
                             att_lst[k] = str(var_in.getncattr(k))
                 var_out.setncatts(att_lst)
 
                 # copy content to new datatype
                 var_out[:] = var_in[:]
+
                 log.info("Copy from tmp: %s" % (var_out.name))
                 if var_out.name == 'time':
                     if 'calendar' in var_out.ncattrs():

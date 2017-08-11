@@ -29,7 +29,7 @@ logfile = 'CMORlight.'+datetime.datetime.now().strftime("%d-%m-%Y")+'.log'
 
 #log.addHandler(handler)
 
-def setup_custom_logger(name,filename='/dev/null',propagate=False,normal_log=True,verbose_log=False):
+def setup_custom_logger(name,filename='/dev/null',propagate=False,normal_log=True,verbose_log=False,append_log=False):
     #formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
     if verbose_log:
         level=logging.DEBUG
@@ -38,6 +38,10 @@ def setup_custom_logger(name,filename='/dev/null',propagate=False,normal_log=Tru
     else:
         level=logging.WARNING
 
+    if append_log:
+        mode='a'
+    else:
+        mode='w'
     formatter = logging.Formatter(fmt='%(levelname)s:  %(message)s')
    # formatter = logging.Formatter(fmt='%(asctime)s %(module)s %(levelname)s:  %(message)s',datefmt='%H:%M:%S')
     #formatter = logging.Formatter(fmt='%(asctime)s %(process)s %(levelname)s:%(message)s')
@@ -46,7 +50,7 @@ def setup_custom_logger(name,filename='/dev/null',propagate=False,normal_log=Tru
     logging.addLevelName(35,"")
     #if filename:
         #logging.basicConfig(filename=filename, level=logging.DEBUG, format='%(asctime)s %(process)s %(levelname)s:%(message)s')
-    handler = logging.FileHandler(filename)
+    handler = logging.FileHandler(filename,mode=mode)
     handler.setFormatter(formatter)
     log.addHandler(handler)
     log.propagate = propagate

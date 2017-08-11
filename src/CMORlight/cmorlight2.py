@@ -164,6 +164,10 @@ def main():
     parser.add_option("-V", "--verbose",
                             action="store_true", dest="verbose_log", default = False,
                             help="Verbose logging for debugging")
+    parser.add_option("-A", "--append_log",
+                            action="store_true", dest="append_log", default = False,
+                            help="Append to log instead of overwrite")
+
 
 
 
@@ -199,7 +203,7 @@ def main():
     LOG_FILENAME = os.path.join(LOG_BASE,base.logfile)
 
     # get logger and assign logging filename
-    log = base.setup_custom_logger(settings.logger_name,LOG_FILENAME,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log)
+    log = base.setup_custom_logger(settings.logger_name,LOG_FILENAME,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
 
     # creating working directory if not exist
     if not os.path.isdir(settings.DirWork):
