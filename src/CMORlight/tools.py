@@ -107,6 +107,7 @@ def set_attributes(params,proc_list=None):
     settings.netCDF_attributes['units'] = params[config.get_config_value('index','INDEX_UNIT')]
     settings.netCDF_attributes['missing_value'] = config.get_config_value('settings','missing_value')
     settings.netCDF_attributes['_FillValue'] = config.get_config_value('settings','missing_value')
+    settings.netCDF_attributes['coordinates'] = 'lon lat'
 
 
 
@@ -711,7 +712,7 @@ def process_file_fix(params,in_file):
     # create object for output file
     global f_out
 
-    f_out = Dataset(outpath,'w') #to make sure file is closed if error occurs
+    f_out = Dataset(outpath,'w')
 
     # create dimensions in target file
     for name, dimension in f_in.dimensions.items():
@@ -858,7 +859,8 @@ def process_file_fix(params,in_file):
     f_var.standard_name = settings.netCDF_attributes['standard_name']
     f_var.long_name = settings.netCDF_attributes['long_name']
     f_var.units = settings.netCDF_attributes['units']
-
+    #add coordinates attribute to fx-variables
+    f_var.coordinates = settings.netCDF_attributes['coordinates']
     #if params[config.get_config_value('index','INDEX_CM_AREA')]=='':
         #f_var.cell_methods = "time: %s" % (cm_type)
     #else:
