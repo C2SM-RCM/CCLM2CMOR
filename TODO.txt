@@ -29,12 +29,10 @@ CMORLIGHT:
         - label columns?
 
     tools.py:
-        - remove reslist from test_var
-        - derotate: strange paths
-        - proc_test_var fertig machen (reslist) oder entfernen
         - process_file_fix: ensemble member 'r0i0p0' -> is the dir structure for fix variables as requested by CORDEX?
         - writing 0 for fx in table should not be mandatory, write anything
-
+        - remove reslist from test_var
+        - proc_test_var fertig machen (reslist) oder entfernen
 
 
 
@@ -42,41 +40,33 @@ CMORLIGHT:
 
     - Fehler bei mrso,mrfso: speziell da schichten im boden anzugeben
     - fehler bei derotierten var
-
+    - preocess derotated vars: if folder not available -> derotate, if infile for this not available: error!
     - Hans_jürgens Kommentare ausprobieren,  beheben
-
     - last folder (in variable folder): day of post-processing -> needed?
-
-    - W_SNOW und TOT_PREC kommen doppelt in Tabelle vor! -> aus gleicher variable berechnet? -> sollte in vorherigem script passieren;
-
+    - wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
+    - check sanity of parameter table before processing each variable: for subdaily: check if agg. method given, otherwise skip subdaily!
+    - created filename for subdaily data fix with 0000, 0130 as start time and 2100, 2230 as end time for i and a data (3hr) -> is this ok?
     - zwei wege welche var prozessiert werden sollen:
       1. schau in tabelle und mach alle die tatsächlich vorhanden sind, warning für fehlende
       2. schau in order und prozessiere alle die in tabelle sind, warning für fehlende in tabelle bzw fehlende in ordner
-
-    - created filename for subdaily data fix with 0000, 0130 as start time and 2100, 2230 as end time for i and a data (3hr) -> is this ok?
-    - check sanity of parameter table before processing each variable: for subdaily: check if agg. method given, otherwise skip subdaily!
-    - unicode is not defined! Is this an error?
+    - W_SNOW und TOT_PREC kommen doppelt in Tabelle vor! -> aus gleicher variable berechnet? -> sollte in vorherigem script passieren;
+    
+    
     - error bei compressing output?
     - Reduce logger output
     - bei QV850p Fehler: wenn nicht vorhanden bricht er ab?
     -should be possible to use cclm_const file instead of processing FR_LAND and HSURF
-
-
-    - which attributes does cordex allow? How should they look like
-    - In tabelle: levelvalue: es muss height bzw plev als attribut für jede variable gesetzt werden außer bei zweien und bei 0 (auch leer)
-      W_SO:  statt levelvalue muss anzahl der schichten zur integration angegeben werden -> setzt negativ zur unterscheidung von obigem?
-    - rlon rlat in coordinates_cordex_eur11.nc nachschauen wenn nicht vorhanden
-    - 4.spalte in tabelle als comment hinzufügen
     - dimension bounds steht noch drin bei instantanen variablen obwohl überflüssig ->  bei inputdaten mit ncks -x rausschneiden (evtl. vorher mit ncatted bearbeiten)
       -> bei akk. und averag. daten neu setzen mit links rechts von zeitstempel
-    - wenn mehrere reslist angegeben: erst hohe auflösung dann niedrigere -> kann mit hoher.temp weiterrechnen um rechenzeit zu sparen, muss nicht mehr auf rohdaten zugreifen: teilweise realsiert für day, mon; nicht für 6hr, day
-    - wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
-
+    - rlon rlat in coordinates_cordex_eur11.nc nachschauen wenn nicht vorhanden
+     wenn mehrere reslist angegeben: erst hohe auflösung dann niedrigere -> kann mit hoher.temp weiterrechnen um rechenzeit zu sparen, muss nicht mehr auf rohdaten zugreifen: teilweise realsiert für day, mon; nicht für 6hr, day
     - deutlicher dass es sich um programmabbruch handelt
     - CCLM subversion in attributen angeben
-
     - was ist INDEX_RCM_NAME_ORG -> wird in settings.param verlangt
-
+    - which attributes does cordex allow? How should they look like
+    - 4.spalte in tabelle als comment hinzufügen
+    - In tabelle: levelvalue: es muss height bzw plev als attribut für jede variable gesetzt werden außer bei zweien und bei 0 (auch leer)
+      W_SO:  statt levelvalue muss anzahl der schichten zur integration angegeben werden -> setzt negativ zur unterscheidung von obigem?
 
     TESTS:
     - check what happens if necessary attribute is not in .ini list and not taken from file

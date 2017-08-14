@@ -1356,29 +1356,24 @@ def derotate_uv():
     """
     derotate u and v variables
     """
-
+    log.info("Start derotating")
     var_list_rotate_u = get_derotate_vars(flt='u')
-    var_list_rotate_v = get_derotate_vars(flt='v')
     var_list_rotated = get_derotate_vars(flt=None)
 
     # assign process list to variable
     for var in var_list_rotated:
         params = settings.param[var]
-        #print params
         out_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
-        #print out_dir
         if os.path.isdir(out_dir) == False:
-            log.info("Output directory does not exist: %s" % out_dir)
+            log.info("Output directory does not exist: %s. Creating..." % out_dir)
             os.makedirs(out_dir)
 
     for var in var_list_rotate_u:
         log.debug(var)
-        #params = config._read_params(var)
         params = settings.param[var]
         log.debug(params)
         out_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
-        in_dir_base = ("%s/%s" % (settings.BasePath,settings.DirIn))
-#        in_dir = get_input_path(var)
+        in_dir_base = settings.DirIn
 
         in_var_u = params[config.get_config_value('index','INDEX_RCM_NAME')]
         in_dir_u = "%s/%s" % (in_dir_base,in_var_u)
@@ -1386,14 +1381,12 @@ def derotate_uv():
         in_dir_v = "%s/%s" % (in_dir_base,in_var_v)
         out_dir_u = "%s/%s" % (get_input_path(var),in_var_u)
         out_dir_v = "%s/%s" % (get_input_path(var),in_var_v)
-
-        print(in_dir_u)
-        print(in_dir_v)
-        print(out_dir_v)
-        print(out_dir_u)
+        if not os.path.isdir(in_dir_u) or not os.path.isdir(in_dir_v):
+            log.warning("Path %s or %s do not exist! Skipping these variables..." % (in_dir_u,in_dir_v))
+            continue
         for dirpath,dirnames,filenames in os.walk(in_dir_u, followlinks=True):
             for f in sorted(filenames):
-                print(f)
+                log.info("Derotate %s" % f)
                 start_range = f[f.rindex('_')+1:f.rindex('.')]
                 in_file_u = "%s/%s" % (in_dir_u,f)
                 in_file_v = "%s/%s" % (in_dir_v,f.replace('U','V'))
@@ -1401,7 +1394,7 @@ def derotate_uv():
                 out_file_v = "%s/%s" % (out_dir_v,f.replace('U','V'))
                 # input files available?
                 if os.path.isfile(in_file_u) and os.path.isfile(in_file_v):
-                    # start if does output files NOT exist
+                    # start if output files do NOT exist
                     if not os.path.isfile(out_file_u) or not os.path.isfile(out_file_v):
                         out_file = "%s/UV_%s-%s_%s.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
                         out_file_derotate = "%s/UV_%s-%s_%s_derotate.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
@@ -1409,9 +1402,8 @@ def derotate_uv():
                             cmd = "cdo merge %s %s %s" % (in_file_u,in_file_v,out_file)
                             retval = shell(cmd)
                         # only these two have the names as CCLM variable in the file
-                        print(in_var_u,in_var_v)
                         if in_var_u == "U_10M" or in_var_v == "V_10M":
-                            if os.path.isfile(out_file) and not os.path.isfile(out_file_derotate):
+                            if not os.path.isfile(out_file_derotate):
                                 cmd = "cdo rotuvb,%s,%s %s %s" % (in_var_u,in_var_v,out_file,out_file_derotate)
                                 retval = shell(cmd)
                             if os.path.isfile(out_file_derotate) and not os.path.isfile(out_file_u):
@@ -1420,14 +1412,15 @@ def derotate_uv():
                             if os.path.isfile(out_file_derotate) and not os.path.isfile(out_file_v):
                                 cmd = "cdo selvar,%s %s %s" % (in_var_v,out_file_derotate,out_file_v)
                                 retval = shell(cmd)
+                                
                             ## remove temp files
-                            #if os.path.isfile(out_file):
-                                #os.remove(out_file)
-                            #if os.path.isfile(out_file_derotate):
-                                #os.remove(out_file_derotate)
+                            os.remove(out_file)
+                            if os.path.isfile(out_file_derotate):
+                                os.remove(out_file_derotate)
+                                
                         # all other have only U and V inside
                         else:
-                            if os.path.isfile(out_file) and not os.path.isfile(out_file_derotate):
+                            if not os.path.isfile(out_file_derotate):
                                 cmd = "cdo rotuvb,U,V %s %s" % (out_file,out_file_derotate)
                                 retval = shell(cmd)
                             if os.path.isfile(out_file_derotate) and not os.path.isfile(out_file_u):
@@ -1436,12 +1429,14 @@ def derotate_uv():
                             if os.path.isfile(out_file_derotate) and not os.path.isfile(out_file_v):
                                 cmd = "cdo selvar,V %s %s" % (out_file_derotate,out_file_v)
                                 retval = shell(cmd)
+                                
                         # remove temp files
-                        if os.path.isfile(out_file):
-                            os.remove(out_file)
+                        os.remove(out_file)
                         if os.path.isfile(out_file_derotate):
                             os.remove(out_file_derotate)
 
+                else:
+                    log.warning("Files %s or %s do not exist! Skipping these variables..." % (in_file_u,in_file_v))
 
 # -----------------------------------------------------------------------------
 def process_file(params,in_file,var,reslist):

@@ -37,7 +37,7 @@ def init(varfile):
     DirLog = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirLog')))
 
     global DirOutRotated
-    DirOutRotated = ("%s/%s/%s" % (BasePath,config.get_config_value('settings', 'DirOutRotated'),config.get_config_value('settings','model')))
+    DirOutRotated = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirOutRotated')))
 
     global global_attr_list
     global_attr_list = config.get_config_value('settings','global_attr_list').split(',')
