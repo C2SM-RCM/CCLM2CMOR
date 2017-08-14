@@ -420,7 +420,6 @@ def proc_chunking(params,reslist):
                         outfile = create_filename(var,res,str(start_yr),str(stop_yr))
                         # generate outpath with outfile and outdir
                         outpath = "%s/%s" % (outdir,outfile)
-#                        print outpath
                         # cat files to aggregation file
                         # skip if exist
                         if (not os.path.isfile(outpath)) or config.get_config_value('boolean','overwrite'):
@@ -550,16 +549,17 @@ def check_resolution(params,res,process_table_only):
         freq_table=params[config.get_config_value('index','INDEX_FRE_SUB')]
         freq=24./res_hr
     elif res=="day":
-        res_hr=24.
         freq_table=params[config.get_config_value('index','INDEX_FRE_DAY')]
         freq=1. #requested samples per day
     elif res=="mon":
-        res_hr= 28*24.  #minimum number of hours per month
         freq_table=params[config.get_config_value('index','INDEX_FRE_MON')]
+        freq=1. #requested samples per month
+    elif res=="sem":
+        freq_table=params[config.get_config_value('index','INDEX_FRE_SEM')]
         freq=1. #requested samples per month
     elif res == 'fx':
         freq_table=params[config.get_config_value('index','INDEX_FX')]
-        freq=0.
+        freq=freq_table
     else:
         log.warning("Time resolution (%s) is not supported, skipping..." % res)
         return False
@@ -859,9 +859,6 @@ def process_file_fix(params,in_file):
     f_var.long_name = settings.netCDF_attributes['long_name']
     f_var.units = settings.netCDF_attributes['units']
 
-    #add coordinates attribute to fx-variables
-    #TODO coordinates attribute never defined anywhere
-   # f_var.coordinates = settings.netCDF_attributes['coordinates']
     #if params[config.get_config_value('index','INDEX_CM_AREA')]=='':
         #f_var.cell_methods = "time: %s" % (cm_type)
     #else:
@@ -926,7 +923,6 @@ def proc_seasonal_mean(params):
             if t_delim in cm_type:
 #                cm0 = cm_type[cm_type.index(' '):]
                 cm = 'mean' #cm_type[cm_type.index(t_delim)+len(t_delim):]
-                cmd = "Cell method used: %s" % (cm)
 
             else:
                 cm = cm_type
@@ -947,16 +943,14 @@ def proc_seasonal_mean(params):
                     f = "%s/%s" % (dirpath,f)
                     cmd = "cdo -f %s -seas%s -selmonth,3/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f,ftmp_name)
                     retval=shell(cmd)
-
                 else:
-                    # first last December of previous year
+                    # first: last December of previous year
                     f_hlp12 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False)
-                    f = "%s/%s" % (dirpath,f_lst[i-1])
-                    cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f,f_hlp12.name)
+                    f_prev = "%s/%s" % (dirpath,f_lst[i-1])
+                    cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
                     retval = shell(cmd)
-                    f = "%s/%s" % (dirpath,f_lst[i])
 
-                    # second month 1...11 of actual year
+                    # second: month 1...11 of actual year
                     f_hlp1_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False)
                     cmd = "cdo -f %s selmonth,1/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f,f_hlp1_11.name)
                     retval = shell(cmd)
@@ -1406,30 +1400,30 @@ def derotate_uv():
                             if not os.path.isfile(out_file_derotate):
                                 cmd = "cdo rotuvb,%s,%s %s %s" % (in_var_u,in_var_v,out_file,out_file_derotate)
                                 retval = shell(cmd)
-                            if os.path.isfile(out_file_derotate) and not os.path.isfile(out_file_u):
+                            if not os.path.isfile(out_file_u):
                                 cmd = "cdo selvar,%s %s %s" % (in_var_u,out_file_derotate,out_file_u)
                                 retval = shell(cmd)
-                            if os.path.isfile(out_file_derotate) and not os.path.isfile(out_file_v):
+                            if not os.path.isfile(out_file_v):
                                 cmd = "cdo selvar,%s %s %s" % (in_var_v,out_file_derotate,out_file_v)
                                 retval = shell(cmd)
-                                
+
                             ## remove temp files
                             os.remove(out_file)
                             if os.path.isfile(out_file_derotate):
                                 os.remove(out_file_derotate)
-                                
+
                         # all other have only U and V inside
                         else:
                             if not os.path.isfile(out_file_derotate):
                                 cmd = "cdo rotuvb,U,V %s %s" % (out_file,out_file_derotate)
                                 retval = shell(cmd)
-                            if os.path.isfile(out_file_derotate) and not os.path.isfile(out_file_u):
+                            if not os.path.isfile(out_file_u):
                                 cmd = "cdo selvar,U %s %s" % (out_file_derotate,out_file_u)
                                 retval = shell(cmd)
-                            if os.path.isfile(out_file_derotate) and not os.path.isfile(out_file_v):
+                            if not os.path.isfile(out_file_v):
                                 cmd = "cdo selvar,V %s %s" % (out_file_derotate,out_file_v)
                                 retval = shell(cmd)
-                                
+
                         # remove temp files
                         os.remove(out_file)
                         if os.path.isfile(out_file_derotate):
@@ -1580,6 +1574,9 @@ def process_file(params,in_file,var,reslist):
         elif res=="mon":
             res_hr= 28*24.  #minimum number of hours per month
             cm_type = params[config.get_config_value('index','INDEX_VAR_CM_MON')]
+        elif res=="sem":
+            res_hr= 28*24.*3  #minimum number of hours per season
+            cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SEM')]
 
         #check if requested time resolution is possible given the input time resolution
         if res_hr < input_time_step:
@@ -1593,6 +1590,7 @@ def process_file(params,in_file,var,reslist):
             log.log(35,"resolution: '%s'" % res)
             log.info("cell method: '%s'\ncalendar: '%s' \n#########################" % (cm_type,in_calendar))
             # out directory
+
             outdir = get_temp_dir(var,res,cm_type)
 
             # get file name
@@ -1669,7 +1667,7 @@ def process_file(params,in_file,var,reslist):
                 cmd1 = "cdo enssum "
                 # use only layer 1 to 8 for the output
                 idx_from = 1
-                # use value from tabel + 1 as upper limit for the soil levels e.g. 8 + 1 = 9!
+                # use value from table + 1 as upper limit for the soil levels e.g. 8 + 1 = 9!
                 idx_to = int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip()) + 1
                 arr = {}
                 for i in range(idx_from,idx_to):

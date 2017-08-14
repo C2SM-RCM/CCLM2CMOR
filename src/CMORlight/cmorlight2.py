@@ -100,19 +100,19 @@ def main():
 
     parser.add_option("-i", "--ini",
                             action="store", dest = "inifile", default = "control_cmor2.ini",
-                            help = "script ini file")
+                            help = "configuration file (.ini)")
     parser.add_option("-p", "--param",
                             action="store", dest = "paramfile", default = "",
-                            help = "model parameter file")
+                            help = "model parameter file (table)")
     parser.add_option("-r", "--resolution",
                             action="store", dest = "reslist", default = "",
-                            help = "process output resolution")
+                            help = "list of desired output resolutions (supported: 1hr (1-hourly), 3hr (3-hourly),6hr (6-hourly),day (daily),mon (monthly) ,sem (seasonal),fx (for time invariant variables)")
     parser.add_option("-v", "--varlist",
                             action="store", dest = "varlist", default = "pr",
-                            help = "process variable")
+                            help = "list of variables to be processed")
     parser.add_option("-a", "--all",
                             action="store_true", dest = "all_vars", default = False,
-                            help = "process all vars")
+                            help = "process all variables")
     parser.add_option("-c", "--chunk-var",
                             action="store_true", dest="chunk_var", default = False,
                             help="go call chunking for the variable list")
@@ -225,6 +225,9 @@ def main():
 
     if options.all_vars == False:
         varlist = options.varlist.split(',')
+        if varlist==[]:
+            log.error("No variables set for processing! Exiting...")
+            return
     else:
         varlist = [] #config.varlist['3hr'] + config.varlist['6hr']
         varlist.extend(tools.get_var_lists())
@@ -241,9 +244,7 @@ def main():
 
 
     # if nothing is set: exit the program
-    if len(reslist) == 1 and reslist[0] == '' and options.seasonal_mean == False and options.test_var == False:
-        log.error("No output resolution/aggregation set, exiting...")
-        return
+
 
     # test modus
     if options.test_var == True:
@@ -295,8 +296,9 @@ def main():
                 tools.proc_chunking(params,reslist)
 
             # seasonal mean
-            elif options.seasonal_mean == True:
-                tools.proc_seasonal_mean(params)
+     #       elif options.seasonal_mean == True:
+     #           log.info("Seasonal processing")
+     #           tools.proc_seasonal_mean(params)
 
             # some procs for correction or cleanup files later
             elif options.corr_var == True:

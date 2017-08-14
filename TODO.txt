@@ -39,9 +39,13 @@ CMORLIGHT:
     GENERAL
 
     - Fehler bei mrso,mrfso: speziell da schichten im boden anzugeben
-    - fehler bei derotierten var
-    - preocess derotated vars: if folder not available -> derotate, if infile for this not available: error!
+    - fehler bei derotate_uv : cdo rotuvb:  Only rotated lon/lat grids supported!
+    - chunking, seasonal mean
+    -delete temp files after run
+    - process derotated vars: if folder not available -> derotate, if infile for this not available: error!
     - Hans_jürgens Kommentare ausprobieren,  beheben
+    - In addition, the Core variables have to be provided on a regular geographic
+latitude/longitude grid.??? -> lon/lat(rlon,rlat) als variablen ausreichend?
     - last folder (in variable folder): day of post-processing -> needed?
     - wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
     - check sanity of parameter table before processing each variable: for subdaily: check if agg. method given, otherwise skip subdaily!
@@ -50,8 +54,8 @@ CMORLIGHT:
       1. schau in tabelle und mach alle die tatsächlich vorhanden sind, warning für fehlende
       2. schau in order und prozessiere alle die in tabelle sind, warning für fehlende in tabelle bzw fehlende in ordner
     - W_SNOW und TOT_PREC kommen doppelt in Tabelle vor! -> aus gleicher variable berechnet? -> sollte in vorherigem script passieren;
-    
-    
+
+
     - error bei compressing output?
     - Reduce logger output
     - bei QV850p Fehler: wenn nicht vorhanden bricht er ab?

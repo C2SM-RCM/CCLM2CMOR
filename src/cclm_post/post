@@ -33,7 +33,11 @@ do
       -x|--exp)
       EXP=$2
       shift 
-      ;;     
+      ;;   
+      -i|--input)
+      EXPPATH=$2
+      shift 
+      ;;      
        -s|--start)
       CURRENT_DATE=$2
       shift
@@ -58,8 +62,12 @@ do
   shift 
 done
 
+EXPPATH=${GCM}/${EXP}
+EXPID=${GCM}_${EXP}
+
 echo "GCM:" ${GCM}
-echo "Experiment:" ${EXP}
+echo "Experiment:" ${GCM}
+echo "Path to input data:" ${INPATH}
 echo "Start date:" ${CURRENT_DATE}
 echo "Stop date:" ${STOP_DATE}
 
@@ -79,11 +87,12 @@ function echon {
   fi
 } 
 
+if [ ! -d ${INPATH} ]
+then
+  echo "Input path does not exist! Exiting..."
+  exit
+fi
 
-#... experiment identifier
-
-EXPPATH=${GCM}/${EXP}
-EXPID=${GCM}_${EXP}
 
 if [ ! -d ${WORKDIR}/${EXPPATH} ]
 then
@@ -135,9 +144,15 @@ do
   
   if [ ! -d ${INPDIR}/${YYYY} ]
   then
-    echon Extracting archive of year ${YYYY}...
-    tar -xf ${ARCH_SRC}/${EXPPATH}/*${YYYY}.tar -C ${INPDIR}
-    echon Done
+    if [ -f ${INPATH}/*${YYYY}.tar ]
+    then
+      echon "Extracting archive of year ${YYYY}..."
+      tar -xf ${INPATH}/*${YYYY}.tar -C ${INPDIR}
+      echon "Done"
+   	else
+   	  echon "Neither directory nor tar file for year ${YYYY} exists in input directory! Exiting..."
+   	  exit
+   	fi
   fi
   
   if [ ! -d ${OUTDIR}/${YYYY_MM} ]
