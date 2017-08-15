@@ -10,7 +10,7 @@
 import logging
 import pkg_resources
 import os
-
+import sys
 #import csv
 
 from _compat import PY2
@@ -22,7 +22,7 @@ else:
 RAW_OPTIONS = [('logging', 'format'), ]
 
 CONFIG = None
-#LOGGER = logging.getLogger("cmorlight")
+LOGGER = logging.getLogger("cmorlight")
 
 # -----------------------------------------------------------------------------
 
@@ -37,8 +37,7 @@ def get_config_value(section, option, inifile=None):
     """
 
     if not CONFIG:
-        print("Load configuration file first! Exiting...")
-        exit
+        sys.exit("ERROR: Load configuration file before getting/setting config values! Exiting...")
 
     value = ''
 
@@ -53,20 +52,23 @@ def get_config_value(section, option, inifile=None):
             elif value.lower() == "true":
                 value = True
 
+        else:
+            LOGGER.error("Option %s in section %s in configuration file does not exist!" % (option,section))
+    else:
+        LOGGER.error("Section %s in configuration file does not exist!" % (section))
+
     if section == 'index':
         value = int(value)
     elif section == 'float':
         value = float(value)
-    elif section == 'boolean':
-        value = bool(value)
-#    print value,type(value)
     return value
 
 
 # -----------------------------------------------------------------------------
-def get_model_value(section,option):
-    ''' Get value from model section '''
-    model = get_config_value('init','model')
+def get_model_value(option):
+    """Get value from model section."""
+
+    model = get_config_value('settings','model')
     return get_config_value("settings_%s" % (model), option)
 
 
@@ -74,11 +76,14 @@ def get_model_value(section,option):
 def set_config_value(section, option, value,inifile=None):
     ''' '''
     if not CONFIG:
-        print("Load configuration file first! Exiting...")
-        exit
+        sys.exit("ERROR: Load configuration file before getting/setting config values! Exiting...")
 
+    if section=="settings_":  #add model value to section
+        section=section+get_config_value('init','model')
     if not CONFIG.has_section(section):
         CONFIG.add_section(section)
+    value=str(value)
+
     CONFIG.set(section, option, value)
 
 
@@ -102,6 +107,8 @@ def load_configuration(inifile):
     CONFIG.readfp(open(pkg_resources.resource_filename(__name__,inifile)))
     #Extend input path if respective option is set:
     if CONFIG.get('boolean','extend_DirIn')=='True':
-      DirIn=CONFIG.get('settings','DirIn')+'/'+CONFIG.get('settings_CCLM','driving_model_id')+'/'+CONFIG.get('settings_CCLM','driving_experiment_name')
+      DirIn=CONFIG.get('settings','DirIn')+'/'+ get_model_value('driving_model_id')+'/'+ get_model_value('driving_experiment_name')
       CONFIG.set('settings','DirIn',DirIn)
+      DirOutRotated=CONFIG.get('settings','DirOutRotated')+'/'+ get_model_value('driving_model_id')+'/'+ get_model_value('driving_experiment_name')
+      CONFIG.set('settings','DirOutRotated',DirOutRotated)
 

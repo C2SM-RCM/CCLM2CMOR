@@ -2,9 +2,9 @@
 #
 # creates CORDEX standard CMOR compliant output from preprocessed input
 #
-#import logging as log
 import os
 import sys
+import shutil
 
 # netcdf4 Library
 from netCDF4 import Dataset
@@ -45,14 +45,12 @@ def process_resolution(params,reslist):
     # get cdf variable name
     var = params[config.get_config_value('index','INDEX_VAR')]
     varRCM=params[config.get_config_value('index','INDEX_RCM_NAME')]
-    # get cell method for the resolution
-    # process resolution with the cell method: cm_...
 
     # create path to input files from basedir,model,driving_model
     in_dir = "%s/%s" % (tools.get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
-    log.info("Looking for input dir(1): %s" % (in_dir))
+    log.debug("Looking for input dir(1): %s" % (in_dir))
     if os.path.isdir(in_dir) == False:
-      log.info("Input directory does not exist(0): %s \n \t Change base path in .ini file or create directory! " % in_dir)
+      log.error("Input directory does not exist(0): %s \n \t Change base path in .ini file or create directory! " % in_dir)
       return
        # if params[config.get_config_value('index','INDEX_RCM_NAME')].find('p') > 0:
         #    in_dir = "%s/%s" % (config.get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')][:params[config.get_config_value('index','INDEX_RCM_NAME')].find('p')])
@@ -69,37 +67,35 @@ def process_resolution(params,reslist):
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
         for f in sorted(filenames):
-            if f.find("%s_" % var) == 0 or f.find("%s_" % varRCM) == 0 or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
+            log.info("\n###########################################################")
+            #if limit_range is set: skip file if it is out of range
+            year=f.split("_")[-1][:4]
+            if config.get_config_value('boolean','limit_range'):
+                if year < config.get_config_value('settings','proc_start') or year > config.get_config_value('settings','proc_end'):
+                    log.debug("File %s out of time range! Skipping ..." % f)
+                    continue
+
+            if f.find("%s_" % var) == 0 or f.find("%s.nc" % var) == 0 or f.find("%s_" % varRCM) == 0 or f.find("%s.nc" % varRCM) == 0 or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
                 in_file = "%s/%s" % (dirpath,f)
-                if os.path.isfile(in_file):
-                    # workaround for error in last input files of CCLM data from DWD
-                    # use only file with e.g. _2100 in filename (only if USE_SEARCH==True)
-                    if config.get_config_value('settings', 'use_search_string') and in_file.find(settings.search_input_string) < 0:
-                        continue
-                    log.info("Input from: %s" % (in_file))
-                    #try:
-                    if os.access(in_file, os.R_OK) == False:
-                        log.error("Could not read file '%s', no permission!" % in_file)
-                    else:
-
-                        log.info("############################### %s" % (str(var in config.get_model_value('settings_CCLM','var_list_fixed'))))
-                        if var in config.get_model_value('settings_CCLM','var_list_fixed'):
-                            tools.process_file_fix(params,in_file)
-                        else:
-                            reslist=tools.process_file(params,in_file,var,reslist)
-
+                # workaround for error in last input files of CCLM data from DWD
+                # use only file with e.g. _2100 in filename (only if USE_SEARCH==True)
+                if config.get_config_value('boolean', 'use_search_string') and in_file.find(settings.search_input_string) < 0:
+                    continue
+                log.log(35,"Input from: %s" % (in_file))
+                if os.access(in_file, os.R_OK) == False:
+                    log.error("Could not read file '%s', no permission!" % in_file)
                 else:
-                    log.error("File '%s' not found!" % in_file)
-#            else:
-#                if f.find("%s" % var) == 0 or f.find("%s" % varRCM) == 0 or f.find("%s" % varRCM[:varRCM.find('p')]) == 0:
-#                    in_file = "%s/%s" % (dirpath,f)
-#                    if os.path.isfile(in_file):
-#                        if var in config.get_model_value('settings_CCLM','var_list_fixed'):
-#                            tools.proc_file_fix(params,in_file)
+                    if var in config.get_model_value('var_list_fixed'):
+                        tools.process_file_fix(params,in_file)
+                    else:
+                        reslist=tools.process_file(params,in_file,var,reslist)
+            else:
+                log.warning("File %s does match the file name conventions for this variable. File not processed...")
 
             # stop after one file with all chosen resolutions if set
             if config.get_config_value('boolean','test_only_one_file') == True:
                 sys.exit()
+    log.info("Variable '%s' finished!" % (var))
     return True
 
 
@@ -111,19 +107,19 @@ def main():
 
     parser.add_option("-i", "--ini",
                             action="store", dest = "inifile", default = "control_cmor2.ini",
-                            help = "script ini file")
+                            help = "configuration file (.ini)")
     parser.add_option("-p", "--param",
                             action="store", dest = "paramfile", default = "",
-                            help = "model parameter file")
+                            help = "model parameter file (table)")
     parser.add_option("-r", "--resolution",
                             action="store", dest = "reslist", default = "",
-                            help = "process output resolution")
+                            help = "list of desired output resolutions (supported: 1hr (1-hourly), 3hr (3-hourly),6hr (6-hourly),day (daily),mon (monthly) ,sem (seasonal),fx (for time invariant variables)")
     parser.add_option("-v", "--varlist",
                             action="store", dest = "varlist", default = "pr",
-                            help = "process variable")
+                            help = "list of variables to be processed")
     parser.add_option("-a", "--all",
                             action="store_true", dest = "all_vars", default = False,
-                            help = "process all vars")
+                            help = "process all variables")
     parser.add_option("-c", "--chunk-var",
                             action="store_true", dest="chunk_var", default = False,
                             help="go call chunking for the variable list")
@@ -166,33 +162,49 @@ def main():
     parser.add_option("-O", "--overwrite",
                             action="store_true", dest="overwrite", default = False,
                             help="Overwrite existent output files")
-    parser.add_option("-T", "--table_only",
-                            action="store_true", dest="process_table_only", default = False,
+    parser.add_option("-f", "--force_proc",
+                            action="store_false", dest="process_table_only", default = True,
                             help="Process variable at specific resolution only if this resolution is declared in the parameter table")
+    parser.add_option("-S", "--silent",
+                            action="store_false", dest="normal_log", default = True,
+                            help="Write only minimal information to log (variables and resolutions in progress, warnings and errors)")
+    parser.add_option("-V", "--verbose",
+                            action="store_true", dest="verbose_log", default = False,
+                            help="Verbose logging for debugging")
+    parser.add_option("-A", "--append_log",
+                            action="store_true", dest="append_log", default = False,
+                            help="Append to log instead of overwrite")
+    parser.add_option("-l", "--limit",
+                            action="store_true", dest="limit_range", default = False,
+                            help="Limit time range for processing (range set in .ini file)")
+
+
+
+
 
 
     (options, args) = parser.parse_args()
     options_dict=vars(options)
     config.load_configuration(options.inifile)
 
-#    if options.act_model not in ['CCLM','WRF']:
- #       log.error("Model ist not supported: '%s'" % (options.act_model))
-  #      # end programm
-   #     return
+    if options.act_model not in ['CCLM','WRF']:
+        sys.exit("Model ist not supported: '%s'" % (options.act_model))
+        # end programm
 
    #store parsed arguments in config
     setval=["paramfile","driving_model_id","driving_experiment_name","driving_model_ensemble_member"]
 
     for val in setval:
         if options_dict[val]!="":
-            config.set_config_value('settings_CCLM',val,options_dict[val])
+            config.set_config_value('settings_',val,options_dict[val])
 
-    config.set_config_value('init','model',options.act_model)
-    config.set_config_value('boolean','overwrite',str(options.overwrite))
+    config.set_config_value('settings','model',options.act_model)
+    config.set_config_value('boolean','overwrite',options.overwrite)
+    config.set_config_value('boolean','limit_range',options.limit_range)
 
-    process_list=[config.get_config_value('settings_CCLM','driving_model_id'),config.get_config_value('settings_CCLM','driving_experiment_name'),config.get_config_value('settings_CCLM','driving_model_ensemble_member')]
+    process_list=[config.get_model_value('driving_model_id'),config.get_model_value('driving_experiment_name'),config.get_model_value('driving_model_ensemble_member')]
     # now read paramfile for all variables for this RCM
-    varfile = ("%s/%s" % (config.get_config_value('settings','DirConfig'),config.get_config_value('settings_CCLM','paramfile')))
+    varfile = ("%s/%s" % (config.get_config_value('settings','DirConfig'),config.get_model_value('paramfile')))
     settings.init(varfile)
 
     # create logger
@@ -205,12 +217,11 @@ def main():
     LOG_FILENAME = os.path.join(LOG_BASE,base.logfile)
 
     # get logger and assign logging filename
-    log = base.setup_custom_logger(settings.logger_name,filename=LOG_FILENAME)
-
+    log = base.setup_custom_logger(settings.logger_name,LOG_FILENAME,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
 
     # creating working directory if not exist
     if not os.path.isdir(settings.DirWork):
-        log.warning("Working directory does not exist, creating: %s" % (settings.DirWork))
+        log.info("Working directory does not exist, creating: %s" % (settings.DirWork))
         os.makedirs(settings.DirWork)
 
     if not os.path.isdir(settings.DirOut):
@@ -218,7 +229,8 @@ def main():
         os.makedirs(settings.DirOut)
 
     # assing some new parameter
-    settings.use_version = "v%s" % (options.use_version)
+    if config.get_config_value('boolean','add_version_to_outpath'):
+        settings.use_version = "v%s" % (options.use_version)
     settings.use_alt_units = options.use_alt_units
     # derotate u and v
     if options.derotate_uv == True:
@@ -227,56 +239,81 @@ def main():
 
     if options.all_vars == False:
         varlist = options.varlist.split(',')
+        if varlist==[]:
+            log.error("No variables set for processing! Exiting...")
+            return
     else:
         varlist = [] #config.varlist['3hr'] + config.varlist['6hr']
-        varlist.extend(tools.get_var_lists(flt=None))
-
+        varlist.extend(tools.get_var_lists())
 
     if options.reslist=="": #if output resolutions not given in command -> take from inifile
         reslist=config.get_config_value('settings','reslist').replace(" ",",") #to allow for space as delimiter
         reslist=list(filter(None,reslist.split(','))) #split string and remove empty strings
     else:
         reslist = options.reslist.split(',')
+
     #TODO: allow for whitespace separation -> need to change in optparse
     #reslist = options.reslist.replace(" ",",") #to allow for space as delimiter
     #reslist=list(filter(None,reslist.split(','))) #split string and remove empty strings
 
 
     # if nothing is set: exit the program
-    if len(reslist) == 1 and reslist[0] == '' and options.seasonal_mean == False and options.test_var == False:
-        log.error("No output resolution/aggregation set, exiting...")
-        return
+
 
     # test modus
     if options.test_var == True:
         tools.proc_test_var(process_list,varlist,reslist)
         return
 
+    #Remove variables in var_skip_list from varlist
+    if settings.var_skip_list[0]!="":
+        log.info("Variables %s were found in var_skip_list. Skip these variables" % settings.var_skip_list)
+        new_varlist=list(varlist)
+        for var in varlist:
+            params = settings.param[var]
+            varCCLM = params[config.get_config_value('index','INDEX_VAR')]
+            varRCM= params[config.get_config_value('index','INDEX_RCM_NAME')]
+            if (varCCLM in settings.var_skip_list) or (varRCM in settings.var_skip_list):
+                new_varlist.remove(var)
+        varlist=list(new_varlist)
+
+
     log.info("Configuration read from: %s" % os.path.abspath(varfile))
     log.info("Variable(s): %s " % varlist)
     log.info("Requested time output resolution(s): %s " % reslist)
-    log.info("Used RCM: %s" % config.get_config_value('init','model'))
+    log.info("Used RCM: %s" % config.get_config_value('settings','model'))
+    if options.process_table_only:
+        log.info("For each variable processing only resolutions declared in parameter table")
+    else:
+        log.info("Processing all resolutions lower equal the input data resolution")
 
     # process all var in varlist with input model and input experiment for proc_list item
     for var in varlist:
-        if settings.param.has_key(var) == False:
+        reslist_act=list(reslist) #new copy of reslist
+
+        if var not in settings.param:
             log.warning("Variable '%s' not supported!" % (var))
             continue
         else:
             # get parameter for next variable in the list
             params = settings.param[var]
-            log.info("Used parameter for variable '%s': %s" % (var,params))
+            varCCLM = params[config.get_config_value('index','INDEX_VAR')]
+            varRCM= params[config.get_config_value('index','INDEX_RCM_NAME')]
+            log.log(35,"\n\n\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (varCCLM, varRCM))
+
+            log.debug("Used parameter for variable '%s': %s" % (var,params))
         if params:
             # set global attributes in the dictionary
             tools.set_attributes(params,process_list)
 
             # skip fixed fields from chunking, makes no sense to chunk
-            if options.chunk_var == True and not var in config.get_model_value('settings_CCLM','var_list_fixed'):
+            if options.chunk_var == True and not var in config.get_model_value('var_list_fixed'):
                 tools.proc_chunking(params,reslist)
 
             # seasonal mean
-            elif options.seasonal_mean == True:
-                tools.proc_seasonal_mean(params)
+     #       elif options.seasonal_mean == True:
+     #           log.info("Seasonal processing")
+     #           tools.proc_seasonal_mean(params)
 
             # some procs for correction or cleanup files later
             elif options.corr_var == True:
@@ -287,11 +324,11 @@ def main():
             else:
                 for res in reslist:
                     if tools.check_resolution(params,res,options.process_table_only) == False:
-                        reslist.remove(res) #remove resolution from list if it is not in table or if it is not supported
-                if reslist!=[]:
-                    process_resolution(params,reslist)
+                        reslist_act.remove(res) #remove resolution from list if it is not in table or if it is not supported
+                if reslist_act!=[]:
+                    process_resolution(params,reslist_act)
                 else:
-                    log.error("None of the given resolutions appears in the table! Skipping variable...")
+                    log.warning("None of the given resolutions appears in the table! Skipping variable...")
 
 
 #########################################################
@@ -302,11 +339,11 @@ if __name__ == "__main__":
 
     # call main function
     main()
+    #clean up temp files
+    shutil.rmtree(settings.DirWork)
     log = logging.getLogger('cmorlight')
     log.propagate = True
-    log.info('##################################')
-    log.info('########  End of script.  ########')
-    log.info('##################################')
+    log.log(35,'\n##################################\n########  End of script.  ########\n##################################')
     ######################
     # END of program!!!  #
     ######################

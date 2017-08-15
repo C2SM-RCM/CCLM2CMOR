@@ -4,21 +4,28 @@ GCM=HadGEM2-ES
 EXP=RCP85
 
 
+
 #... directory path settings
+IN_SUB=HadGEM2-ES_Hist_RCP85/RCP85 
 SPDIR=${PROJECT}/CMOR # this is starter package specific and not necessary, if the full paths are defined in the following lines
 ARCH_SRC=/store/c2sm/ch4/ssilje/Archive_cosmo_runs
 PFDIR=${SPDIR}/src/cclm_post           # base directory where the scripts for the experiment are stored
 WORKDIR=${SPDIR}/work/cclm_work                  # NONE of the created files under this directory will be deleted at the end of the job chain
 INPUTPOST=${SPDIR}/input     # do not define SCRATCHDIR as any of your other paths!!!
 OUTPUTPOST=${SPDIR}/work/outputpost
+INPATH=${ARCH_SRC}/${IN_SUB}
+
 
 #... batch command
 BATCH_CMD=bash                           # the batch command of your computer system
 
 #... start and end date of the simulation
-FIRST_YEAR=2005
-YDATE_START=1949120100      # start date of simulation YYYYMMDDHH[mmss]
-YDATE_STOP=2006123000      # end date of simulation YYYYMMDDHH[mmss]
+
+YDATE_START=200802      #Start year and month for processing (if not given in command line) YYYYMM
+YDATE_STOP=201501     #End year and month for processing (if not given in command line)  YYYYMM
+
+SIM_START=1949120100 # start date of simulation YYYYMMDDHH[mmss]: needed for constant file
+#SIM_STOP=2099123000  # end date of simulation YYYYMMDDHH[mmss]
 
 
 #... directory and binary path settings for utilities

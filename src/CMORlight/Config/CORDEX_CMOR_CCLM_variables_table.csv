@@ -24,7 +24,7 @@ RUNOFF_T;RUNOFF_T;mrro;RUNOFF_G + RUNOFF_S;;ModelLevel;0,000277778;mean;mean;mea
 W_SO;W_SO;mrso;Sum(W_SO(1:8);;ModelLevel;1000;point;mean;mean;mean;8;kg m-2;4;i;1;4;1;m*4;1;s*4;;Total Soil Moisture Content;;soil_moisture_content;;land;mean where land
 W_SNOW;W_SNOW;snw;;;ModelLevel;1000;point;mean;mean;mean;2;kg m-2;4;i;1;4;1;m*4;1;s*4;;Surface Snow Amount;;surface_snow_amount;;landIce land;mean where land
 SNOW_MELT;SNOW_MELT;snm;;;ModelLevel;0,000277778;mean;mean;mean;mean;0;kg m-2 s-1;4;a;1;4;1;;1;;;Surface Snow Melt;;surface_snow_melt_flux;;landIce land;mean where land
-TOT_PREC;TOT_PREC;prhmax;daymax(TOT_PREC);;ModelLevel;0,000277778;;maximum;;;0;kg m-2 s-1;;;1;;;;;;;Daily Maximum Hourly Precipitation Rate;;precipitation_flux;;atmos;
+MAX_PREC;MAX_PREC;prhmax;daymax(TOT_PREC);;ModelLevel;0,000277778;;maximum;;;0;kg m-2 s-1;;;1;;;;;;;Daily Maximum Hourly Precipitation Rate;;precipitation_flux;;atmos;
 PREC_CON;PREC_CON;prc;RAIN_CON + SNOW_CON;;ModelLevel;0,000277778;mean;mean;;;0;kg m-2 s-1;8;a;1;;;;;;;Convective Precipitation;;convective_precipitation_flux;;atmos;
 ATHB_T;ATHB_T;rlut;;;ModelLevel;-1;mean;mean;mean;mean;0;W m-2;4;a;1;;1;;1;;;TOA Outgoing Longwave Radiation;;toa_outgoing_longwave_flux;up;atmos;
 ASOD_T;ASOD_T;rsdt;;;ModelLevel;1;mean;mean;mean;mean;0;W m-2;4;a;1;;1;;1;;;TOA Incident Shortwave Radiation;;toa_incoming_shortwave_flux;down;atmos;
@@ -56,7 +56,7 @@ FI200p;FI;zg200;;;PressureLevel;1;point;mean;mean;mean;20000;m;4;i;1;4;1;m*4;1;s
 ;;clh;;;ModelLevel;100;mean;mean;;;0;%;4;a;1;;;;;;;High Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
 ;;clm;;;ModelLevel;100;mean;mean;;;0;%;4;a;1;;;;;;;Mid Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
 ;;cll;;;ModelLevel;100;mean;mean;;;0;%;4;a;1;;;;;;;Low Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
-W_SNOW;W_SNOW;snc;Max(0.01,Min(1.,W_SNOW/0.015))*H(x);;ModelLevel;100;point;mean;mean;mean;0;%;4;i;1;4;1;m*4;1;s*4;;Snow Area Fraction;;surface_snow_area_fraction;;landIce land;
+AREA_SNOW;AREA_SNOW;snc;Max(0.01,Min(1.,W_SNOW/0.015))*H(x);;ModelLevel;100;point;mean;mean;mean;0;%;4;i;1;4;1;m*4;1;s*4;;Snow Area Fraction;;surface_snow_area_fraction;;landIce land;
 H_SNOW;H_SNOW;snd;;;ModelLevel;1;point;mean;mean;mean;0;m;4;i;1;4;1;m*4;1;s*4;;Snow Depth;;surface_snow_thickness;;landIce land;mean where land
 ;;sic;;;;;;;;;;%;;;1;;1;m;1;s;;Sea Ice Area Fraction;;sea_ice_area_fraction;;seaIce ocean;
 TOT_SNOW;TOT_SNOW;prsn;SNOW_GSP + SNOW_CON;;;0,000277778;;mean;;;0;kg m-2 s-1;;;1;;;;;;;Snowfall Flux;;snowfall_flux;;atmos;
