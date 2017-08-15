@@ -2,9 +2,9 @@
 #
 # creates CORDEX standard CMOR compliant output from preprocessed input
 #
-#import logging as log
 import os
 import sys
+import shutil
 
 # netcdf4 Library
 from netCDF4 import Dataset
@@ -67,28 +67,35 @@ def process_resolution(params,reslist):
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
         for f in sorted(filenames):
+            log.info("\n###########################################################")
+            #if limit_range is set: skip file if it is out of range
+            year=f.split("_")[-1][:4]
+            if config.get_config_value('boolean','limit_range'):
+                if year < config.get_config_value('settings','proc_start') or year > config.get_config_value('settings','proc_end'):
+                    log.debug("File %s out of time range! Skipping ..." % f)
+                    continue
+
             if f.find("%s_" % var) == 0 or f.find("%s.nc" % var) == 0 or f.find("%s_" % varRCM) == 0 or f.find("%s.nc" % varRCM) == 0 or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
                 in_file = "%s/%s" % (dirpath,f)
                 # workaround for error in last input files of CCLM data from DWD
                 # use only file with e.g. _2100 in filename (only if USE_SEARCH==True)
                 if config.get_config_value('boolean', 'use_search_string') and in_file.find(settings.search_input_string) < 0:
                     continue
-                log.info("Input from: %s" % (in_file))
+                log.log(35,"Input from: %s" % (in_file))
                 if os.access(in_file, os.R_OK) == False:
                     log.error("Could not read file '%s', no permission!" % in_file)
                 else:
-
-                    log.info("\n###########################################################") #%s" % (str(var in config.get_model_value('var_list_fixed'))))
                     if var in config.get_model_value('var_list_fixed'):
                         tools.process_file_fix(params,in_file)
                     else:
                         reslist=tools.process_file(params,in_file,var,reslist)
             else:
-                log.info("File %s does match the file name conventions for this variable. File not processed...")
+                log.warning("File %s does match the file name conventions for this variable. File not processed...")
 
             # stop after one file with all chosen resolutions if set
             if config.get_config_value('boolean','test_only_one_file') == True:
                 sys.exit()
+    log.info("Variable '%s' finished!" % (var))
     return True
 
 
@@ -167,6 +174,11 @@ def main():
     parser.add_option("-A", "--append_log",
                             action="store_true", dest="append_log", default = False,
                             help="Append to log instead of overwrite")
+    parser.add_option("-l", "--limit",
+                            action="store_true", dest="limit_range", default = False,
+                            help="Limit time range for processing (range set in .ini file)")
+
+
 
 
 
@@ -188,6 +200,8 @@ def main():
 
     config.set_config_value('settings','model',options.act_model)
     config.set_config_value('boolean','overwrite',options.overwrite)
+    config.set_config_value('boolean','limit_range',options.limit_range)
+
     process_list=[config.get_model_value('driving_model_id'),config.get_model_value('driving_experiment_name'),config.get_model_value('driving_model_ensemble_member')]
     # now read paramfile for all variables for this RCM
     varfile = ("%s/%s" % (config.get_config_value('settings','DirConfig'),config.get_model_value('paramfile')))
@@ -252,15 +266,16 @@ def main():
         return
 
     #Remove variables in var_skip_list from varlist
-    log.info("Variables %s were found in var_skip_list. Skip these variables" % settings.var_skip_list)
-    new_varlist=list(varlist)
-    for var in varlist:
-        params = settings.param[var]
-        varCCLM = params[config.get_config_value('index','INDEX_VAR')]
-        varRCM= params[config.get_config_value('index','INDEX_RCM_NAME')]
-        if (varCCLM in settings.var_skip_list) or (varRCM in settings.var_skip_list):
-            new_varlist.remove(var)
-    varlist=list(new_varlist)
+    if settings.var_skip_list[0]!="":
+        log.info("Variables %s were found in var_skip_list. Skip these variables" % settings.var_skip_list)
+        new_varlist=list(varlist)
+        for var in varlist:
+            params = settings.param[var]
+            varCCLM = params[config.get_config_value('index','INDEX_VAR')]
+            varRCM= params[config.get_config_value('index','INDEX_RCM_NAME')]
+            if (varCCLM in settings.var_skip_list) or (varRCM in settings.var_skip_list):
+                new_varlist.remove(var)
+        varlist=list(new_varlist)
 
 
     log.info("Configuration read from: %s" % os.path.abspath(varfile))
@@ -324,6 +339,8 @@ if __name__ == "__main__":
 
     # call main function
     main()
+    #clean up temp files
+    shutil.rmtree(settings.DirWork)
     log = logging.getLogger('cmorlight')
     log.propagate = True
     log.log(35,'\n##################################\n########  End of script.  ########\n##################################')

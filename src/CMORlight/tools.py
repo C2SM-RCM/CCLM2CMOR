@@ -893,7 +893,6 @@ def process_file_fix(params,in_file):
 
     # close input file
     f_in.close()
-    log.debug("Input4: %s" % in_file)
 
     # ready message
     log.info("Variable '%s' finished!" % (var))
@@ -1449,7 +1448,6 @@ def process_file(params,in_file,var,reslist):
 
     # create object from netcdf file to access all parameters and attributes
     f_in = Dataset(in_file,"r")
-    log.info("Input1: %s" % in_file)
 
     for name in f_in.ncattrs():
         if name in settings.global_attr_file: #only take attribute from file if in this list
@@ -1540,24 +1538,23 @@ def process_file(params,in_file,var,reslist):
     # get last value of array time
     dt_stop_in = str(dt_in[data_max_len-1])
     dt_stop_in = dt_stop_in[:dt_stop_in.index(' ')].replace('-','')
-    log.info("Start: %s, stop: %s" % (dt_start_in,dt_stop_in))
 
     # now create the correct filename in temp directory
     # calculate time difference between first two time steps (in hours)
     # in hours: should be 1 or 3 or 6
     a = datetime.strptime(str(dt_in[0]), settings.FMT)
     b = datetime.strptime(str(dt_in[1]), settings.FMT)
-    log.info("First time step in input file: %s" % (str(a)))
+    log.debug("Start: %s, stop: %s" % (str(a),str(a)))
 
     tdelta = b - a
     tdelta_seconds = tdelta.seconds
     input_time_step = tdelta_seconds / 3600. + (tdelta.days * 24.)
-    log.info("Input data time interval: %shourly" % (str(input_time_step)))
+    log.debug("Input data time interval: %shourly" % (str(input_time_step)))
 
     # difference one day: seconds of time delta are '0'!
     if tdelta_seconds == 0:
         tdelta_seconds = tdelta.days * 24 * 3600.
-    log.info("Time starts at: %s, %s, difference (in seconds) is: %s" % (str(a),str(b),str(tdelta.seconds)))
+   # log.info("Time starts at: %s, %s, difference (in seconds) is: %s" % (str(a),str(b),str(tdelta.seconds)))
 
     # define variables for storing the pathes for mrfso and mrso
     in_file_help = ""
@@ -1590,7 +1587,8 @@ def process_file(params,in_file,var,reslist):
         if cm_type != '':
             log.info("\n#########################")
             log.log(35,"resolution: '%s'" % res)
-            log.info("cell method: '%s'\ncalendar: '%s' \n#########################" % (cm_type,in_calendar))
+            log.debug("cell method: '%s' " % (cm_type))
+            log.info("#########################")
             # out directory
 
             outdir = get_temp_dir(var,res,cm_type)
@@ -1608,7 +1606,7 @@ def process_file(params,in_file,var,reslist):
                     continue
                 else:
                     log.info("Overwriting..")
-            log.info("Output to: %s" % (outpath))
+            log.debug("Output to: %s" % (outpath))
 
             # set step wide of cdo command
             if res == '1hr':
@@ -1661,7 +1659,7 @@ def process_file(params,in_file,var,reslist):
                 cmd_mul = ' -mulc,%s ' % (mulc_factor_str)
             else:
                 cmd_mul = ""
-            log.info("mulc factor for variable(%s): %s" % (var,cmd_mul))
+            log.debug("mulc factor for variable(%s): %s" % (var,cmd_mul))
             #sys.exit()
 
             # create help output file which is at the zthe new in_file
@@ -1675,15 +1673,13 @@ def process_file(params,in_file,var,reslist):
                 for i in range(idx_from,idx_to):
                     f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False)
                     arr[i] = f_hlp.name
-#                    f_hlp = "%s/%s-%d.nc" % (settings.DirWork,'help',i)
                     retval = shell("cdo -f %s sellevidx,%d %s %s" %(config.get_config_value('settings', 'cdo_nctype'),i,in_file,arr[i]))
-                    log.info("%s %s" % (cmd1,arr[i]))
-                # ATTENTION
+
                 # now calculate the sum
-#                f_hlp = "%s/%s-%s.nc" % (settings.DirWork,'help','sum')
                 f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False)
-                cmd = "%s %s" % (cmd1,f_hlp.name)
-                #TODO: the program crashes here since there are no input files given for the sum cdo enssum!
+                #write files in arr into str with whitespace separation for cdo command
+                files_str=" ".join(arr.values())
+                cmd = "%s %s %s" % (cmd1,files_str,f_hlp.name)
                 retval = shell(cmd)
                 # multiply with factor 1000 (from csv table)
                 # switch from original in_file to the new in_file for these variables
@@ -1705,7 +1701,6 @@ def process_file(params,in_file,var,reslist):
             #if var in ['mrso','mrfso'] and os.path.isfile(in_file_help):
                 #in_file_org = in_file
                 #in_file = in_file_help
-            log.info("Cell method: %s" % (cm_type))
             # get type of function to create the output file: point,mean,maximum,minimum,sum
             # extract cell method from string
             t_delim = 'mean over days'
@@ -1716,7 +1711,6 @@ def process_file(params,in_file,var,reslist):
 
             else:
                 cm = cm_type
-            log.info("Cell method used for cdo command: %s" % (cm))
 
             # mulc has been already done before!!
             if var in ['mrso','mrfso']:
@@ -1809,16 +1803,15 @@ def process_file(params,in_file,var,reslist):
                 # also set the compression
                 if config.get_config_value('boolean','nc_compress') == True:
                     log.info("COMPRESS variable: %s" % (var_name))
-                else:
-                    log.info("NO COMPRESS")
+
                 # skip 'pressure'!!
                 my_lst = []
                 for dim in var_in.dimensions:
                     if str(dim) not in settings.varlist_reject:
                         my_lst.append(dim)
                 var_dims = tuple(my_lst)
-                log.info("Dimensions (of variable %s): %s" % (var_name,str(var_dims)))
-                log.info("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
+                log.debug("Dimensions (of variable %s): %s" % (var_name,str(var_dims)))
+                log.debug("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
                 if var_name in [var,settings.netCDF_attributes['RCM_NAME_ORG']]:
                     if config.get_config_value('boolean','nc_compress') == True:
                         var_out = f_out.createVariable(var_name,datatype=data_type,
@@ -1826,7 +1819,7 @@ def process_file(params,in_file,var,reslist):
                     else:
                         var_out = f_out.createVariable(var_name,datatype=data_type,
                             dimensions=var_dims,fill_value=settings.netCDF_attributes['missing_value'])
-                    log.info("FillValue(output): %s,%s" % (var_name,var_out._FillValue))
+                    log.debug("FillValue(output): %s,%s" % (var_name,var_out._FillValue))
                 else:
                     if config.get_config_value('boolean','nc_compress') == True:
                         var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims,complevel=4)
@@ -1834,7 +1827,7 @@ def process_file(params,in_file,var,reslist):
                         var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims)
                 #if '_FillValue' in var_in.ncattrs() and var_in._FillValue < 0:
                     #correct_fillvalue = True
-                log.info("Dimensions (of variable %s): %s" % (var_name,str(f_out.dimensions)))
+                log.debug("Dimensions (of variable %s): %s" % (var_name,str(f_out.dimensions)))
                 # set all character fields as character converted with str() function
                 # create attribute list
                 if var_name in ['lat','lon']:
@@ -1851,7 +1844,7 @@ def process_file(params,in_file,var,reslist):
                 # copy content to new datatype
                 var_out[:] = var_in[:]
 
-                log.info("Copy from tmp: %s" % (var_out.name))
+                log.debug("Copy from tmp: %s" % (var_out.name))
                 if var_out.name == 'time':
                     if 'calendar' in var_out.ncattrs():
                         if var_out.getncattr('calendar') != in_calendar:
@@ -1898,7 +1891,7 @@ def process_file(params,in_file,var,reslist):
                     var_out.setncatts(att_lst)
                     # copy content to new datatype
                     var_out[:] = var_in[:]
-                    log.info("Copy from input: %s" % (var_out.name))
+                    log.debug("Copy from input: %s" % (var_out.name))
 #            sys.exit()
 
             ##############################
@@ -1968,8 +1961,6 @@ def process_file(params,in_file,var,reslist):
                 num_refdate_diff = float(int(num_refdate_diff))
                 log.warning("Set time of start date (%s) to 00:00!" % str(date_start))
 
-            # show some numbers
-            log.info("Startdate for time settings: %s, %s" % (str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,calendar=in_calendar))))
 
             if res == '1hr':
                 num = 1. / 24.
@@ -2177,7 +2168,6 @@ def process_file(params,in_file,var,reslist):
         else:
             cmd = "No cell method set for this variable (%s) and time resolution (%s)." % (var,res)
             log.warning(cmd)
-       # log.info("Input3: %s" % in_file)
 
     # ATTENTION: 'in_file' is only to be deleted here for these variables, otherwise it is read-only!!
     if var in ['mrso','mrfso'] and os.path.isfile(in_file_org):
@@ -2197,6 +2187,5 @@ def process_file(params,in_file,var,reslist):
     # close input file
     f_in.close()
     # ready message
-    log.info("Variable '%s' finished!" % (var))
     return new_reslist
 

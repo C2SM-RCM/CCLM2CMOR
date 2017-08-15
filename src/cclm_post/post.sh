@@ -14,10 +14,10 @@ else
   exit 1
 fi
 
-source job_settings
+source job_settings.sh
 
 CURRENT_DATE=$(echo ${YDATE_START} | cut -c1-6)
-STOP_DATE=$(echo ${YDATE_STOP} | cut -c1-6) 
+STOP_DATE=$(echo ${YDATE_STOP} | cut -c1-6)
 overwrite=false
 n=true #normal printing mode
 v=false #verbose printing mode
@@ -28,23 +28,23 @@ do
   case $key in
       -g|--gcm)
       GCM=$2
-      shift 
+      shift
       ;;
       -x|--exp)
       EXP=$2
-      shift 
-      ;;   
+      shift
+      ;;
       -i|--input)
       EXPPATH=$2
-      shift 
-      ;;      
+      shift
+      ;;
        -s|--start)
       CURRENT_DATE=$2
       shift
       ;;
       -e|--end)
       STOP_DATE=$2
-      shift 
+      shift
       ;;
       -S|--silent)
       n=false
@@ -57,9 +57,9 @@ do
       ;;
       *)
       echo unknown option!
-      ;;  
+      ;;
   esac
-  shift 
+  shift
 done
 
 EXPPATH=${GCM}/${EXP}
@@ -72,20 +72,20 @@ echo "Start date:" ${CURRENT_DATE}
 echo "Stop date:" ${STOP_DATE}
 
 #printing modes
- 
+
 function echov {
   if ${v}
-  then 
+  then
     echo $1
   fi
-} 
+}
 
 function echon {
   if ${n}
-  then 
+  then
    echo $1
   fi
-} 
+}
 
 if [ ! -d ${INPATH} ]
 then
@@ -99,8 +99,7 @@ then
   mkdir -p ${WORKDIR}/${EXPPATH}
 fi
 
-### get the current date
-#cd ${PFDIR}
+
 
 INPDIR=${INPUTPOST}/${EXPPATH}
 OUTDIR=${OUTPUTPOST}/${EXPPATH}
@@ -141,7 +140,7 @@ do
   echon "################################"
   echon "# Processing time ${YYYY_MM}"
   echon "################################"
-  
+
   if [ ! -d ${INPDIR}/${YYYY} ]
   then
     if [ -f ${INPATH}/*${YYYY}.tar ]
@@ -154,7 +153,7 @@ do
    	  exit
    	fi
   fi
-  
+
   if [ ! -d ${OUTDIR}/${YYYY_MM} ]
   then
     mkdir -p ${OUTDIR}/${YYYY_MM}
@@ -183,14 +182,14 @@ do
     echon "Copy constant file"
     ncks -h -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} ${INPDIR}/${YYYY}/output/out01/lffd${SIM_START}c.nc ${WORKDIR}/${EXPPATH}/cclm_const.nc
   fi
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
   #function to process constant variables
-  function constVar { 
+  function constVar {
 	if [ ! -f ${OUTDIR}/$1.nc ] ||  ${overwrite}
 	then
 		echon "Building file for constant variable $1"
@@ -199,7 +198,7 @@ do
   	echov "File for constant variable $1 already exists. Skipping..."
 	fi
 	}
-	
+
 	#... functions for building time series
 	function timeseries {  # building a time series for a given quantity
 	cd ${INPDIR}/${CURRDIR}/$2
@@ -222,17 +221,17 @@ do
 	  PASCAL=$(python -c "print(${PLEVS[$NPLEV]} * 100.)")
 	  PLEV=$(python -c "print(int(${PLEVS[$NPLEV]}))")
 	  cd ${INPDIR}/${CURRDIR}/$2
-	  
+
   	if [ ! -f ${OUTDIR}/${YYYY_MM}/${1}${PLEV}p_ts.nc ] ||  ${overwrite}
     then
   		echon "Building time series at pressure level ${PLEV} hPa for variable $1"
 	    ${NCO_BINDIR}/ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d pressure,${PASCAL},${PASCAL} -v $1 lffd${CURRENT_DATE}*p.nc ${OUTDIR}/${YYYY_MM}/${1}${PLEV}p_ts.nc
   	  ${NCO_BINDIR}/ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INPDIR}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100p.nc ${OUTDIR}/${YYYY_MM}/${1}${PLEV}p_ts.nc
-	  else 
+	  else
     	echov "Time series for variable $1 at pressure level ${PLEV}  already exists. Skipping..."
 	  fi
 	  let "NPLEV = NPLEV + 1"
-	  
+
 	done
 	}
 
@@ -244,7 +243,7 @@ do
 	do
 	  ZLEV=$(python -c "print(int(${ZLEVS[$NZLEV]}))")
 	  cd ${INPDIR}/${CURRDIR}/$2
-	  
+
   	if [ ! -f ${OUTDIR}/${YYYY_MM}/${1}${ZLEV}z_ts.nc ] ||  ${overwrite}
     then
   		echon "Building time series at height level ${ZLEV} m for variable $1"
@@ -269,84 +268,9 @@ do
   fi
 
 	# --- build time series for selected variables
+	cd ${PFDIR}
+	source jobf.sh
 
-	timeseries  FRESHSNW   out01
-	timeseries  PP         out01
-	timeseries  QC         out01
-	timeseries  QI         out01
-	timeseries  QV         out01
-	timeseries  QV_S       out01
-	timeseries  T          out01
-	timeseries  T_S        out01
-	timeseries  T_SNOW     out01
-	timeseries  T_SO       out01
-	timeseries  U          out01
-	timeseries  V          out01
-	timeseries  W_I        out01
-	timeseries  W_SNOW     out01
-	timeseries  W_SO       out01
-	#
-	timeseries  P          out02
-	timeseries  W          out02
-	#
-	timeseries  SNOW_CON   out03
-	timeseries  SNOW_GSP   out03
-	timeseries  RAIN_CON   out03
-	timeseries  RAIN_GSP   out03
-	timeseries  TOT_PREC   out03
-	#
-	timeseries  ALHFL_S    out04
-	timeseries  ALWD_S     out04
-	timeseries  ALWU_S     out04
-	timeseries  ASHFL_S    out04
-	timeseries  ASOD_T     out04
-	timeseries  ASOB_T     out04
-	timeseries  ASOB_S     out04
-	timeseries  ATHB_T     out04
-	timeseries  ATHB_S     out04
-	timeseries  ASWDIFD_S  out04
-	timeseries  ASWDIFU_S  out04
-	timeseries  ASWDIR_S   out04
-	timeseries  CLCT       out04
-	timeseries  DURSUN     out04
-	timeseries  PMSL       out04
-	timeseries  PS         out04
-	timeseries  QV_2M      out04
-	timeseries  T_2M       out04
-	timeseries  U_10M      out04
-	timeseries  V_10M      out04
-	timeseries  RELHUM_2M  out04
-	timeseries  ALB_RAD    out04
-	#
-	timeseries  AEVAP_S    out05
-	timeseries  CLCH       out05
-	timeseries  CLCL       out05
-	timeseries  CLCM       out05
-	timeseries  H_SNOW     out05
-	timeseries  RUNOFF_G   out05
-	timeseries  RUNOFF_S   out05
-	timeseries  T_S        out05
-	timeseries  TQC        out05
-	timeseries  TQI        out05
-	timeseries  TQV        out05
-	timeseries  W_SO_ICE   out05
-	timeseries  W_SO       out05
-	timeseries  HPBL       out05
-	timeseries  SNOW_MELT  out05
-	timeseries  W_SNOW     out05
-	#
-	timeseriesp FI         out06
-	timeseriesp QV         out06
-	timeseriesp T          out06
-	timeseriesp U          out06
-	timeseriesp V          out06
-	timeseriesp RELHUM     out06
-	#
-	timeseries  TMAX_2M    out07
-	timeseries  TMIN_2M    out07
-	timeseries  VMAX_10M   out07
-	timeseries  VABSMX_10M out07
-	#
 
 	#################################################
 	# compress data
@@ -403,21 +327,21 @@ do
 	#echo "END  " ${YYYY} ${MM}  >> ${WORKDIR}/${EXPPATH}/joblogs/post/finish_joblist
 
 
-  
+
   MMint=$(python -c "print(int("${MMint}")+1)")
   if [ ${MMint} -ge 13 ]
   then
     MMint=1
     YYYY=$(python -c "print(int("${YYYY}")+1)")
   fi
-  
+
   if [ ${MMint} -le 9 ]
   then
     MM=0${MMint}
   else
     MM=${MMint}
   fi
-  
+
   CURRENT_DATE=${YYYY}${MM}
 
 done
