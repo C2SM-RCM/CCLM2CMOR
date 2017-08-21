@@ -67,14 +67,13 @@ def process_resolution(params,reslist):
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
         for f in sorted(filenames):
-            log.info("\n###########################################################")
             #if limit_range is set: skip file if it is out of range
             year=f.split("_")[-1][:4]
             if config.get_config_value('boolean','limit_range'):
                 if year < config.get_config_value('settings','proc_start') or year > config.get_config_value('settings','proc_end'):
                     log.debug("File %s out of time range! Skipping ..." % f)
                     continue
-
+            log.info("\n###########################################################")
             if f.find("%s_" % var) == 0 or f.find("%s.nc" % var) == 0 or f.find("%s_" % varRCM) == 0 or f.find("%s.nc" % varRCM) == 0 or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
                 in_file = "%s/%s" % (dirpath,f)
                 # workaround for error in last input files of CCLM data from DWD
@@ -177,6 +176,10 @@ def main():
     parser.add_option("-l", "--limit",
                             action="store_true", dest="limit_range", default = False,
                             help="Limit time range for processing (range set in .ini file)")
+    parser.add_option( "--remove",
+                            action="store_true", dest="remove_src", default = False,
+                            help="Remove source files after chunking")
+
 
 
 
@@ -201,6 +204,7 @@ def main():
     config.set_config_value('settings','model',options.act_model)
     config.set_config_value('boolean','overwrite',options.overwrite)
     config.set_config_value('boolean','limit_range',options.limit_range)
+    config.set_config_value('boolean','remove_src',options.remove_src)
 
     process_list=[config.get_model_value('driving_model_id'),config.get_model_value('driving_experiment_name'),config.get_model_value('driving_model_ensemble_member')]
     # now read paramfile for all variables for this RCM
@@ -290,7 +294,9 @@ def main():
     # process all var in varlist with input model and input experiment for proc_list item
     for var in varlist:
         reslist_act=list(reslist) #new copy of reslist
-
+        for res in reslist:
+            if tools.check_resolution(params,res,options.process_table_only) == False:
+                reslist_act.remove(res) #remove resolution from list if it is not in table or if it is not supported
         if var not in settings.param:
             log.warning("Variable '%s' not supported!" % (var))
             continue
@@ -302,33 +308,27 @@ def main():
             log.log(35,"\n\n\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (varCCLM, varRCM))
 
             log.debug("Used parameter for variable '%s': %s" % (var,params))
+
+        if reslist_act==[]:
+            log.warning("None of the given resolutions appears in the table! Skipping variable...")
+            continue
         if params:
             # set global attributes in the dictionary
             tools.set_attributes(params,process_list)
 
             # skip fixed fields from chunking, makes no sense to chunk
             if options.chunk_var == True and not var in config.get_model_value('var_list_fixed'):
-                tools.proc_chunking(params,reslist)
-
-            # seasonal mean
-     #       elif options.seasonal_mean == True:
-     #           log.info("Seasonal processing")
-     #           tools.proc_seasonal_mean(params)
+                log.log(35, "Chunking files \n #######################")
+                tools.proc_chunking(params,reslist_act)
 
             # some procs for correction or cleanup files later
             elif options.corr_var == True:
-                for res in reslist:
+                for res in reslist_act:
                     tools.proc_corr_var(params,res,key=options.corr_key)
 
             # process all vars from varlist with all output resolutions from reslist
             else:
-                for res in reslist:
-                    if tools.check_resolution(params,res,options.process_table_only) == False:
-                        reslist_act.remove(res) #remove resolution from list if it is not in table or if it is not supported
-                if reslist_act!=[]:
-                    process_resolution(params,reslist_act)
-                else:
-                    log.warning("None of the given resolutions appears in the table! Skipping variable...")
+                process_resolution(params,reslist_act)
 
 
 #########################################################
@@ -341,6 +341,13 @@ if __name__ == "__main__":
     main()
     #clean up temp files
     shutil.rmtree(settings.DirWork)
+
+    #Clean up .tmp files in output directory (if on last run program crashed while writing a file)
+    for root, dirs, files in os.walk(settings.DirOut):
+        for file in files:
+            if file[-4:]==".tmp":
+                os.remove(os.path.join(root, file))
+
     log = logging.getLogger('cmorlight')
     log.propagate = True
     log.log(35,'\n##################################\n########  End of script.  ########\n##################################')

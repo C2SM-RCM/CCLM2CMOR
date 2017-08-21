@@ -22,7 +22,7 @@ EXP=RCP85
 
 YYA=2005
 MMA=01
-YYE=2007
+YYE=2014
 MME=12
 
 LASTDAY=30   #Last day of each month (e.g. 30 or 31)
@@ -36,8 +36,9 @@ inst_list="AER_BC AER_DUST AER_ORG AER_SO4 AER_SS ALB_DIF ALB_DRY ALB_RAD ALB_SA
 
 #which variables to process
 proc_list="W_SNOW T_S W_SO"
+#proc_list="AEVAP_S ALHFL_S ALWD_S ALWU_S ASHFL_S ASOB_T ASOD_T ASWDIFD_S ASWDIFU_S ASWDIR_S ATHB_T DURSUN FI HPBL H_SNOW PMSL PS QV QV QV_2M RAIN_CON RELHUM_2M RUNOFF_G RUNOFF_S SNOW_CON SNOW_GSP SNOW_MELT T T TMAX_2M TMIN_2M TOT_PREC TQC TQI TQV T_2M T_S U U U_10M V V VABSMX_10M VMAX_10M V_10M W_SNOW W_SO W_SO_ICE"
 #process all available variables
-proc_all=false
+proc_all=true
 
 #constant variables
 const_list="FR_LAND HSURF"
@@ -154,9 +155,19 @@ do
   echo "####################"
   echo ${YY}
   echo "####################"
-
-  FILES=$(ls ${INDIR}/${YYA}_${MMA}/*_ts.nc)
-
+  
+  if ! ${proc_all} 
+  then
+    FILES=${proc_list} 
+  else
+    FILES=$(ls ${INDIR}/${YY}_${MMA}/*_ts.nc)
+  fi
+  
+  if [ ! -d ${INDIR}/${YYA}_${MMA} ]
+  then
+    echo "Directory ${INDIR}/${YYA}_${MMA} does not exist! Skipping this month..."
+    continue
+  fi
 
   #
   if [ ${LFILE} -ne 2 ]
@@ -166,8 +177,14 @@ do
     for FILE in ${FILES}        # var name loop
     do
       FILEIN=$(basename ${FILE})
-      (( c2 = ${#FILEIN}-6 ))
-      FILEOUT=$(echo ${FILEIN} | cut -c1-${c2})
+      
+      if  ${proc_all}  
+      then
+        (( c2 = ${#FILEIN}-6 ))
+        FILEOUT=$(echo ${FILEIN} | cut -c1-${c2}) # cut off "_ts.nc"
+      else
+        FILEOUT=${FILE} 
+      fi
       
       #cut off pressure level information from FILEOUT to find it in acc_list or inst_list
       if [ "${FILEOUT: -1}" == "p" ]
@@ -178,29 +195,31 @@ do
         varname=${FILEOUT}
       fi
 
-      #if variable not in proc_list: skip it
-      if [[ ${proc_list} =~ (^|[[:space:]])${varname}($|[[:space:]]) ]] 
+      #process variable if in proc_list or if proc_all is set
+      if [[ ${proc_list} =~ (^|[[:space:]])${varname}($|[[:space:]]) ]] || ${proc_all}
       then
-        echon ""
-      elif  ${proc_all} 
-      then
-        echon ""
+        
+        if ls ${OUTDIR}/${FILEOUT}/${FILEOUT}_${YY}* 1> /dev/null 2>&1 
+        then
+          if ${overwrite} 
+          then    
+            echon ""
+            echon ${FILEOUT}
+            echon "File for variable ${FILEOUT} and year ${YY} already exists. Overwriting..."
+          else
+            echov ""
+            echov "File for variable ${FILEOUT} and year ${YY} already exists. Skipping..."
+            continue
+          fi
+        else
+          echon ""
+          echon ${FILEOUT}
+        fi
+
       else
         continue
       fi
       
-      echon ${FILEOUT}
-
-      if ls ${OUTDIR}/${FILEOUT}/${FILEOUT}_${YY}* 1> /dev/null 2>&1 
-      then
-        if ${overwrite} 
-        then      
-          echon "File for variable ${FILEOUT} and year ${YY} already exists. Overwriting..."
-        else
-          echon "File for variable ${FILEOUT} and year ${YY} already exists. Skipping..."
-          continue
-        fi
-      fi
 
 
       # determine if current variable is an accumulated quantity
@@ -240,10 +259,15 @@ do
       MM=${MA}
       while [ ${MM} -le ${ME} ]
       do 
+        if [ ! -f ${INDIR}/${YY}_${MM}/${FILEOUT}_ts.nc ]
+        then
+          echo "File ${INDIR}/${YY}_${MM}/${FILEOUT}_ts.nc does not exist! Skipping this variable..."
+          continue 2
+        fi
         FILELIST="$(echo ${FILELIST}) $(ls ${INDIR}/${YY}_${MM}/${FILEOUT}_ts.nc)"
         (( MM=MM+1 ))
       done
-
+      
       echon "Concatenate files"
       echov "${FILELIST}"
       # concatenate monthly files to yearly file

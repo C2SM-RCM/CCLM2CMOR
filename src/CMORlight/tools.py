@@ -385,9 +385,9 @@ def proc_chunking(params,reslist):
             cm_type = params[config.get_config_value('index','INDEX_VAR_CM_MON')]
         else:
             cmd = "Resolution (%s) is not supported in chunking, keep it as it is." % res
-            log.warning(cmd)
+            log.debug(cmd)
             continue
-        log.info("Chunking for variable (%s) and resolution (%s) " % (var,res))
+        log.log(35,"resolution: %s " % (res))
         if cm_type != '':
             outdir = get_temp_dir(var,res,cm_type)
             for dirpath,dirnames,filenames in os.walk(outdir):
@@ -396,6 +396,8 @@ def proc_chunking(params,reslist):
                 stop_yr = 0
                 flist = ''
                 for f in sorted(filenames):
+                    if f[-3:] != ".nc": #skip unsuitable files
+                        continue
                     idx = f.index("%s_" % res)
 #                    act_yr = int(f[idx+len("%s_" % res):f.index(".nc")][:4])
                     if start_yr == 0:
@@ -403,68 +405,62 @@ def proc_chunking(params,reslist):
                             start_yr = int(f[idx+len("%s_" % res):f.index(".nc")][:8])
                         elif res == 'mon' or res == 'sem':
                             start_yr = int(f[idx+len("%s_" % res):f.index(".nc")][:6])
+
+                    start_yr_curr=int(f[idx+len("%s_" % res):f.index(".nc")][:4])
                     idx = f.rindex("-")
                     if res == 'day':
                         stop_yr = int(f[idx+1:f.index(".nc")][:8])
                     elif res == 'mon' or res == 'sem':
                         stop_yr = int(f[idx+1:f.index(".nc")][:6])
-                    f_list.append("%s/%s" % (outdir,f))
+
                     # use year of stop date for chunk border
                     act_yr = int(f[idx+1:f.index(".nc")][:4])
+                    if act_yr > start_yr_curr + 1:
+                        log.debug("%s is not a yearly file. Skipping..." % f)
+                        continue
+
+                    f_list.append("%s/%s" % (outdir,f))
                     if act_yr % max_agg == 0:
-                        # TODO: correct this to first step and last step
-                        # generate input filelist
-                        for y in f_list:
-                            flist = ("%s %s " % (flist,y))
 
-                        # generate complete output path with output filename
-                        outfile = create_filename(var,res,str(start_yr),str(stop_yr))
-                        # generate outpath with outfile and outdir
-                        outpath = "%s/%s" % (outdir,outfile)
-                        # cat files to aggregation file
-                        # skip if exist
-                        if (not os.path.isfile(outpath)) or config.get_config_value('boolean','overwrite'):
-                            if config.get_config_value('boolean','overwrite'):
-                                log.info("Output file exists: %s, overwriting..." % (outpath))
-                            retval=shell("ncrcat -h -O %s %s " % (flist,outpath))
-
-                            # remove source files
-                            if len(f_list) > 1:
-                                retval=shell("rm -f %s " % (flist))
-                            # set attributes
-                            set_attributes_create(outpath,res)
-                        else:
-                            log.info("Output file exist: %s, skipping!" % (outpath))
-
+                        do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir)
                         # reset parameter
                         f_list = []
                         start_yr = 0
                         stop_yr = 0
                         flist = ''
-                # do the same for wahts left in list
+                # do the same for whats left in list
                 if len(f_list) > 1:
-                    # generate filename for outfile
-                    outfile = create_filename(var,res,str(start_yr),str(stop_yr))
-                    # generate outpath with outfile and outdir
-                    outpath = "%s/%s" % (outdir,outfile)
-                    # generate input filelist
-                    for y in f_list:
-                        flist = ("%s %s " % (flist,y))
+                    do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir)
 
-                    # cat files to aggregation file
-                    if (not os.path.isfile(outpath)) or config.get_config_value('boolean','overwrite'):
-                        if config.get_config_value('boolean','overwrite'):
-                            log.info("Output file exist: %s, overwriting..." % (outpath))
-                        retval = shell("ncrcat -h -O %s %s " % (flist,outpath))
+# -----------------------------------------------------------------------------
+def do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir):
+    if len(f_list) > 1:
 
-                        # remove source files
-                        retval = shell("rm -f %s " % (flist))
+        # generate complete output path with output filename
+        outfile = create_filename(var,res,str(start_yr),str(stop_yr))
+        # generate outpath with outfile and outdir
+        outpath = "%s/%s" % (outdir,outfile)
 
-                        # set attributes
-                        set_attributes_create(outpath,res)
-                    else:
-                        log.info("Output file exist: %s, skipping!" % (outpath))
+        # TODO: correct this to first step and last step
+        # generate input filelist
+        for y in f_list:
+            flist = ("%s %s " % (flist,y))
+        # cat files to aggregation file
+        # skip if exist
+        if (not os.path.isfile(outpath)) or config.get_config_value('boolean','overwrite'):
+            if os.path.isfile(outpath):
+                log.info("Output file exists: %s, overwriting..." % (outfile))
+            else:
+                log.info("Concatenating files to %s" % (outfile))
+            retval=shell("ncrcat -h -O %s %s " % (flist,outpath))
 
+            # set attributes
+            set_attributes_create(outpath,res)
+        else:
+            log.info("Output file exist: %s, skipping!" % (outfile))
+                                    # remove source files
+        if config.get_config_value('boolean','remove_src'):
+            retval=shell("rm -f %s " % (flist))
 
 # -----------------------------------------------------------------------------
 def leap_year(year, calendar='standard'):
@@ -700,7 +696,7 @@ def process_file_fix(params,in_file):
     # create complete outpath: outdir + outfile
     outpath = "%s/%s" % (outdir,outfile)
     # skip file if exists or overwrite
-    if os.path.isfile(outpath) and (not config.get_config_value('boolean','overwrite')):
+    if os.path.isfile(outpath):
         log.info("Output file exists: %s" % (outpath))
         if not config.get_config_value('boolean','overwrite'):
             log.info("Skipping...")
@@ -938,10 +934,11 @@ def proc_seasonal_mean(params):
 
                 # first a temp file
                 ftmp_name = "%s/%s%s" % (settings.DirWork,str(uuid.uuid1()),'-help.nc')
+                # generate outpath with outfile and outdir
+                f = "%s/%s" % (dirpath,f)
+
                 # for season the last month from previous year is needed
                 if i == 0:
-                    # generate outpath with outfile and outdir
-                    f = "%s/%s" % (dirpath,f)
                     cmd = "cdo -f %s -seas%s -selmonth,3/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f,ftmp_name)
                     retval=shell(cmd)
                 else:
@@ -1585,10 +1582,18 @@ def process_file(params,in_file,var,reslist):
 
         # process only if cell method is definded in input matrix
         if cm_type != '':
-            log.info("\n#########################")
-            log.log(35,"resolution: '%s'" % res)
+            log.info("#########################")
+            log.log(35,"     resolution: '%s'" % res)
             log.debug("cell method: '%s' " % (cm_type))
             log.info("#########################")
+
+            #call method for seasonal mean
+
+            if res=="sem":
+                log.info("Seasonal processing")
+                proc_seasonal_mean(params)
+                continue
+
             # out directory
 
             outdir = get_temp_dir(var,res,cm_type)
@@ -1635,7 +1640,6 @@ def process_file(params,in_file,var,reslist):
                 elif in_calendar in ('366_day','all_leap'):
                     nstep = 366. * 24. / (tdelta_seconds/3600.)
             # TODO
-            # sem is in extra proc: _proc_seasonal_mean
             #elif res == 'sem':
                 #if time.calendar in ('standard','gregorian','proleptic_gregorian','noleap','365_day','julian','all_leap'):
                     #nstep = (365 * 24 / (tdelta_seconds/3600)) / 4

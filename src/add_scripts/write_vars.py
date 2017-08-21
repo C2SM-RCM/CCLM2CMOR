@@ -90,17 +90,31 @@ jobf=open(path_cclm+"jobf.sh","w")
 for o,out in enumerate(outvar):
     for var in out:
         if var in cordex_vars or not cordex_only:
+            jobf.write("{:s} ".format(var))
             jobf.write("timeseries  {:{width}s} out{:02d}\n".format(var,o+1,width=lenmax))
+
        # else:
         #    print("Variable %s not needed!" % var)
     for varp in outvarp[o]:
         if varp in cordex_vars or not cordex_only:
+            jobf.write("{:s} ".format(varp,o+1,width=lenmax))
             jobf.write("timeseriesp {:{width}s} out{:02d}\n".format(varp,o+1,width=lenmax))
+
      #   else:
       #      print("Variable %s not needed!" % varp)
     jobf.write("#\n")
 
 jobf.close()
+
+
+#write proc_list into file
+proc_list=open(path_cclm+"proc_list","w")
+
+for var in sorted(flat_l):
+    if var in cordex_vars or not cordex_only:
+        proc_list.write("{:s} ".format(var))
+
+proc_list.close()
 
 
 

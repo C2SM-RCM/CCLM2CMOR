@@ -21,8 +21,8 @@ BATCH_CMD=bash                           # the batch command of your computer sy
 
 #... start and end date of the simulation
 
-YDATE_START=200802      #Start year and month for processing (if not given in command line) YYYYMM
-YDATE_STOP=201501     #End year and month for processing (if not given in command line)  YYYYMM
+YDATE_START=201001      #Start year and month for processing (if not given in command line) YYYYMM
+YDATE_STOP=201012     #End year and month for processing (if not given in command line)  YYYYMM
 
 SIM_START=1949120100 # start date of simulation YYYYMMDDHH[mmss]: needed for constant file
 #SIM_STOP=2099123000  # end date of simulation YYYYMMDDHH[mmss]

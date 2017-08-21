@@ -37,7 +37,8 @@ CMORLIGHT:
 
 
     - fehler bei derotate_uv : cdo rotuvb:  Only rotated lon/lat grids supported!
-    - chunking, seasonal mean
+    - chunking: done correctly?
+    - seasonal mean integrated in process_file but not perfectly economic?
     - process derotated vars: if folder not available -> derotate, if infile for this not available: error!
     - Hans_jürgens Kommentare ausprobieren,  beheben
     - In addition, the Core variables have to be provided on a regular geographic
