@@ -1,8 +1,9 @@
 # tools.py
 
-# default
+# system tools
 import os
 import sys
+import glob
 
 # netcdf4 Library
 from netCDF4 import Dataset
@@ -439,6 +440,11 @@ def do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir):
         # generate complete output path with output filename
         outfile = create_filename(var,res,str(start_yr),str(stop_yr))
         # generate outpath with outfile and outdir
+        #TODO: remove extra directory?
+        outdir=outdir+"/chunks"
+        if not os.path.isdir(outdir):
+            os.makedirs(outdir)
+
         outpath = "%s/%s" % (outdir,outfile)
 
         # TODO: correct this to first step and last step
@@ -895,26 +901,47 @@ def process_file_fix(params,in_file):
 
 
 # -----------------------------------------------------------------------------
-def proc_seasonal_mean(params):
+def proc_seasonal_mean(params,year):
     ''' create seasonal mean from monthly data '''
 
     # get cdf variable name
     var = params[config.get_config_value('index','INDEX_VAR')]
-    # first get monthly data
+    # first get daily data
     res = "day"
     cm_type = params[config.get_config_value('index','INDEX_VAR_CM_DAY')]
-    # get outdir
+    # get output directory of daily data: input for seasonal
     indir = get_temp_dir(var,res,cm_type)
     log.info("Inputdir: %s" % (indir))
 
+    # seasonal mean
+    res = 'sem'
+    # get cell method
+    cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SEM')]
+
+    #create possible filenames and check their existence -> skip or overwrite file
+    outdir = get_temp_dir(var,res,cm_type)
+    outfile1 = create_filename(var,res,year+"03",year+"11")
+    outpath1 = "%s/%s" % (outdir,outfile1)
+    outfile2 = create_filename(var,res,str(int(year)-1)+"12",year+"11")
+    outpath2 = "%s/%s" % (outdir,outfile2)
+
+    if os.path.isfile(outpath1) or os.path.isfile(outpath2):
+        if os.path.isfile(outpath1):
+            log.info("Output file exists: %s" % (outpath1))
+        else:
+            log.info("Output file exists: %s" % (outpath2))
+
+        if not config.get_config_value('boolean','overwrite'):
+            log.info("Skipping...")
+            return
+        else:
+            log.info("Overwriting..")
+
+
     # get files with monthly data from the same input (if exist)
+    input_exist=False  #is changed if input file was found
     for dirpath,dirnames,filenames in os.walk(indir):
-        # switch to sem output
-        cmd = ''
-        # seasonal mean
-        res = 'sem'
-        # get cell method
-        cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SEM')]
+
         if cm_type != '':
             t_delim = 'mean over days'
             if t_delim in cm_type:
@@ -929,6 +956,12 @@ def proc_seasonal_mean(params):
             f_lst = sorted(filenames)
             i = 0
             for f in f_lst:
+                year_act=f.split("_")[-1][:4]
+                if year_act != year: #only process file if the year is correct
+                    i=i+1
+                    continue
+                else:
+                    input_exist=True
                 if config.get_config_value('boolean','use_search_string') and f.find(settings.search_input_string) > 0 and f.find(settings.search_input_string.replace('_','-')) > 0:
                     continue
 
@@ -1049,6 +1082,8 @@ def proc_seasonal_mean(params):
                     os.remove(ftmp_name)
                 # next file index in the list
                 i += 1
+            if not input_exist:
+                log.warning("Input file (daily resolution) for seasonal processing does not exist. Skipping this year...")
         else:
             log.warning("No cell method set for this variable (%s) and time resolution (%s)." % (var,res))
 
@@ -1431,7 +1466,7 @@ def derotate_uv():
                     log.warning("Files %s or %s do not exist! Skipping these variables..." % (in_file_u,in_file_v))
 
 # -----------------------------------------------------------------------------
-def process_file(params,in_file,var,reslist):
+def process_file(params,in_file,var,reslist,year):
     '''
     process one input file and create one one output file
 
@@ -1472,6 +1507,8 @@ def process_file(params,in_file,var,reslist):
                 in_calendar = 'standard'
         else:
             in_calendar = 'standard'
+
+   # in_calendar=config.get_model_value("calendar")
 
     # mark for use another time unit
     if settings.use_alt_units: ## and dt_in_year_chk < settings.alt_start_year: # or possible use of: config.use_alt_units:
@@ -1590,8 +1627,7 @@ def process_file(params,in_file,var,reslist):
             #call method for seasonal mean
 
             if res=="sem":
-                log.info("Seasonal processing")
-                proc_seasonal_mean(params)
+                proc_seasonal_mean(params,year)
                 continue
 
             # out directory

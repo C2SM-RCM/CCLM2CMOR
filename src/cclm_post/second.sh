@@ -7,120 +7,16 @@
 # K. Keuler, Matthias Göbel Stand: 08.08.2017
 #-------------------------------------------------------------------------
 
-# EXPID  - simulation ID
-# WORKDIR- directory of monthly time series
-# YYA    - start year
-# MMA    - start month
-# YYE    - end year
-# MME    - end month
-# FILET  - start of the file names of the tar-files
 typeset -Z2 MM MA ME MP MMA MME DHH EHH
 typeset -Z4 YY YYA YYE YP
 
-GCM=HadGEM2-ES
-EXP=RCP85
 
-YYA=2005
+#---------------------------------------------------------------------
 MMA=01
-YYE=2014
 MME=12
 
-LASTDAY=30   #Last day of each month (e.g. 30 or 31)
-
-
-# all CCLM variables representing a time interval (min,max,average, accumulated)
-accu_list="AEVAP_S ALHFL_BS ALHFL_PL ALHFL_S ALWD_S ALWU_S APAB_S ASHFL_S ASOB_S ASOB_T ASOD_T ASWDIFD_S ASWDIFU_S ASWDIR_S ATHB_S ATHB_T AUMFL_S AUSTRSSO AVDISSSO AVMFL_S AVSTRSSO DURSUN DURSUN_M DURSUN_R GRAU_GSP HAIL_GSP RAIN_CON RAIN_GSP RUNOFF_G RUNOFF_S SNOW_CON SNOW_GSP SNOW_MELT T_2M_AV TD_2M_AV TDIV_HUM TMAX_2M TMIN_2M TOT_PREC U_10M_AV V_10M_AV VABSMX_10M VGUST_CON VGUST_DYN VMAX_10M"
-  
-#all instantaneous variables
-inst_list="AER_BC AER_DUST AER_ORG AER_SO4 AER_SS ALB_DIF ALB_DRY ALB_RAD ALB_SAT BAS_CON BRN C_T_LK CAPE_3KM CAPE_CON CAPE_ML CAPE_MU CEILING CIN_ML CIN_MU CLC CLC_CON CLC_SGS CLCH CLCL CLCM CLCT CLCT_MOD CLDEPTH CLW_CON DBZ DBZ_850 DBZ_CMAX DD_ANAI DEPTH_LK DP_BS_LK DPSDT DQC_CON DQI_CON DQV_CON DQVDT DT_CON DT_SSO DTKE_CON DTKE_HSH DTKE_SSO DU_CON DU_SSO DV_CON DV_SSO EDR EMIS_RAD EVATRA_SUM FC FETCH_LK FF_ANAI FI FI_ANAI FIS FOR_D FOR_E FR_ICE FR_LAKE FRESHSNW GAMSO_LK H_B1_LK H_ICE H_ML_LK H_SNOW H_SNOW_M HBAS_CON HBAS_SC HHL HMO3 HORIZON HPBL HTOP_CON HTOP_DC HTOP_SC HZEROCL LAI LAI_MN LAI_MX LCL_ML LFC_ML LHFL_S LWD_S LWU_S MFLX_CON MSG_RAD MSG_RADC MSG_TB MSG_TBC O3 OMEGA P P_ANAI PABS_RAD PLCOV PLCOV_MN PLCOV_MX PMSL PMSL_ANAI POT_VORTIC PP PRG_GSP PRH_GSP PRR_CON PRR_GSP PRS_CON PRS_GSP PS Q_SEDIM QC QC_ANAI QC_RAD QCVG_CON QG QH QI QI_RAD QNCLOUD QNGRAUPEL QNHAIL QNICE QNRAIN QNSNOW QR QRS QS QV QV_2M QV_ANAI QV_S QVSFLX RCLD RELHUM RELHUM_2M RESID_WSO RHO_SNOW RHO_SNOW_M RLAT RLON ROOTDP RSMIN RSTOM SDI_1 SDI_2 SHFL_S SI SKYVIEW SLI SLO_ANG SLO_ASP SNOWLMT SOBS_RAD SOBT_RAD SOD_T SOHR_RAD SOILTYP SP_10M SSO_GAMMA SSO_SIGMA SSO_STDH SSO_THETA SWDIFD_S SWDIFU_S SWDIR_COR SWDIR_S SWISS00 SWISS12 SYNME5 SYNME6 SYNME7 SYNMSG T T_2M T_ANAI T_B1_LK T_BOT_LK T_BS_LK T_CL T_G T_ICE T_M T_MNW_LK T_S T_SNOW T_SNOW_M T_SO T_WML_LK TCH TCM TD_2M THBS_RAD THBT_RAD THHR_RAD TINC_LH TKE TKE_CON TKETENS TKVH TKVM TO3 TOP_CON TOT_PR TOTFORCE_S TQC TQC_ANAI TQG TQH TQI TQR TQS TQV TQV_ANAI TRA_SUM TWATER U U_10M UMFL_S USTR_SSO V V_10M VDIS_SSO VIO3 VMFL_S VORTIC_U VORTIC_V VORTIC_W VSTR_SSO W W_CL W_G1 W_G2 W_G3 W_I W_SNOW W_SNOW_M W_SO W_SO_ICE WLIQ_SNOW Z0 ZHD ZTD ZWD"
-
-#which variables to process
-proc_list="W_SNOW T_S W_SO"
-#proc_list="AEVAP_S ALHFL_S ALWD_S ALWU_S ASHFL_S ASOB_T ASOD_T ASWDIFD_S ASWDIFU_S ASWDIR_S ATHB_T DURSUN FI HPBL H_SNOW PMSL PS QV QV QV_2M RAIN_CON RELHUM_2M RUNOFF_G RUNOFF_S SNOW_CON SNOW_GSP SNOW_MELT T T TMAX_2M TMIN_2M TOT_PREC TQC TQI TQV T_2M T_S U U U_10M V V VABSMX_10M VMAX_10M V_10M W_SNOW W_SO W_SO_ICE"
-#process all available variables
-proc_all=true
-
-#constant variables
-const_list="FR_LAND HSURF"
-
-# Set LFILE=1 if only primary fields should be created and =2 for only secondary fields; for any other number both types of fields are calculated
-LFILE=1
-
-
-n=true #normal printing mode
-v=false #verbose printing mode
-overwrite=false #overwrite output if it exists
-
-while [[ $# -gt 0 ]]
-do
-  key="$1"
-  case $key in
-      -g|--gcm)
-      GCM=$2
-      shift 
-      ;;
-      -x|--exp)
-      EXP=$2
-      shift 
-      ;;     
-       -s|--start)
-      YYA=$2         
-      shift
-      ;;
-      -e|--end)
-      YYE=$2 
-      shift 
-      ;;
-      -S|--silent)
-      n=false
-      ;;
-      -V|--verbose)
-      v=true
-      ;;
-      -O|--overwrite)
-      overwrite=true
-      ;;
-      -a|--all)
-      proc_all=true
-      ;;
-      *)
-      echo unknown option!
-      ;;  
-  esac
-  shift 
-done
-
-EXPPATH=${GCM}/${EXP}
-EXPID=${GCM}_${EXP}
-
-WORKDIR=${SCRATCH}/experiments/${EXPPATH}/post${YYA}_${YYE}
-INDIR=${PROJECT}/CMOR/work/outputpost/${EXPPATH}
-OUTDIR=${PROJECT}/CMOR/work/input_CMORlight/${EXPPATH}
-CONSTDIR=${PROJECT}/CMOR/work/
-PERM=755
-
-#
-# module Befehl verfügbar machen
-#source /sw/rhel6-x64/etc/profile.mistral
-#module load getrusage
-# getrusage <command>  shows time and memory consumption of specific <command>
-
-
-
-function echov {
-if ${v}
-then 
-echo $1
-fi
-} 
-
-function echon {
-if ${n}
-then 
-echo $1
-fi
-} 
-#---------------------------------------------------------------------
+INDIR=${INDIR}/${EXPPATH}
+OUTDIR=${OUTDIR}/${EXPPATH}
 
 
 # create subdirectory for full time series
@@ -163,17 +59,23 @@ do
     FILES=$(ls ${INDIR}/${YY}_${MMA}/*_ts.nc)
   fi
   
-  if [ ! -d ${INDIR}/${YYA}_${MMA} ]
-  then
-    echo "Directory ${INDIR}/${YYA}_${MMA} does not exist! Skipping this month..."
-    continue
-  fi
+  #check if directories for all months exist
+  MM=${MMA}
+  while [ ${MM} -le ${MME} ]
+  do 
+    if [ ! -d ${INDIR}/${YY}_${MM} ]
+    then
+      echo "Directory ${INDIR}/${YY}_${MM} does not exist! Skipping this year..."
+      (( YY=YY+1 ))
+      continue 2
+    fi
+    (( MM=MM+1 ))
+  done
 
   #
   if [ ${LFILE} -ne 2 ]
   then
   # concatenate monthly files to annual file
-
     for FILE in ${FILES}        # var name loop
     do
       FILEIN=$(basename ${FILE})
@@ -198,7 +100,6 @@ do
       #process variable if in proc_list or if proc_all is set
       if [[ ${proc_list} =~ (^|[[:space:]])${varname}($|[[:space:]]) ]] || ${proc_all}
       then
-        
         if ls ${OUTDIR}/${FILEOUT}/${FILEOUT}_${YY}* 1> /dev/null 2>&1 
         then
           if ${overwrite} 
@@ -246,7 +147,7 @@ do
         done
         if [ LACCU -eq 1 ]
         then
-          echon "Error for ${varname}: neither contained in accu_list nor in inst_list! Skipping..."
+          echo "Error for ${varname}: neither contained in accu_list nor in inst_list! Skipping..."
           continue
         fi
       fi
@@ -630,6 +531,9 @@ do
   fi
   (( YY=YY+1 ))
   done                                      # year loopend
+
+
+
   # Remove monthly subdirs YYYY_MM
   #YY=${YYA}
   #MM=${MMA}

@@ -87,7 +87,7 @@ def process_resolution(params,reslist):
                     if var in config.get_model_value('var_list_fixed'):
                         tools.process_file_fix(params,in_file)
                     else:
-                        reslist=tools.process_file(params,in_file,var,reslist)
+                        reslist=tools.process_file(params,in_file,var,reslist,year)
             else:
                 log.warning("File %s does match the file name conventions for this variable. File not processed...")
 

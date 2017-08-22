@@ -75,11 +75,18 @@ lenmax=len(max(flat_l, key=len))
 
 #Get variables needed for cordex from csv file
 cordex_vars=[]
+PLEVS={}
 with open(varfile,'rt') as csvfile:
     reader = csv.reader(csvfile,delimiter=';')
     for row in reader:
         if row[1]!="":
             cordex_vars.append(row[1])
+            #write requested pressure levels into dict
+            if row[1]!=row[0]:
+                if row[1] in PLEVS:
+                    PLEVS[row[1]].append(row[0][-4:-1])
+                else:
+                    PLEVS[row[1]]=[row[0][-4:-1]]
 #additionally needed variables to calculate CORDEX variables
 add=["SNOW_GSP","SNOW_CON","RAIN_CON","RUNOFF_G","ASOB_T","ASWDIR_S","ASWDIFD_S","TQC"]
 cordex_vars.extend(add)
@@ -90,16 +97,16 @@ jobf=open(path_cclm+"jobf.sh","w")
 for o,out in enumerate(outvar):
     for var in out:
         if var in cordex_vars or not cordex_only:
-            jobf.write("{:s} ".format(var))
             jobf.write("timeseries  {:{width}s} out{:02d}\n".format(var,o+1,width=lenmax))
 
        # else:
         #    print("Variable %s not needed!" % var)
     for varp in outvarp[o]:
         if varp in cordex_vars or not cordex_only:
-            jobf.write("{:s} ".format(varp,o+1,width=lenmax))
-            jobf.write("timeseriesp {:{width}s} out{:02d}\n".format(varp,o+1,width=lenmax))
 
+            plev=str(PLEVS[varp]).replace("[","(").replace("]",")").replace(",","").replace("0'","0.").replace("'","")
+            jobf.write("PLEVS=%s \n" % plev)
+            jobf.write("timeseriesp {:{width}s} out{:02d} \n \n".format(varp,o+1,width=lenmax))
      #   else:
       #      print("Variable %s not needed!" % varp)
     jobf.write("#\n")

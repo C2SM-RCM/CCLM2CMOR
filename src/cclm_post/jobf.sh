@@ -42,11 +42,21 @@ timeseries  W_SO_ICE   out05
 timeseries  HPBL       out05
 timeseries  SNOW_MELT  out05
 #
-timeseriesp FI         out06
-timeseriesp QV         out06
-timeseriesp T          out06
-timeseriesp U          out06
-timeseriesp V          out06
+PLEVS=(500. 200.) 
+timeseriesp FI         out06 
+ 
+PLEVS=(850.) 
+timeseriesp QV         out06 
+ 
+PLEVS=(850. 500. 200.) 
+timeseriesp T          out06 
+ 
+PLEVS=(850. 500. 925 200.) 
+timeseriesp U          out06 
+ 
+PLEVS=(850. 500. 925 200.) 
+timeseriesp V          out06 
+ 
 #
 timeseries  TMAX_2M    out07
 timeseries  TMIN_2M    out07

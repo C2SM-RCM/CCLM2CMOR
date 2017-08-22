@@ -37,8 +37,13 @@ CMORLIGHT:
 
 
     - fehler bei derotate_uv : cdo rotuvb:  Only rotated lon/lat grids supported!
-    - chunking: done correctly?
+    - spezialfall: prhmax -> berechnen wenn stündlicher output vorliegt
+    
+    
+    - chunking: in extra folder -> do something better!
+    - every step in process_file needed to be carried out for every file??? -> raise performance!
     - seasonal mean integrated in process_file but not perfectly economic?
+    - mrso: 6hr: bounds not available??; 2019 seems to be 2020 -> switch infile comes in ?
     - process derotated vars: if folder not available -> derotate, if infile for this not available: error!
     - Hans_jürgens Kommentare ausprobieren,  beheben
     - In addition, the Core variables have to be provided on a regular geographic
@@ -54,14 +59,12 @@ latitude/longitude grid.??? -> lon/lat(rlon,rlat) als variablen ausreichend?
 
 
     - error bei compressing output?
-    - Reduce logger output
     -should be possible to use cclm_const file instead of processing FR_LAND and HSURF
     - dimension bounds steht noch drin bei instantanen variablen obwohl überflüssig ->  bei inputdaten mit ncks -x rausschneiden (evtl. vorher mit ncatted bearbeiten)
       -> bei akk. und averag. daten neu setzen mit links rechts von zeitstempel
     - rlon rlat in coordinates_cordex_eur11.nc nachschauen wenn nicht vorhanden
     - deutlicher dass es sich um programmabbruch handelt
     - CCLM subversion in attributen angeben -> COSMO_5.0_clm6?
-    - was ist INDEX_RCM_NAME_ORG -> wird in settings.param verlangt
     - which attributes does cordex allow? How should they look like
     - 4.spalte in tabelle als comment hinzufügen
     - wenn mehrere reslist angegeben: erst hohe auflösung dann niedrigere -> kann mit hoher.temp weiterrechnen um rechenzeit zu sparen, muss nicht mehr auf rohdaten zugreifen: teilweise realsiert für day, mon; nicht für 6hr, day
