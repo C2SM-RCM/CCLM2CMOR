@@ -15,9 +15,8 @@ typeset -Z4 YY YYA YYE YP
 MMA=01
 MME=12
 
-INDIR=${INDIR}/${EXPPATH}
-OUTDIR=${OUTDIR}/${EXPPATH}
-
+INDIR=${INDIR_BASE}/${EXPPATH}
+OUTDIR=${OUTDIR_BASE}/${EXPPATH}
 
 # create subdirectory for full time series
 [[ -d ${OUTDIR} ]] || mkdir -p  ${OUTDIR}
@@ -532,7 +531,7 @@ do
   fi
   (( YY=YY+1 ))
   DATE2=$(date +%s)
-	SEC_TOTAL=$(python -c "print(${DATE2}-${DATE1T})")
+	SEC_TOTAL=$(python -c "print(${DATE2}-${DATE1})")
 	echon "Time for postprocessing: ${SEC_TOTAL} s"
   done                                      # year loopend
 
@@ -555,5 +554,4 @@ do
     #fi
   #done
 
-exit
 

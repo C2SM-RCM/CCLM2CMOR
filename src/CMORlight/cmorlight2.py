@@ -52,20 +52,10 @@ def process_resolution(params,reslist):
     if os.path.isdir(in_dir) == False:
       log.error("Input directory does not exist(0): %s \n \t Change base path in .ini file or create directory! " % in_dir)
       return
-       # if params[config.get_config_value('index','INDEX_RCM_NAME')].find('p') > 0:
-        #    in_dir = "%s/%s" % (config.get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')][:params[config.get_config_value('index','INDEX_RCM_NAME')].find('p')])
-         #   log.info("Now looking for input dir: %s" % (in_dir))
-          #  if os.path.isdir(in_dir) == False:
-              # log.info("Input directory does not exist(1): %s" % in_dir)
-                #return
-   # if os.path.isdir(in_dir) == False:
-   #     in_dir = "%s" % (tools.get_input_path(var))
-    #    log.info("Looking for input dir(2): %s" % (in_dir))
-    #if os.path.isdir(in_dir) == False:
-     #   log.warning("Input directory does not exist(2): %s" % in_dir)
-      #  return
+
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
+        i=0
         for f in sorted(filenames):
             #if limit_range is set: skip file if it is out of range
             year=f.split("_")[-1][:4]
@@ -85,7 +75,8 @@ def process_resolution(params,reslist):
                     log.error("Could not read file '%s', no permission!" % in_file)
                 else:
                     if var in config.get_model_value('var_list_fixed'):
-                        tools.process_file_fix(params,in_file)
+                      tools.process_file_fix(params,in_file)
+                     # log.warning("Skip process file")
                     else:
                         reslist=tools.process_file(params,in_file,var,reslist,year)
             else:
@@ -94,6 +85,11 @@ def process_resolution(params,reslist):
             # stop after one file with all chosen resolutions if set
             if config.get_config_value('boolean','test_only_one_file') == True:
                 sys.exit()
+
+#        pool=Pool(processes=len(l))
+#      #  a.extend(pool.map(main,l))
+#        pool.terminate()
+
     log.info("Variable '%s' finished!" % (var))
     return True
 
@@ -122,9 +118,9 @@ def main():
     parser.add_option("-c", "--chunk-var",
                             action="store_true", dest="chunk_var", default = False,
                             help="go call chunking for the variable list")
-    parser.add_option("-s", "--seasonal-mean",
-                            action="store_true", dest="seasonal_mean", default=False,
-                            help="go calculate seasonal mean from aggregated monthly data")
+#    parser.add_option("-s", "--seasonal-mean",
+#                            action="store_true", dest="seasonal_mean", default=False,
+#                            help="go calculate seasonal mean from aggregated monthly data")
     parser.add_option("-n", "--use-version",
                             action="store", dest = "use_version", default = tools.new_dataset_version(),
                             help = "version for drs (default: today in format YYYYMMDD)")
@@ -155,7 +151,7 @@ def main():
     parser.add_option("-x", "--experiment",
                             action="store", dest="driving_experiment_name", default = "",
                             help="set used experiment")
-    parser.add_option("-e", "--ensemble",
+    parser.add_option("-E", "--ensemble",
                             action="store", dest="driving_model_ensemble_member", default = "",
                             help="set used ensemble")
     parser.add_option("-O", "--overwrite",
@@ -175,7 +171,13 @@ def main():
                             help="Append to log instead of overwrite")
     parser.add_option("-l", "--limit",
                             action="store_true", dest="limit_range", default = False,
-                            help="Limit time range for processing (range set in .ini file)")
+                            help="Limit time range for processing (range set in .ini file or parsed)")
+    parser.add_option("-s", "--start",
+                            action="store", dest="proc_start", default = None,
+                            help="Start year for processing if --limit is set.")
+    parser.add_option("-e", "--end",
+                            action="store", dest="proc_end", default = None,
+                            help="End year for processing if --limit is set.")
     parser.add_option( "--remove",
                             action="store_true", dest="remove_src", default = False,
                             help="Remove source files after chunking")
@@ -195,8 +197,7 @@ def main():
         # end programm
 
    #store parsed arguments in config
-    setval=["paramfile","driving_model_id","driving_experiment_name","driving_model_ensemble_member"]
-
+    setval=["paramfile","driving_model_id","driving_experiment_name","driving_model_ensemble_member","proc_start","proc_end"]
     for val in setval:
         if options_dict[val]!="":
             config.set_config_value('settings_',val,options_dict[val])

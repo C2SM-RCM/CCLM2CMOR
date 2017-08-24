@@ -340,9 +340,7 @@ def new_dataset_version():
 # -----------------------------------------------------------------------------
 def get_out_dir(var,res,cm_type):
     '''
-    creates a path from variable,resolution,cell methods
-    actual: in temp directory
-    later: in output directory
+    creates an output path from variable,resolution,cell methods
     '''
     if cm_type != '':
         outpath = create_outpath(res,var)
@@ -352,16 +350,6 @@ def get_out_dir(var,res,cm_type):
         return outpath
     else:
         return ""
-
-
-# -----------------------------------------------------------------------------
-def get_temp_dir(var,res,cm_type): #todo: superfluent
-    '''
-    creates a path from variable,resolution,cell methods
-    actual: in temp directory
-    later: in output directory
-    '''
-    return get_out_dir(var,res,cm_type)
 
 
 # -----------------------------------------------------------------------------
@@ -390,7 +378,7 @@ def proc_chunking(params,reslist):
             continue
         log.log(35,"resolution: %s " % (res))
         if cm_type != '':
-            outdir = get_temp_dir(var,res,cm_type)
+            outdir = get_out_dir(var,res,cm_type)
             for dirpath,dirnames,filenames in os.walk(outdir):
                 f_list = []
                 start_yr = 0
@@ -440,8 +428,9 @@ def do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir):
         # generate complete output path with output filename
         outfile = create_filename(var,res,str(start_yr),str(stop_yr))
         # generate outpath with outfile and outdir
-        #TODO: remove extra directory?
-        outdir=outdir+"/chunks"
+        #extra directory to put chunked files into
+        if config.get_config_value('settings','chunk_into')!="":
+            outdir=outdir+"/"+config.get_config_value('settings','chunk_into')
         if not os.path.isdir(outdir):
             os.makedirs(outdir)
 
@@ -696,7 +685,7 @@ def process_file_fix(params,in_file):
     settings.Global_attributes[name] = 'r0i0p0'
 
     # out directory
-    outdir = get_temp_dir(var,'fx','fx')
+    outdir = get_out_dir(var,'fx','fx')
     # get file name
     outfile = create_filename(var,'fx','','')
     # create complete outpath: outdir + outfile
@@ -910,7 +899,7 @@ def proc_seasonal_mean(params,year):
     res = "day"
     cm_type = params[config.get_config_value('index','INDEX_VAR_CM_DAY')]
     # get output directory of daily data: input for seasonal
-    indir = get_temp_dir(var,res,cm_type)
+    indir = get_out_dir(var,res,cm_type)
     log.info("Inputdir: %s" % (indir))
 
     # seasonal mean
@@ -919,7 +908,7 @@ def proc_seasonal_mean(params,year):
     cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SEM')]
 
     #create possible filenames and check their existence -> skip or overwrite file
-    outdir = get_temp_dir(var,res,cm_type)
+    outdir = get_out_dir(var,res,cm_type)
     outfile1 = create_filename(var,res,year+"03",year+"11")
     outpath1 = "%s/%s" % (outdir,outfile1)
     outfile2 = create_filename(var,res,str(int(year)-1)+"12",year+"11")
@@ -952,7 +941,7 @@ def proc_seasonal_mean(params,year):
                 cm = cm_type
             log.info("Cell method used for cdo command: %s" % (cm))
 
-            outdir = get_temp_dir(var,res,cm_type)
+            outdir = get_out_dir(var,res,cm_type)
             f_lst = sorted(filenames)
             i = 0
             for f in f_lst:
@@ -1206,7 +1195,7 @@ def proc_corr_var(params,res,key):
     #res = "sem"
     cm_type = params[config.get_config_value('index','INDEX_VAR_CM_DAY')]
     # get outdir
-    indir = get_temp_dir(var,res,cm_type)
+    indir = get_out_dir(var,res,cm_type)
     log.info("Inputdir: %s" % (indir))
 
     # get files with monthly data from the same input (if exist)
@@ -1632,7 +1621,7 @@ def process_file(params,in_file,var,reslist,year):
 
             # out directory
 
-            outdir = get_temp_dir(var,res,cm_type)
+            outdir = get_out_dir(var,res,cm_type)
 
             # get file name
             outfile = create_filename(var,res,dt_start_in,dt_stop_in)
@@ -1778,7 +1767,7 @@ def process_file(params,in_file,var,reslist,year):
             elif res == 'mon':
                 # get file with daily data from the same input (if exist)
                 DayFile = create_filename(var,'day',dt_start_in,dt_stop_in)
-                DayPath = "%s/%s" % (get_temp_dir(var,'day',cm_type),DayFile)
+                DayPath = "%s/%s" % (get_out_dir(var,'day',cm_type),DayFile)
                 # use day files or prcess this step before
                 if os.path.isfile(DayPath):
                     cmd = "cdo -f %s -s mon%s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,DayPath,ftmp_name)

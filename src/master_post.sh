@@ -8,6 +8,17 @@
 #SBATCH --error=/scratch/snx1600/mgoebel/CMOR/logs/shell/CMOR_sh_%j.err
 #SBATCH --job-name="CMOR_sh"
 
+#Check if all functions are available
+funcs="ncrcat ncks ncap2 ncatted"
+for f in $funcs
+do
+  typ=$(type -p $f)
+  if [ -z ${typ} ]  
+  then
+    echo "Necessary function $f is not available! Load respective module. Exiting..."
+  fi
+done
+
 DATE1=$(date +%s)
 cd /scratch/snx1600/mgoebel/CMOR/src
 source ./settings.sh

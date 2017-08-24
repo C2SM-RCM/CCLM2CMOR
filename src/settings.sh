@@ -34,8 +34,8 @@ INPUTPOST=${BASEDIR}/input     # directory to where the raw data archives are ex
 OUTPUTPOST=${BASEDIR}/work/outputpost # output directory of the first step
 
 #for second step
-INDIR=${OUTPUTPOST}
-OUTDIR=${BASEDIR}/work/input_CMORlight
+INDIR_BASE=${OUTPUTPOST}
+OUTDIR_BASE=${BASEDIR}/work/input_CMORlight
 
 
 #Variable settings
