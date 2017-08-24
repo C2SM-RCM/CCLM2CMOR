@@ -51,7 +51,8 @@ do
   echo "####################"
   echo ${YY}
   echo "####################"
-  
+  DATE1=$(date +%s)
+	
   if ! ${proc_all} 
   then
     FILES=${proc_list} 
@@ -530,6 +531,9 @@ do
   #
   fi
   (( YY=YY+1 ))
+  DATE2=$(date +%s)
+	SEC_TOTAL=$(python -c "print(${DATE2}-${DATE1T})")
+	echon "Time for postprocessing: ${SEC_TOTAL} s"
   done                                      # year loopend
 
 

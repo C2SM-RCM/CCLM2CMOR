@@ -5,22 +5,25 @@ post_step=0 #to limit post processing to step 1 or 2, for all other values both 
 
 GCM=HadGEM2-ES     
 EXP=RCP85
-ARCH_SUB=HadGEM2-ES_Hist_RCP85/RCP85 #subdirectory where data of this simulation are archived
+
+EXPPATH=${GCM}/${EXP}
+ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived
+#ARCH_SUB=HadGEM2-ES_Hist_RCP85/RCP85
 
 # time settings
 SIM_START=1949120100 # start date of simulation YYYYMMDDHH[mmss]: needed for constant file
 
 #for step 1:
-START_DATE=201901      #Start year and month for processing (if not given in command line) YYYYMM
-STOP_DATE=202001     #End year and month for processing (if not given in command line)  YYYYMM
+START_DATE=202102      #Start year and month for processing (if not given in command line) YYYYMM
+STOP_DATE=210012     #End year and month for processing (if not given in command line)  YYYYMM
 #SIM_STOP=2099123000  # end date of simulation YYYYMMDDHH[mmss]
 
 #for step 2:
-YYA=2019 #Start year for processing 
-YYE=2019 #End year for processing 
+YYA=  #Start year for processing 
+YYE= #End year for processing 
 
 #... directory path settings
-BASEDIR=${PROJECT}/CMOR 
+BASEDIR=/scratch/snx1600/mgoebel/CMOR
 ARCH_BASE=/store/c2sm/ch4/ssilje/Archive_cosmo_runs # directory where the raw data of the simulations are archived
 ARCHDIR=${ARCH_BASE}/${ARCH_SUB} # join archive paths
 SRCDIR=${BASEDIR}/src/cclm_post           # directory where the post processing scripts are stored
@@ -33,15 +36,6 @@ OUTPUTPOST=${BASEDIR}/work/outputpost # output directory of the first step
 #for second step
 INDIR=${OUTPUTPOST}
 OUTDIR=${BASEDIR}/work/input_CMORlight
-
-
-
-#... directory and binary path settings for utilities
-UTILS_BINDIR=${SPDIR}/src/cfu/bin          # absolute path to directory of utility binaries
-CDO=/apps/daint/UES/jenkins/6.0.UP02/gpu/easybuild/software/CDO/1.8.0rc6-CrayGNU-2016.11/bin    # absolute path of the CDO binary 
-NCO_BINDIR=/apps/daint/UES/jenkins/6.0.UP02/gpu/easybuild/software/NCO/4.6.7-CrayGNU-2016.11/bin  # absolute path to directory of NCO binaries
-NC_BINDIR=/apps/daint/UES/jenkins/6.0.UP02/gpu/easybuild/software/netCDF/4.4.1.1-CrayGNU-2016.11/bin #  absolute path of the netcdf binaries (ncdump, nccopy)
-
 
 
 #Variable settings
@@ -59,7 +53,7 @@ const_list="FR_LAND HSURF"
 
 #Special settings for first step
 
-NBOUNDCUT=10 # number of boundary lines to be cut off in the time series data and before evaluating the data with SAMOA
+NBOUNDCUT=10 # number of boundary lines to be cut off in the time series data 
 IE_TOT=101 # number of gridpoints in zonal direction?
 JE_TOT=111 # number of gridpoints in meridional direction
 PLEVS=(200. 500. 850. 925.)  # list of pressure levels to output.The list must be the same as or a subset	of the list in the specific GRIBOUT. 
@@ -71,7 +65,7 @@ LASTDAY=30   #Last day of each month (e.g. 30 or 31) TODO: some gcms use greogor
 proc_list="V" #which variables to process (set proc_all=false for this to take effect)
 proc_all=true  #process all available variables (not only those in proc_list)
 
-LFILE=1  # Set LFILE=1 if only primary fields (given out by COSMO) should be created and =2 for only secondary fields (additionally calculated for CORDEX); for any other number both types of fields are calculated
+LFILE=0  # Set LFILE=1 if only primary fields (given out by COSMO) should be created and =2 for only secondary fields (additionally calculated for CORDEX); for any other number both types of fields are calculated
 
 PERM=755 #Permission settings for output files
 

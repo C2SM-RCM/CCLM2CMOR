@@ -39,15 +39,13 @@ CMORLIGHT:
     - fehler bei derotate_uv : cdo rotuvb:  Only rotated lon/lat grids supported!
     - spezialfall: prhmax -> berechnen wenn stündlicher output vorliegt
     
-    
+    - sachen in proc_corr_var schauen ob die schon passen
     - chunking: in extra folder -> do something better!
     - every step in process_file needed to be carried out for every file??? -> raise performance!
     - seasonal mean integrated in process_file but not perfectly economic?
     - mrso: 6hr: bounds not available??; 2019 seems to be 2020 -> switch infile comes in ?
     - process derotated vars: if folder not available -> derotate, if infile for this not available: error!
     - Hans_jürgens Kommentare ausprobieren,  beheben
-    - In addition, the Core variables have to be provided on a regular geographic
-latitude/longitude grid.??? -> lon/lat(rlon,rlat) als variablen ausreichend?
     - last folder (in variable folder): day of post-processing -> needed?
     - wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
     - check sanity of parameter table before processing each variable: for subdaily: check if agg. method given, otherwise skip subdaily!
