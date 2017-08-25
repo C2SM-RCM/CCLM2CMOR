@@ -2,7 +2,7 @@
 #SBATCH --account=pr04
 #SBATCH --nodes=1
 ##SBATCH --partition=prepost
-#SBATCH --time=4:00:00
+#SBATCH --time=04:00:00
 #SBATCH --constraint=gpu
 #SBATCH --output=/scratch/snx1600/mgoebel/CMOR/logs/shell/CMOR_sh_%j.out
 #SBATCH --error=/scratch/snx1600/mgoebel/CMOR/logs/shell/CMOR_sh_%j.err
@@ -16,6 +16,7 @@ do
   if [ -z ${typ} ]  
   then
     echo "Necessary function $f is not available! Load respective module. Exiting..."
+    exit
   fi
 done
 
@@ -43,11 +44,6 @@ do
       args="${args} -x $2"
       shift
       ;;
-      -i|--input)
-      EXPPATH=$2
-      args="${args} -i $2"
-      shift
-      ;;
        -s|--start)
       START_DATE=$2
       shift
@@ -55,6 +51,10 @@ do
       -e|--end)
       STOP_DATE=$2
       args="${args} -e $2"
+      shift
+      ;;
+      -F|--first_year)
+      FIRST=$2
       shift
       ;;
       --first)
@@ -93,37 +93,6 @@ do
 done
 
 
-#range for first and second script equal
-YYA=$(echo ${START_DATE} | cut -c1-4) 
-YYE=$(echo ${STOP_DATE} | cut -c1-4)
-
-#if only years given: process from January to December
-if [ ${#START_DATE} -eq 4 ]
-then
-  START_DATE="${START_DATE}01"
-  (( STOP_DATE=STOP_DATE+1 ))
-  STOP_DATE="${STOP_DATE}01"
-else
-  START_DATE= $(echo ${START_DATE} | cut -c1-6) 
-  STOP_DATE=$(echo ${STOP_DATE} | cut -c1-6) 
-fi
-
-(( NEXT_YEAR=YYA+1 ))
-
-#for batch processing: process only one year per job
-if [ ${NEXT_YEAR} -le ${YYE} ] && ${batch}  
-then
-  #Submit job for the following year  
-  sbatch master_post.sh ${args} -s ${NEXT_YEAR}
-
-  #Set stop years to start years to process only one year per job
-  YYE=${YYA}
-  ((STOP_DATE=START_DATE+100 )) #increase by one year (months are also in there)
-
-fi
-EXPPATH=${GCM}/${EXP}
-EXPID=${GCM}_${EXP}
-
 #printing modes
 
 function echov {
@@ -141,9 +110,74 @@ function echon {
 }
 
 
+EXPPATH=${GCM}/${EXP}
+EXPID=${GCM}_${EXP}
+
+#folders
+INDIR1=${INDIR_BASE1}/${EXPPATH}
+OUTDIR1=${OUTDIR_BASE1}/${EXPPATH}
+
+INDIR2=${INDIR_BASE2}/${EXPPATH}
+OUTDIR2=${OUTDIR_BASE2}/${EXPPATH}
+
+
+#range for second script
+YYA=$(echo ${START_DATE} | cut -c1-4) 
+YYE=$(echo ${STOP_DATE} | cut -c1-4)
+
+#initialize first year
+if [ -z ${FIRST} ]  
+then
+  FIRST=${YYA}
+fi
+
+#if only years given: process from January to December
+if [ ${#START_DATE} -eq 4 ]
+then
+  START_DATE="${START_DATE}01"
+  (( STOP_DATE=STOP_DATE+1 ))
+  STOP_DATE="${STOP_DATE}01"
+else
+  START_DATE= $(echo ${START_DATE} | cut -c1-6) 
+  STOP_DATE=$(echo ${STOP_DATE} | cut -c1-6) 
+fi
+
+(( NEXT_YEAR=YYA+1 ))
+
+
 echo "GCM:" ${GCM}
 echo "Experiment:" ${GCM}
 echo "######################################################"
+ 
+#for batch processing: process only one year per job
+if [ ${NEXT_YEAR} -le ${YYE} ] && ${batch}  
+then
+
+
+  #Extract archived years every 10 years
+  (( d=YYA-FIRST ))
+  (( mod=d%10 ))
+  if [ $mod -eq 0 ]
+  then
+    (( startex=YYA+10 ))
+    (( endex=YYA+19 ))
+    echon "Extracting years ${startex} to  ${endex} \n\n"
+    sbatch  ${SRCDIR}/xfer.sh -s ${startex} -e ${endex} -g ${GCM} -x ${EXP}
+    #Submit job for the following year after all other jobs (including extraction) are finished
+    sbatch --dependency=singleton master_post.sh ${args} -s ${NEXT_YEAR} -F ${FIRST} 
+  else
+    sbatch master_post.sh ${args} -s ${NEXT_YEAR} -F ${FIRST} 
+  fi
+
+
+  #Set stop years to start years to process only one year per job
+  YYE=${YYA}
+  ((STOP_DATE=START_DATE+100 )) #increase by one year (months are also in there)
+
+fi
+
+
+
 
 if  [ ${post_step} -ne 2 ]
 then
@@ -178,3 +212,6 @@ DATE2=$(date +%s)
 SEC_TOTAL=$(python -c "print(${DATE2}-${DATE1})")
 echo "total time for postprocessing: ${SEC_TOTAL} s"
 
+#Delete input data
+echo "deleting input data"
+sbatch  ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP}

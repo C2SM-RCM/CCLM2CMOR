@@ -3,34 +3,53 @@
 #SBATCH --nodes=1
 #SBATCH --partition=xfer
 #SBATCH --time=4:00:00
-#SBATCH --output=delete.out
-#SBATCH --error=delete.err
-#SBATCH --job-name="xfer"
+#SBATCH --output=/scratch/snx1600/mgoebel/CMOR/logs/shell/delete_%j.out
+#SBATCH --error=/scratch/snx1600/mgoebel/CMOR/logs/shell/delete_%j.err
+#SBATCH --job-name="delete"
 
 
 BASEDIR=/scratch/snx1600/mgoebel/CMOR
 
 source ${BASEDIR}/src/settings.sh
-
-INPDIR=${INPUTPOST}/${EXPPATH}
-
-
-startyear=${1}
-endyear=${2}
-
-year=${startyear}
-
-
-#~ if [ ${NEXTYEAR} -le ${endyear} ]
-#~ then
- #~ sbatch xfer.sh ${NEXTYEAR} ${endyear}
-#~ fi
-while [ ${year} -le ${endyear} ]
+args=""
+while [[ $# -gt 0 ]]
 do
-  echo "Deleting ${INPDIR}/${year}" #/input
-  rm -r  ${INPDIR}/${year} #/input
-  (( year=year+1 ))
+  key="$1"
+  case $key in
+      -g|--gcm)
+      GCM=$2
+      args="${args} -g $2"
+      shift
+      ;;
+      -x|--exp)
+      EXP=$2
+      args="${args} -x $2"
+      shift
+      ;;
+      -s|--start)
+      startyear=$2
+      shift
+      ;;
+      -e|--end)
+      endyear=$2
+      args="${args} -e $2"
+      shift
+      ;;
+      *)
+      echo "unknown option!"
+      ;;
+  esac
+  shift
+done
+
+EXPPATH=${GCM}/${EXP}
+INPDIR=${INDIR_BASE1}/${EXPPATH}
+
+while [ ${startyear} -le ${endyear} ]
+do
+  echo "Deleting ${INPDIR}/${startyear}" #/input
+  rm -r  ${INPDIR}/${startyear} #/input
+  (( startyear=startyear+1 ))
 done
 
 
-exit 0

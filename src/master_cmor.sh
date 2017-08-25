@@ -1,0 +1,66 @@
+#!/bin/ksh
+#SBATCH --account=pr04
+#SBATCH --nodes=1
+##SBATCH --partition=prepost
+#SBATCH --time=4:00:00
+#SBATCH --constraint=gpu
+#SBATCH --output=/scratch/snx1600/mgoebel/CMOR/logs/CMOR_py_%j.out
+#SBATCH --error=/scratch/snx1600/mgoebel/CMOR/logs/CMOR_py_%j.err
+#SBATCH --job-name="CMOR_py"
+
+cores=3
+python_script="/scratch/snx1600/mgoebel/CMOR/src/CMORlight/cmorlight2.py"
+
+
+multi=false # run several jobs simultaneously
+args=""
+while [[ $# -gt 0 ]]
+do
+  key="$1"
+  case $key in
+       -s|--start)
+      START=$2
+      shift
+      ;;
+      -e|--end)
+      STOP=$2
+      shift
+      ;;
+      -m|--multi)
+      multi=true
+      ;;
+      *)
+      args="$args $1"
+      ;;
+  esac
+  shift
+done
+
+
+
+# Python script runs $cores years at once -> create one job out of $cores years
+(( START_NEW=START+cores ))
+
+if [ -z ${START} ]  
+then
+  echo "Please provide start year for processing with -s YYYY. Exiting..."
+  exit
+fi
+
+if [ -z ${STOP} ]  
+then
+  echo "Please provide end year for processing with -e YYYY. Exiting..."
+  exit
+fi
+
+if [ ${START_NEW} -le ${STOP} ] && $multi
+then
+  sbatch master_cmor.sh ${args} -m -s ${START_NEW} -e ${STOP}
+  (( STOP=START+cores-1 )) #STOP year for this batch
+fi
+
+
+python ${python_script} ${args} -s ${START} -e ${STOP}
+
+
+

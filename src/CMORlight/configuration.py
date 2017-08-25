@@ -11,6 +11,7 @@ import logging
 import pkg_resources
 import os
 import sys
+import settings
 #import csv
 
 from _compat import PY2
@@ -22,8 +23,8 @@ else:
 RAW_OPTIONS = [('logging', 'format'), ]
 
 CONFIG = None
-LOGGER = logging.getLogger("cmorlight")
 
+LOGGER = logging.getLogger("cmorlight")
 # -----------------------------------------------------------------------------
 
 
@@ -61,6 +62,8 @@ def get_config_value(section, option, inifile=None):
         value = int(value)
     elif section == 'float':
         value = float(value)
+    elif section == 'integer':
+        value = int(value)
     return value
 
 

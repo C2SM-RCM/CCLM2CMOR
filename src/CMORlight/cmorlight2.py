@@ -15,6 +15,9 @@ from netCDF4 import date2num
 from datetime import datetime
 #from datetime import timedelta
 
+#for multiprocessing
+from multiprocessing import Process,Pool
+
 # command line parser
 from optparse import OptionParser
 
@@ -37,15 +40,20 @@ import tools
 import __init__ as base
 
 import logging
-log = logging.getLogger('cmorlight')
+log = logging.getLogger("cmorlight")
 
 # -----------------------------------------------------------------------------
+def process_file_unpack(args):
+    '''Helper function for multiprocessing to unpack arguments before using pool.map'''
+    return tools.process_file(*args)
+
 def process_resolution(params,reslist):
     ''' '''
+    log = logging.getLogger("cmorlight")
+
     # get cdf variable name
     var = params[config.get_config_value('index','INDEX_VAR')]
     varRCM=params[config.get_config_value('index','INDEX_RCM_NAME')]
-
     # create path to input files from basedir,model,driving_model
     in_dir = "%s/%s" % (tools.get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
     log.debug("Looking for input dir(1): %s" % (in_dir))
@@ -53,14 +61,22 @@ def process_resolution(params,reslist):
       log.error("Input directory does not exist(0): %s \n \t Change base path in .ini file or create directory! " % in_dir)
       return
 
+    multilst=[] #argument list for multiprocessing
+    cores=config.get_config_value("integer","cores")
+
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
         i=0
         for f in sorted(filenames):
-            #if limit_range is set: skip file if it is out of range
             year=f.split("_")[-1][:4]
+            #use other logger
+            if config.get_config_value("boolean","multi"):
+                log = logging.getLogger("cmorlight_"+year)
+                log.info("\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (var, varRCM))
+                log.info(datetime.now())
+            #if limit_range is set: skip file if it is out of range
             if config.get_config_value('boolean','limit_range'):
-                if year < config.get_config_value('settings','proc_start') or year > config.get_config_value('settings','proc_end'):
+                if int(year) < config.get_config_value('integer','proc_start') or int(year) > config.get_config_value('integer','proc_end'):
                     log.debug("File %s out of time range! Skipping ..." % f)
                     continue
             log.info("\n###########################################################")
@@ -75,21 +91,29 @@ def process_resolution(params,reslist):
                     log.error("Could not read file '%s', no permission!" % in_file)
                 else:
                     if var in config.get_model_value('var_list_fixed'):
-                      tools.process_file_fix(params,in_file)
-                     # log.warning("Skip process file")
+                        tools.process_file_fix(params,in_file)
                     else:
-                        reslist=tools.process_file(params,in_file,var,reslist,year)
+                        if config.get_config_value("boolean","multi"):
+                            multilst.append([params,in_file,var,reslist,year])
+                        else:
+                            reslist=tools.process_file(params,in_file,var,reslist,year)
+
             else:
                 log.warning("File %s does match the file name conventions for this variable. File not processed...")
 
-            # stop after one file with all chosen resolutions if set
-            if config.get_config_value('boolean','test_only_one_file') == True:
-                sys.exit()
+            i=i+1
 
-#        pool=Pool(processes=len(l))
-#      #  a.extend(pool.map(main,l))
-#        pool.terminate()
-
+            #process as many files simultaneously as there are cores specified
+            if config.get_config_value("boolean","multi") and i==cores:
+                R=[]
+                pool=Pool(processes=cores)
+                R.extend(pool.map(process_file_unpack,multilst))
+                pool.terminate()
+                #start new
+                multilst=[]
+                i=0
+                #change reslist
+               # reslist=R[0]
     log.info("Variable '%s' finished!" % (var))
     return True
 
@@ -173,11 +197,14 @@ def main():
                             action="store_true", dest="limit_range", default = False,
                             help="Limit time range for processing (range set in .ini file or parsed)")
     parser.add_option("-s", "--start",
-                            action="store", dest="proc_start", default = None,
+                            action="store", dest="proc_start", default = "",
                             help="Start year for processing if --limit is set.")
     parser.add_option("-e", "--end",
-                            action="store", dest="proc_end", default = None,
+                            action="store", dest="proc_end", default = "",
                             help="End year for processing if --limit is set.")
+    parser.add_option("-M", "--multi",
+                            action="store_true", dest="multi", default = False,
+                            help="Use multiprocessing with number of cores specified in .ini file.")
     parser.add_option( "--remove",
                             action="store_true", dest="remove_src", default = False,
                             help="Remove source files after chunking")
@@ -196,8 +223,12 @@ def main():
         sys.exit("Model ist not supported: '%s'" % (options.act_model))
         # end programm
 
+    #limit range if start and end are given in command line
+    if options.proc_start!="" and options.proc_end!="":
+        options.limit_range=True
+
    #store parsed arguments in config
-    setval=["paramfile","driving_model_id","driving_experiment_name","driving_model_ensemble_member","proc_start","proc_end"]
+    setval=["paramfile","driving_model_id","driving_experiment_name","driving_model_ensemble_member"]
     for val in setval:
         if options_dict[val]!="":
             config.set_config_value('settings_',val,options_dict[val])
@@ -206,6 +237,9 @@ def main():
     config.set_config_value('boolean','overwrite',options.overwrite)
     config.set_config_value('boolean','limit_range',options.limit_range)
     config.set_config_value('boolean','remove_src',options.remove_src)
+    config.set_config_value('boolean','multi',options.multi)
+    config.set_config_value('integer','proc_start',options.proc_start)
+    config.set_config_value('integer','proc_end',options.proc_end)
 
     process_list=[config.get_model_value('driving_model_id'),config.get_model_value('driving_experiment_name'),config.get_model_value('driving_model_ensemble_member')]
     # now read paramfile for all variables for this RCM
@@ -219,10 +253,24 @@ def main():
         os.makedirs(LOG_BASE)
         if os.path.isdir(LOG_BASE) == True:
             print("Logging directory created: %s" % LOG_BASE)
-    LOG_FILENAME = os.path.join(LOG_BASE,base.logfile)
+    LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')
+    logext = datetime.now().strftime("%d-%m-%Y")+'.log'
 
-    # get logger and assign logging filename
-    log = base.setup_custom_logger(settings.logger_name,LOG_FILENAME,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
+    # get logger and assign logging filename (many loggers for multiprocessing)
+    if options.limit_range and options.multi:
+        #create logger for each processing year
+        for y in range(config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end")+1):
+            logfile=LOG_FILENAME+str(y)+'.'+logext
+            log = base.setup_custom_logger("cmorlight_"+str(y),logfile,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
+        #change general logger name
+        LOG_FILENAME+="%s_%s." % (config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end"))
+
+    log = base.setup_custom_logger("cmorlight",LOG_FILENAME+logext,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
+
+    if not options.limit_range and options.multi:
+        print("To use multiprocessing you have to limit the time range (with -l) and specify this range in the .ini file! Exiting...")
+        log.error("To use multiprocessing you have to limit the time range (with -l) and specify this range in the .ini file! Exiting...")
+        sys.exit()
 
     # creating working directory if not exist
     if not os.path.isdir(settings.DirWork):

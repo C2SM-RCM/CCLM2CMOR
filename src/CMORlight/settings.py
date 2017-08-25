@@ -8,9 +8,6 @@ def init(varfile):
     '''
         set global variables
     '''
-    global logger_name
-    logger_name = config.get_config_value('settings', 'logger_name')
-
     # base path for all other path
     global BasePath
     BasePath = config.get_config_value('settings', 'BasePath')

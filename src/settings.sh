@@ -30,12 +30,12 @@ SRCDIR=${BASEDIR}/src/cclm_post           # directory where the post processing 
 WORKDIR=${SCRATCH}/work/post # work directory, CAUTION: WITH OPTION "--clean" ALL FILES IN THIS FOLDER WILL BE DELETED!
 
 #input/output directory for first step
-INPUTPOST=${BASEDIR}/input     # directory to where the raw data archives are extracted
-OUTPUTPOST=${BASEDIR}/work/outputpost # output directory of the first step
+INDIR_BASE1=${BASEDIR}/input     # directory to where the raw data archives are extracted
+OUTDIR_BASE1=${BASEDIR}/work/outputpost # output directory of the first step
 
 #for second step
-INDIR_BASE=${OUTPUTPOST}
-OUTDIR_BASE=${BASEDIR}/work/input_CMORlight
+INDIR_BASE2=${OUTDIR_BASE1}
+OUTDIR_BASE2=${BASEDIR}/work/input_CMORlight
 
 
 #Variable settings
@@ -62,7 +62,7 @@ ZLEVS=(100. 1000. 2000. 5000.) # list of height levels to output (similar to PLE
 #Special settings for second step
 
 LASTDAY=30   #Last day of each month (e.g. 30 or 31) TODO: some gcms use greogorian calendar!
-proc_list="V" #which variables to process (set proc_all=false for this to take effect)
+proc_list="TOT_SNOW" #which variables to process (set proc_all=false for this to take effect)
 proc_all=true  #process all available variables (not only those in proc_list)
 
 LFILE=0  # Set LFILE=1 if only primary fields (given out by COSMO) should be created and =2 for only secondary fields (additionally calculated for CORDEX); for any other number both types of fields are calculated

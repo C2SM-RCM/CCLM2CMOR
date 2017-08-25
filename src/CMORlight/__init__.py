@@ -7,7 +7,6 @@ import datetime
 
 __version__ = open('VERSION', "r").read()
 VERSION = "v%s, DKRZ, 2016,2017" % (__version__)
-logfile = 'CMORlight.'+datetime.datetime.now().strftime("%d-%m-%Y")+'.log'
 
 #LOG_BASE = os.environ['HOME']
 #LOG_BASE = settings.DirLog # = '/mnt/lustre01/work/bb0931/CMOR/logs'

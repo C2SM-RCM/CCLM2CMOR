@@ -15,11 +15,10 @@ typeset -Z4 YY YYA YYE YP
 MMA=01
 MME=12
 
-INDIR=${INDIR_BASE}/${EXPPATH}
-OUTDIR=${OUTDIR_BASE}/${EXPPATH}
+
 
 # create subdirectory for full time series
-[[ -d ${OUTDIR} ]] || mkdir -p  ${OUTDIR}
+[[ -d ${OUTDIR2} ]] || mkdir -p  ${OUTDIR2}
 #Create and change to WORKDIR
 [[ -d ${WORKDIR} ]] || mkdir -p  ${WORKDIR} 
 cd ${WORKDIR}
@@ -29,15 +28,15 @@ YY=$YYA
 #copy constant variables
 for constVar in ${const_list}
 do 
-  if [ ! -f ${OUTDIR}/${constVar}/${constVar}.nc ]
+  if [ ! -f ${OUTDIR2}/${constVar}/${constVar}.nc ]
   then
-    if [ -f ${INDIR}/${constVar}.nc ]
+    if [ -f ${INDIR2}/${constVar}.nc ]
     then
       echon "Copy constant variable ${constVar}.nc to output folder"
-      [[ -d ${OUTDIR}/${constVar} ]] || mkdir ${OUTDIR}/${constVar}
-      cp ${INDIR}/${constVar}.nc ${OUTDIR}/${constVar}/
+      [[ -d ${OUTDIR2}/${constVar} ]] || mkdir ${OUTDIR2}/${constVar}
+      cp ${INDIR2}/${constVar}.nc ${OUTDIR2}/${constVar}/
     else
-      echo "Required constant variable file ${constVar}.nc is not in input folder ${INDIR}! Skipping this variable..."
+      echo "Required constant variable file ${constVar}.nc is not in input folder ${INDIR2}! Skipping this variable..."
     fi
   fi
 done
@@ -56,16 +55,16 @@ do
   then
     FILES=${proc_list} 
   else
-    FILES=$(ls ${INDIR}/${YY}_${MMA}/*_ts.nc)
+    FILES=$(ls ${INDIR2}/${YY}_${MMA}/*_ts.nc)
   fi
   
   #check if directories for all months exist
   MM=${MMA}
   while [ ${MM} -le ${MME} ]
   do 
-    if [ ! -d ${INDIR}/${YY}_${MM} ]
+    if [ ! -d ${INDIR2}/${YY}_${MM} ]
     then
-      echo "Directory ${INDIR}/${YY}_${MM} does not exist! Skipping this year..."
+      echo "Directory ${INDIR2}/${YY}_${MM} does not exist! Skipping this year..."
       (( YY=YY+1 ))
       continue 2
     fi
@@ -100,7 +99,7 @@ do
       #process variable if in proc_list or if proc_all is set
       if [[ ${proc_list} =~ (^|[[:space:]])${varname}($|[[:space:]]) ]] || ${proc_all}
       then
-        if ls ${OUTDIR}/${FILEOUT}/${FILEOUT}_${YY}* 1> /dev/null 2>&1 
+        if ls ${OUTDIR2}/${FILEOUT}/${FILEOUT}_${YY}* 1> /dev/null 2>&1 
         then
           if ${overwrite} 
           then    
@@ -160,12 +159,12 @@ do
       MM=${MA}
       while [ ${MM} -le ${ME} ]
       do 
-        if [ ! -f ${INDIR}/${YY}_${MM}/${FILEOUT}_ts.nc ]
+        if [ ! -f ${INDIR2}/${YY}_${MM}/${FILEOUT}_ts.nc ]
         then
-          echo "File ${INDIR}/${YY}_${MM}/${FILEOUT}_ts.nc does not exist! Skipping this variable..."
+          echo "File ${INDIR2}/${YY}_${MM}/${FILEOUT}_ts.nc does not exist! Skipping this variable..."
           continue 2
         fi
-        FILELIST="$(echo ${FILELIST}) $(ls ${INDIR}/${YY}_${MM}/${FILEOUT}_ts.nc)"
+        FILELIST="$(echo ${FILELIST}) $(ls ${INDIR2}/${YY}_${MM}/${FILEOUT}_ts.nc)"
         (( MM=MM+1 ))
       done
       
@@ -200,7 +199,7 @@ do
       echov "New reference time: ${REFTIME}"
       
       #create output directory
-      [[ -d ${OUTDIR}/${FILEOUT} ]] || mkdir ${OUTDIR}/${FILEOUT}
+      [[ -d ${OUTDIR2}/${FILEOUT} ]] || mkdir ${OUTDIR2}/${FILEOUT}
       
       if [ ${LACCU} -eq 1 ] 
       then
@@ -229,7 +228,7 @@ do
             MP=01
             (( YP=YP+1 ))
           fi
-          FILENEXT=${INDIR}/${YP}_${MP}/${FILEOUT}_ts.nc
+          FILENEXT=${INDIR2}/${YP}_${MP}/${FILEOUT}_ts.nc
           if [ -f ${FILENEXT} ]
           then
             echov "Append first date from next month's file to the end of current month"
@@ -252,7 +251,7 @@ do
           echo "is not correct"
           exit
         fi
-        ENDFILE=${OUTDIR}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YP}${MP}0100.nc
+        ENDFILE=${OUTDIR2}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YP}${MP}0100.nc
   #     shift time variable by DHH/2*3600 and transfer time from seconds in days       
         echov "Modifying time and time_bnds values and attributes"
         ncap2 -O -h -s "time_bnds=time_bnds/86400" -s "time=(time-${DTS})/86400" ${FILEOUT}_tmp3.nc ${ENDFILE}
@@ -285,7 +284,7 @@ do
           echo ${EHH}
           exit       
         fi
-        ENDFILE=${OUTDIR}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YY}${ME}${LASTDAY}${EHH}.nc
+        ENDFILE=${OUTDIR2}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YY}${ME}${LASTDAY}${EHH}.nc
   #     transfer time from seconds in days and remove time_bnds from instantaneous fields
         echov "Modifying time values and attributes"
   #      ncap2 -O -h -s "time_bnds=time_bnds/86400" -s "time_bnds(:,0)=time_bnds(:,1)" ${FILEOUT}_tmp3.nc ${ENDFILE}
@@ -322,18 +321,18 @@ do
     name1=U_10M
     name2=V_10M
     name3=SP_10M
-    file1=$(ls ${OUTDIR}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
+    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
     if [ -f ${file1} -a -f ${file2} ]
     then
       ((c1 = ${#file1}-23 )) 
       ((c2 = ${#file1}-3 ))
       DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR}/${name3}/${name3}_${DATE}.nc
+      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
       if [ ! -f ${file3} ] ||  ${overwrite}
       then
         echon "Create SP_10M"
-        [[ -d ${OUTDIR}/${name3} ]] || mkdir  ${OUTDIR}/${name3} 
+        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
         cp ${file1} temp1.nc
         ncks -h -a -A -v ${name2} ${file2} temp1.nc
         ncap2 -h -O -s "${name3}=sqrt(${name1}^2+${name2}^2)" temp1.nc temp1.nc 
@@ -352,18 +351,18 @@ do
     name1=ASWDIR_S
     name2=ASWDIFD_S
     name3=ASWD_S
-    file1=$(ls ${OUTDIR}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
+    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
     if [ -f ${file1} -a -f ${file2} ]
     then
       ((c1 = ${#file1}-23 )) 
       ((c2 = ${#file1}-3 ))
       DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR}/${name3}/${name3}_${DATE}.nc
+      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
       if [ ! -f ${file3} ] ||  ${overwrite}
       then
         echon "Create ASWD_S"
-        [[ -d ${OUTDIR}/${name3} ]] || mkdir  ${OUTDIR}/${name3} 
+        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
         cp ${file1} temp1.nc
         ncks -h -a -A -v ${name2} ${file2} temp1.nc
         ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1.nc temp1.nc 
@@ -382,18 +381,18 @@ do
     name1=ASOD_T
     name2=ASOB_T
     name3=ASOU_T
-    file1=$(ls ${OUTDIR}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
+    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
     if [ -f ${file1} -a -f ${file2} ]
     then
       ((c1 = ${#file1}-23 )) 
       ((c2 = ${#file1}-3 ))
       DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR}/${name3}/${name3}_${DATE}.nc
+      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
       if [ ! -f ${file3} ] ||  ${overwrite}
       then
         echon "Create ASOU_T"
-        [[ -d ${OUTDIR}/${name3} ]] || mkdir  ${OUTDIR}/${name3} 
+        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
         cp ${file1} temp1.nc
         ncks -h -a -A -v ${name2} ${file2} temp1.nc
         ncap2 -h -O -s "${name3}=${name1}-${name2}" temp1.nc temp1.nc 
@@ -412,18 +411,18 @@ do
     name1=RUNOFF_S
     name2=RUNOFF_G
     name3=RUNOFF_T
-    file1=$(ls ${OUTDIR}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
+    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
     if [ -f ${file1} -a -f ${file2} ]
     then
       ((c1 = ${#file1}-23 )) 
       ((c2 = ${#file1}-3 ))
       DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR}/${name3}/${name3}_${DATE}.nc
+      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
       if [ ! -f ${file3} ] ||  ${overwrite}
       then
         echon "Create RUNOFF_T"
-        [[ -d ${OUTDIR}/${name3} ]] || mkdir  ${OUTDIR}/${name3} 
+        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
         cp ${file1} temp1.nc
         ncks -h -a -A -v ${name2} ${file2} temp1.nc
         ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1.nc temp1.nc 
@@ -442,18 +441,18 @@ do
     name1=RAIN_CON
     name2=SNOW_CON
     name3=PREC_CON
-    file1=$(ls ${OUTDIR}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
+    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
     if [ -f ${file1} -a -f ${file2} ]
     then
       ((c1 = ${#file1}-23 )) 
       ((c2 = ${#file1}-3 ))
       DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR}/${name3}/${name3}_${DATE}.nc
+      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
       if [ ! -f ${file3} ] ||  ${overwrite}
       then
         echon "Create PREC_CON"
-        [[ -d ${OUTDIR}/${name3} ]] || mkdir  ${OUTDIR}/${name3} 
+        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
         cp ${file1} temp1.nc
         ncks -h -a -A -v ${name2} ${file2} temp1.nc
         ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1.nc temp1.nc 
@@ -472,18 +471,18 @@ do
     name1=SNOW_GSP
     name2=SNOW_CON
     name3=TOT_SNOW
-    file1=$(ls ${OUTDIR}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
+    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
     if [ -f ${file1} -a -f ${file2} ]
     then
      ((c1 = ${#file1}-23 )) 
      ((c2 = ${#file1}-3 ))
       DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR}/${name3}/${name3}_${DATE}.nc
+      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
       if [ ! -f ${file3} ] ||  ${overwrite}
       then
         echon "Create TOT_SNOW"
-        [[ -d ${OUTDIR}/${name3} ]] || mkdir  ${OUTDIR}/${name3} 
+        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
         cp ${file1} temp1.nc
         ncks -h -a -A -v ${name2} ${file2} temp1.nc
         ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1.nc temp1.nc 
@@ -502,18 +501,18 @@ do
     name1=TQC
     name2=TQI
     name3=TQW
-    file1=$(ls ${OUTDIR}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
+    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
     if [ -f ${file1} -a -f ${file2} ]
     then
       ((c1 = ${#file1}-23 )) 
       ((c2 = ${#file1}-3 ))
       DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR}/${name3}/${name3}_${DATE}.nc
+      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
       if [ ! -f ${file3} ] ||  ${overwrite}
       then
         echon "Create TQW"
-        [[ -d ${OUTDIR}/${name3} ]] || mkdir  ${OUTDIR}/${name3} 
+        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
         cp ${file1} temp1.nc
         ncks -h -a -A -v ${name2} ${file2} temp1.nc
         ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1.nc temp1.nc 

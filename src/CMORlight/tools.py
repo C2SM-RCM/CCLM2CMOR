@@ -26,17 +26,17 @@ from datetime import datetime
 # uuid support
 import uuid
 
+import __init__ as base
+
 # support logging
 import logging
-log = logging.getLogger('cmorlight')
-
-
+log = logging.getLogger("cmorlight")
 # -----------------------------------------------------------------------------
 def shell(cmd):
     '''
     Call a shell command
     '''
-    log.debug("Command: '%s'" % cmd)
+  #  log.debug("Command: '%s'" % cmd)
     prc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     prc.wait()
     if prc.returncode != 0:
@@ -893,6 +893,11 @@ def process_file_fix(params,in_file):
 def proc_seasonal_mean(params,year):
     ''' create seasonal mean from monthly data '''
 
+    if config.get_config_value("boolean","multi"):
+        logger = logging.getLogger("cmorlight_"+year)
+    else:
+        logger = logging.getLogger("cmorlight")
+
     # get cdf variable name
     var = params[config.get_config_value('index','INDEX_VAR')]
     # first get daily data
@@ -900,7 +905,7 @@ def proc_seasonal_mean(params,year):
     cm_type = params[config.get_config_value('index','INDEX_VAR_CM_DAY')]
     # get output directory of daily data: input for seasonal
     indir = get_out_dir(var,res,cm_type)
-    log.info("Inputdir: %s" % (indir))
+    logger.info("Inputdir: %s" % (indir))
 
     # seasonal mean
     res = 'sem'
@@ -916,15 +921,15 @@ def proc_seasonal_mean(params,year):
 
     if os.path.isfile(outpath1) or os.path.isfile(outpath2):
         if os.path.isfile(outpath1):
-            log.info("Output file exists: %s" % (outpath1))
+            logger.info("Output file exists: %s" % (outpath1))
         else:
-            log.info("Output file exists: %s" % (outpath2))
+            logger.info("Output file exists: %s" % (outpath2))
 
         if not config.get_config_value('boolean','overwrite'):
-            log.info("Skipping...")
+            logger.info("Skipping...")
             return
         else:
-            log.info("Overwriting..")
+            logger.info("Overwriting..")
 
 
     # get files with monthly data from the same input (if exist)
@@ -939,7 +944,7 @@ def proc_seasonal_mean(params,year):
 
             else:
                 cm = cm_type
-            log.info("Cell method used for cdo command: %s" % (cm))
+            logger.info("Cell method used for cdo command: %s" % (cm))
 
             outdir = get_out_dir(var,res,cm_type)
             f_lst = sorted(filenames)
@@ -1010,7 +1015,7 @@ def proc_seasonal_mean(params,year):
                         if var_name in f_in.variables.keys():
                             copy_var(f_in,f_tmp,var_name)
                 except:
-                    log.info("Variable '%s' does not exist." % ("rotated_pole"))
+                    logger.info("Variable '%s' does not exist." % ("rotated_pole"))
 
                 # copy also height an plev: they are correct at that point
                 for var_name in ['lat','lon','rotated_pole','plev','height']:
@@ -1072,9 +1077,9 @@ def proc_seasonal_mean(params,year):
                 # next file index in the list
                 i += 1
             if not input_exist:
-                log.warning("Input file (daily resolution) for seasonal processing does not exist. Skipping this year...")
+                logger.warning("Input file (daily resolution) for seasonal processing does not exist. Skipping this year...")
         else:
-            log.warning("No cell method set for this variable (%s) and time resolution (%s)." % (var,res))
+            logger.warning("No cell method set for this variable (%s) and time resolution (%s)." % (var,res))
 
 
 # -----------------------------------------------------------------------------
@@ -1459,13 +1464,14 @@ def process_file(params,in_file,var,reslist,year):
     '''
     process one input file and create one one output file
 
-    call with:
-        var: variable name (cf notification)
-        res: resolution: 3hr,6hr,day,mon,cm_sem
-        cm_type: cell method: sum,mean,max,min,...
-        in_file: path to in file
-        outdir: output directory (where the complete data goes
     '''
+
+    if config.get_config_value("boolean","multi"):
+        logger = logging.getLogger("cmorlight_"+year)
+    else:
+        logger = logging.getLogger("cmorlight")
+
+   # params=settings.param[var]
 
     # create object from netcdf file to access all parameters and attributes
     f_in = Dataset(in_file,"r")
@@ -1534,7 +1540,7 @@ def process_file(params,in_file,var,reslist,year):
         f_in.close()
         # create object from netcdf file to access all parameters and attributes
         f_in = Dataset(in_file,"r")
-        log.info("Input1 (new): %s" % in_file)
+        logger.info("Input1 (new): %s" % in_file)
         # get time variable from input
         time_in = f_in.variables['time']
         if settings.use_alt_units:
@@ -1567,17 +1573,17 @@ def process_file(params,in_file,var,reslist,year):
     # in hours: should be 1 or 3 or 6
     a = datetime.strptime(str(dt_in[0]), settings.FMT)
     b = datetime.strptime(str(dt_in[1]), settings.FMT)
-    log.debug("Start: %s, stop: %s" % (str(a),str(a)))
+    logger.debug("Start: %s, stop: %s" % (str(a),str(a)))
 
     tdelta = b - a
     tdelta_seconds = tdelta.seconds
     input_time_step = tdelta_seconds / 3600. + (tdelta.days * 24.)
-    log.debug("Input data time interval: %shourly" % (str(input_time_step)))
+    logger.debug("Input data time interval: %shourly" % (str(input_time_step)))
 
     # difference one day: seconds of time delta are '0'!
     if tdelta_seconds == 0:
         tdelta_seconds = tdelta.days * 24 * 3600.
-   # log.info("Time starts at: %s, %s, difference (in seconds) is: %s" % (str(a),str(b),str(tdelta.seconds)))
+   # logger.info("Time starts at: %s, %s, difference (in seconds) is: %s" % (str(a),str(b),str(tdelta.seconds)))
 
     # define variables for storing the pathes for mrfso and mrso
     in_file_help = ""
@@ -1602,16 +1608,16 @@ def process_file(params,in_file,var,reslist,year):
 
         #check if requested time resolution is possible given the input time resolution
         if res_hr < input_time_step:
-            log.warning("Requested time resolution (%s) is higher than time resolution of input data (%s hr). Skip this resolution for all following files.." % (res,input_time_step))
+            logger.warning("Requested time resolution (%s) is higher than time resolution of input data (%s hr). Skip this resolution for all following files.." % (res,input_time_step))
             new_reslist.remove(res)
             continue
 
         # process only if cell method is definded in input matrix
         if cm_type != '':
-            log.info("#########################")
-            log.log(35,"     resolution: '%s'" % res)
-            log.debug("cell method: '%s' " % (cm_type))
-            log.info("#########################")
+            logger.info("#########################")
+            logger.log(35,"     resolution: '%s'" % res)
+            logger.debug("cell method: '%s' " % (cm_type))
+            logger.info("#########################")
 
             #call method for seasonal mean
 
@@ -1630,13 +1636,13 @@ def process_file(params,in_file,var,reslist,year):
             # skip file if exist
 
             if os.path.isfile(outpath):
-                log.info("Output file exists: %s" % (outpath))
+                logger.info("Output file exists: %s" % (outpath))
                 if not config.get_config_value('boolean','overwrite'):
-                    log.info("Skipping...")
+                    logger.info("Skipping...")
                     continue
                 else:
-                    log.info("Overwriting..")
-            log.debug("Output to: %s" % (outpath))
+                    logger.info("Overwriting..")
+            logger.debug("Output to: %s" % (outpath))
 
             # set step wide of cdo command
             if res == '1hr':
@@ -1688,7 +1694,7 @@ def process_file(params,in_file,var,reslist,year):
                 cmd_mul = ' -mulc,%s ' % (mulc_factor_str)
             else:
                 cmd_mul = ""
-            log.debug("mulc factor for variable(%s): %s" % (var,cmd_mul))
+            logger.debug("mulc factor for variable(%s): %s" % (var,cmd_mul))
             #sys.exit()
 
             # create help output file which is at the zthe new in_file
@@ -1783,7 +1789,7 @@ def process_file(params,in_file,var,reslist,year):
 
             ## check output file
             #if not os.path.isfile(outpath):
-                #log.info("Output file: %s does not exist!" % (outpath))
+                #logger.info("Output file: %s does not exist!" % (outpath))
                 ## if not exist for some reason return and go ahead
                 #return
 
@@ -1810,7 +1816,7 @@ def process_file(params,in_file,var,reslist,year):
             # set dimension vertices only if set to True in settings file
             if config.get_config_value('boolean','add_vertices') == True:
                 f_out.createDimension('vertices',4)
-                log.info("Add vertices")
+                logger.info("Add vertices")
 
             # copy variables from temp file
             for var_name in f_tmp.variables.keys():
@@ -1831,7 +1837,7 @@ def process_file(params,in_file,var,reslist,year):
                 # at variable creation set fill_vlue, later is impossible
                 # also set the compression
                 if config.get_config_value('boolean','nc_compress') == True:
-                    log.info("COMPRESS variable: %s" % (var_name))
+                    logger.info("COMPRESS variable: %s" % (var_name))
 
                 # skip 'pressure'!!
                 my_lst = []
@@ -1839,8 +1845,8 @@ def process_file(params,in_file,var,reslist,year):
                     if str(dim) not in settings.varlist_reject:
                         my_lst.append(dim)
                 var_dims = tuple(my_lst)
-                log.debug("Dimensions (of variable %s): %s" % (var_name,str(var_dims)))
-                log.debug("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
+                logger.debug("Dimensions (of variable %s): %s" % (var_name,str(var_dims)))
+                logger.debug("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
                 if var_name in [var,settings.netCDF_attributes['RCM_NAME_ORG']]:
                     if config.get_config_value('boolean','nc_compress') == True:
                         var_out = f_out.createVariable(var_name,datatype=data_type,
@@ -1848,7 +1854,7 @@ def process_file(params,in_file,var,reslist,year):
                     else:
                         var_out = f_out.createVariable(var_name,datatype=data_type,
                             dimensions=var_dims,fill_value=settings.netCDF_attributes['missing_value'])
-                    log.debug("FillValue(output): %s,%s" % (var_name,var_out._FillValue))
+                    logger.debug("FillValue(output): %s,%s" % (var_name,var_out._FillValue))
                 else:
                     if config.get_config_value('boolean','nc_compress') == True:
                         var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims,complevel=4)
@@ -1856,7 +1862,7 @@ def process_file(params,in_file,var,reslist,year):
                         var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims)
                 #if '_FillValue' in var_in.ncattrs() and var_in._FillValue < 0:
                     #correct_fillvalue = True
-                log.debug("Dimensions (of variable %s): %s" % (var_name,str(f_out.dimensions)))
+                logger.debug("Dimensions (of variable %s): %s" % (var_name,str(f_out.dimensions)))
                 # set all character fields as character converted with str() function
                 # create attribute list
                 if var_name in ['lat','lon']:
@@ -1873,7 +1879,7 @@ def process_file(params,in_file,var,reslist,year):
                 # copy content to new datatype
                 var_out[:] = var_in[:]
 
-                log.debug("Copy from tmp: %s" % (var_out.name))
+                logger.debug("Copy from tmp: %s" % (var_out.name))
                 if var_out.name == 'time':
                     if 'calendar' in var_out.ncattrs():
                         if var_out.getncattr('calendar') != in_calendar:
@@ -1920,7 +1926,7 @@ def process_file(params,in_file,var,reslist,year):
                     var_out.setncatts(att_lst)
                     # copy content to new datatype
                     var_out[:] = var_in[:]
-                    log.debug("Copy from input: %s" % (var_out.name))
+                    logger.debug("Copy from input: %s" % (var_out.name))
 #            sys.exit()
 
             ##############################
@@ -1939,7 +1945,7 @@ def process_file(params,in_file,var,reslist,year):
             except:
                 data_len = f_out.variables[settings.netCDF_attributes['cf_name']].shape[0]
             data_len = min(data_len,data_max_len)
-            log.debug("Date len: %s" % str(data_len))
+            logger.debug("Date len: %s" % str(data_len))
 
             #TODO  use/no use of time_bnds??
 
@@ -1983,19 +1989,19 @@ def process_file(params,in_file,var,reslist,year):
             num_refdate_diff = date2num(date_start,time.units,calendar=in_calendar)
 
             # show some numbers
-            log.debug("num_refdate_diff: %s" % str(num_refdate_diff))
+            logger.debug("num_refdate_diff: %s" % str(num_refdate_diff))
 
             # start always with time = 00:00:00
             if date_start.hour > 0:
                 num_refdate_diff = float(int(num_refdate_diff))
-                log.warning("Set time of start date (%s) to 00:00!" % str(date_start))
+                logger.warning("Set time of start date (%s) to 00:00!" % str(date_start))
 
 
             if res == '1hr':
                 num = 1. / 24.
                 # set time and time_bnds
                 if cm != 'point':
-                    log.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
+                    logger.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
                     for n in range(data_len):
                         time_bnds[n,0] = num_refdate_diff + (n * num)
                         time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
@@ -2008,7 +2014,7 @@ def process_file(params,in_file,var,reslist,year):
                 num = 0.125
                 # set time and time_bnds
                 if cm != 'point':
-                    log.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
+                    logger.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
                     for n in range(data_len):
                         time_bnds[n,0] = num_refdate_diff + (n * num)
                         time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
@@ -2021,7 +2027,7 @@ def process_file(params,in_file,var,reslist,year):
                 num = 0.25
                 # set time and time_bnds
                 if cm != 'point':
-                    log.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
+                    logger.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
                     for n in range(data_len):
                         time_bnds[n,0] = num_refdate_diff + (n * num)
                         time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
@@ -2034,7 +2040,7 @@ def process_file(params,in_file,var,reslist,year):
                 num = 0.5
                 # set time and time_bnds
                 if cm != 'point':
-                    log.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
+                    logger.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
                     for n in range(data_len):
                         time_bnds[n,0] = num_refdate_diff + (n * num)
                         time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
@@ -2056,7 +2062,7 @@ def process_file(params,in_file,var,reslist,year):
                 # only 12 month a year!!
                 for n in range(data_len):
                     time_bnds[n,0] = num_refdate_diff
-                    log.info("bnds1: %s" % (num2date(num_refdate_diff,time.units,calendar=in_calendar)))
+                    logger.info("bnds1: %s" % (num2date(num_refdate_diff,time.units,calendar=in_calendar)))
 
                     #d = num2date(time[n],time.units,time.calendar)
                     d = num2date(num_refdate_diff,time.units,calendar=in_calendar)
@@ -2067,14 +2073,14 @@ def process_file(params,in_file,var,reslist,year):
                     # add one day in February of leap year
                     if leap_year(d.year,time.calendar) and m == 1:
                         days += 1
-                    log.info("Add DAYs: %d,%d,%d" % (days,d.year,d.month))
+                    logger.info("Add DAYs: %d,%d,%d" % (days,d.year,d.month))
 
                     num_refdate_diff += days
-                    log.info("bnds2: %s" % (num2date(num_refdate_diff,time.units,calendar=in_calendar)))
+                    logger.info("bnds2: %s" % (num2date(num_refdate_diff,time.units,calendar=in_calendar)))
                     time_bnds[n,1] = num_refdate_diff
                     time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
                 end = num_refdate_diff
-                log.info("time_bnds difference: %s" % (str(end - start)))
+                logger.info("time_bnds difference: %s" % (str(end - start)))
 
             # commit changes
             f_out.sync()
@@ -2086,7 +2092,7 @@ def process_file(params,in_file,var,reslist,year):
             try:
                 f_out.renameVariable(settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['cf_name'])
             except:
-                log.info("Variable has cf name already: %s" % (var))
+                logger.info("Variable has cf name already: %s" % (var))
 
             # no time_bnds if cell method is 'point'
             if cm == 'point':
@@ -2094,7 +2100,7 @@ def process_file(params,in_file,var,reslist,year):
                 try:
                     f_var.delncattr('bounds')
                 except:
-                    log.info("Attribute %s not available for variable %s." % ('bounds','time'))
+                    logger.info("Attribute %s not available for variable %s." % ('bounds','time'))
 
             if int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip()) > 0 and not var in ['mrfso','mrro']:
                 if params[config.get_config_value('index','INDEX_MODEL_LEVEL')] == config.get_config_value('settings','PModelType'):
@@ -2119,10 +2125,10 @@ def process_file(params,in_file,var,reslist,year):
 
             # set all predefined global attributes
             if settings.Global_attributes=={}:
-                log.error("List of global attributes is empty!")
+                logger.error("List of global attributes is empty!")
             else:
                 f_out.setncatts(settings.Global_attributes)
-                log.info("Global attributes set!")
+                logger.info("Global attributes set!")
 
             # commit changes
             f_out.sync()
@@ -2157,7 +2163,7 @@ def process_file(params,in_file,var,reslist,year):
             try:
                 f_var.setncattr('grid_mapping','rotated_pole')
             except:
-                log.warning("Variable '%s' does not exist." % ("rotated_pole"))
+                logger.warning("Variable '%s' does not exist." % ("rotated_pole"))
 
             # commit changes
             f_out.sync()
@@ -2174,7 +2180,7 @@ def process_file(params,in_file,var,reslist,year):
             # ncopy file to correct output format
             if config.get_config_value('boolean','nc_compress') == True:
                 compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')])
-            log.info("Variable attributes set!")
+            logger.info("Variable attributes set!")
 
             # close tmp file
 #            fp_tmp.close()
@@ -2196,7 +2202,7 @@ def process_file(params,in_file,var,reslist,year):
             #sys.exit()
         else:
             cmd = "No cell method set for this variable (%s) and time resolution (%s)." % (var,res)
-            log.warning(cmd)
+            logger.warning(cmd)
 
     # ATTENTION: 'in_file' is only to be deleted here for these variables, otherwise it is read-only!!
     if var in ['mrso','mrfso'] and os.path.isfile(in_file_org):
@@ -2205,13 +2211,13 @@ def process_file(params,in_file,var,reslist,year):
             os.remove(in_file_help)
         except:
             cmd = "Could not remove file: %s" % (in_file)
-            log.warning(cmd)
+            logger.warning(cmd)
     if switch_infile == True and os.path.isfile(in_file):
         try:
             os.remove(in_file)
         except:
             cmd = "Could not remove file: %s" % (in_file)
-            log.warning(cmd)
+            logger.warning(cmd)
 
     # close input file
     f_in.close()

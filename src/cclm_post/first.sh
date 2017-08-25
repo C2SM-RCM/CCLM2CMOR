@@ -9,10 +9,10 @@
 
 #function to process constant variables
 function constVar {
-  if [ ! -f ${OUTDIR}/$1.nc ] ||  ${overwrite}
+  if [ ! -f ${OUTDIR1}/$1.nc ] ||  ${overwrite}
   then
     echon "Building file for constant variable $1"
-    ncks -h -A -v $1,rotated_pole ${WORKDIR}/${EXPPATH}/cclm_const.nc ${OUTDIR}/$1.nc
+    ncks -h -A -v $1,rotated_pole ${WORKDIR}/${EXPPATH}/cclm_const.nc ${OUTDIR1}/$1.nc
   else
     echov "File for constant variable $1 already exists. Skipping..."
   fi
@@ -20,12 +20,12 @@ function constVar {
 
 #... functions for building time series
 function timeseries {  # building a time series for a given quantity
-  cd ${INPDIR}/${CURRDIR}/$2
-  if [ ! -f ${OUTDIR}/${YYYY_MM}/$1_ts.nc ] ||  ${overwrite}
+  cd ${INDIR1}/${CURRDIR}/$2
+  if [ ! -f ${OUTDIR1}/${YYYY_MM}/$1_ts.nc ] ||  ${overwrite}
   then
     echon "Building time series for variable $1"
-    ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v $1 lffd${CURRENT_DATE}*[!cpz].nc ${OUTDIR}/${YYYY_MM}/$1_ts.nc
-    ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INPDIR}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100.nc ${OUTDIR}/${YYYY_MM}/$1_ts.nc
+    ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v $1 lffd${CURRENT_DATE}*[!cpz].nc ${OUTDIR1}/${YYYY_MM}/$1_ts.nc
+    ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INDIR1}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100.nc ${OUTDIR1}/${YYYY_MM}/$1_ts.nc
   else
     echov "Time series for variable $1 already exists. Skipping..."
   fi
@@ -39,13 +39,13 @@ function timeseriesp {  # building a time series for a given quantity on pressur
   do
     PASCAL=$(python -c "print(${PLEVS[$NPLEV]} * 100.)")
     PLEV=$(python -c "print(int(${PLEVS[$NPLEV]}))")
-    cd ${INPDIR}/${CURRDIR}/$2
+    cd ${INDIR1}/${CURRDIR}/$2
 
-    if [ ! -f ${OUTDIR}/${YYYY_MM}/${1}${PLEV}p_ts.nc ] ||  ${overwrite}
+    if [ ! -f ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc ] ||  ${overwrite}
     then
       echon "Building time series at pressure level ${PLEV} hPa for variable $1"
-      ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d pressure,${PASCAL},${PASCAL} -v $1 lffd${CURRENT_DATE}*p.nc ${OUTDIR}/${YYYY_MM}/${1}${PLEV}p_ts.nc
-      ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INPDIR}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100p.nc ${OUTDIR}/${YYYY_MM}/${1}${PLEV}p_ts.nc
+      ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d pressure,${PASCAL},${PASCAL} -v $1 lffd${CURRENT_DATE}*p.nc ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc
+      ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INDIR1}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100p.nc ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc
     else
       echov "Time series for variable $1 at pressure level ${PLEV}  already exists. Skipping..."
     fi
@@ -60,13 +60,13 @@ function timeseriesz {
   while [ ${NZLEV} -le ${#ZLEVS[@]} ]
   do
     ZLEV=$(python -c "print(int(${ZLEVS[$NZLEV]}))")
-    cd ${INPDIR}/${CURRDIR}/$2
+    cd ${INDIR1}/${CURRDIR}/$2
 
-    if [ ! -f ${OUTDIR}/${YYYY_MM}/${1}${ZLEV}z_ts.nc ] ||  ${overwrite}
+    if [ ! -f ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc ] ||  ${overwrite}
     then
       echon "Building time series at height level ${ZLEV} m for variable $1"
-      ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d altitude,${ZLEV}.,${ZLEV}. -v $1 lffd${CURRENT_DATE}*z.nc ${OUTDIR}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
-      ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INPDIR}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100z.nc ${OUTDIR}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
+      ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d altitude,${ZLEV}.,${ZLEV}. -v $1 lffd${CURRENT_DATE}*z.nc ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
+      ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INDIR1}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100z.nc ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
     else
       echov "Time series for variable $1 at height level ${ZLEV} m  already exists. Skipping..."
     fi
@@ -83,11 +83,10 @@ fi
 
 
 
-INPDIR=${INPUTPOST}/${EXPPATH}
-OUTDIR=${OUTPUTPOST}/${EXPPATH}
-if [ ! -d ${INPUTPOST}/${EXPPATH} ]
+
+if [ ! -d ${INDIR1} ]
 then
-  mkdir -p ${INPUTPOST}/${EXPPATH}
+  mkdir -p ${INDIR1}
 fi
 
 YYYY=$(echo ${CURRENT_DATE} | cut -c1-4)
@@ -120,12 +119,12 @@ do
   echon "# Processing time ${YYYY_MM}"
   echon "################################"
 
-  if [ -d ${INPDIR}/${YYYY} ]
+  if [ -d ${INDIR1}/${YYYY} ]
   then
 
-    if [ ! -d ${OUTDIR}/${YYYY_MM} ]
+    if [ ! -d ${OUTDIR1}/${YYYY_MM} ]
     then
-      mkdir -p ${OUTDIR}/${YYYY_MM}
+      mkdir -p ${OUTDIR1}/${YYYY_MM}
     fi
 
     DATE_START=$(date +%s)
@@ -143,7 +142,7 @@ do
     if [ ! -f ${WORKDIR}/${EXPPATH}/cclm_const.nc ]
     then
       echon "Copy constant file"
-      ncks -h -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} ${INPDIR}/${YYYY}/output/out01/lffd${SIM_START}c.nc ${WORKDIR}/${EXPPATH}/cclm_const.nc
+      ncks -h -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} ${INDIR1}/${YYYY}/output/out01/lffd${SIM_START}c.nc ${WORKDIR}/${EXPPATH}/cclm_const.nc
     fi
     
     #start timing
@@ -165,7 +164,7 @@ do
     
   else
     echo "Cannot find input directory for year ${YYYY}. Skipping..."
-    #tar -xf ${ARCHDIR}/*${YYYY}.tar -C ${INPDIR}
+    #tar -xf ${ARCHDIR}/*${YYYY}.tar -C ${INDIR1}
   fi
   # step ahead in time
   MMint=$(python -c "print(int("${MMint}")+1)")
