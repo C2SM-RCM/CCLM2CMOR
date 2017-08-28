@@ -26,6 +26,8 @@ from datetime import datetime
 # uuid support
 import uuid
 
+
+import time as timepkg
 import __init__ as base
 
 # support logging
@@ -41,6 +43,9 @@ def shell(cmd):
     prc.wait()
     if prc.returncode != 0:
         raise Exception('Shell Error: %s \n for command: %s' % (prc.communicate()[0], cmd) )
+    else:
+        log.debug(cmd)
+
     return prc.communicate()[0]
 
 
@@ -155,7 +160,7 @@ def create_outpath(res,var):
 
 
 # -----------------------------------------------------------------------------
-def create_filename(var,res,dt_start,dt_stop):
+def create_filename(var,res,dt_start,dt_stop,logger=log):
     ''' '''
     # 3hr file: pr_EUR-11_ECMWF-ERAINT_evaluation_r1i1p1_CLMcom-CCLM4-8-17_v1_3hr_198901010130-199012312230.nc
     # 6hr file: vas_EUR-11_ECMWF-ERAINT_evaluation_r1i1p1_SMHI-RCA4_v1_6hr_       2003010100-2003123118.nc
@@ -178,7 +183,7 @@ def create_filename(var,res,dt_start,dt_stop):
         else:
             #TODO: do check of parameter table before to rule out this case
             bounds=[["0000","2100"],["0000","1800"]]
-            log.error("Subdaily aggregation method in column %s of parameter table must be 'i' or 'a'! Assumed instantaneous..." % config.get_config_value('index','INDEX_FRE_AGG'))
+            logger.error("Subdaily aggregation method in column %s of parameter table must be 'i' or 'a'! Assumed instantaneous..." % config.get_config_value('index','INDEX_FRE_AGG'))
 
     if res == "1hr":
         dt_start = "%s%s" % (dt_start,bounds[0][0])
@@ -207,7 +212,7 @@ def create_filename(var,res,dt_start,dt_stop):
                     )
         return result
 
-    log.debug("Filename start/stop: %s, %s" % (dt_start,dt_stop))
+    logger.debug("Filename start/stop: %s, %s" % (dt_start,dt_stop))
 
     result = ""
     # zg500_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_day_19510101-19551231.nc
@@ -226,12 +231,12 @@ def create_filename(var,res,dt_start,dt_stop):
 
 
 # -----------------------------------------------------------------------------
-def compress_output(outpath,index_per_day=8):
+def compress_output(outpath,index_per_day=8,year=0,logger=log):
     ''' '''
     # create object for output file
     if os.path.exists(outpath):
         try:
-            ftmp_name = "%s/%s.nc" % (settings.DirWork,str(uuid.uuid1()))
+            ftmp_name = "%s/%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()))
             # 3hr data
             if index_per_day == 8:
                 cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
@@ -242,13 +247,13 @@ def compress_output(outpath,index_per_day=8):
             os.remove(outpath)
             retval=shell("mv %s %s" % (ftmp_name,outpath))
         except:
-            log.error("Error while compressing ouput file: (%s)" % outpath)
+            logger.error("Error while compressing ouput file: (%s)" % outpath)
     else:
-        log.error("File does not exist: (%s)" % outpath)
+        logger.error("File does not exist: (%s)" % outpath)
 
 
 # -----------------------------------------------------------------------------
-def set_attributes_create(outpath,res=None):
+def set_attributes_create(outpath,res=None,year=0,logger=log):
     ''' '''
     # create object for output file
     if os.path.exists(outpath):
@@ -257,7 +262,7 @@ def set_attributes_create(outpath,res=None):
         if res:
             f_out.setncattr("frequency",res)
         # set (new) tracking_id
-        f_out.setncattr("tracking_id",str(uuid.uuid1()))
+        f_out.setncattr("tracking_id",str(year)+str(uuid.uuid1()))
         # set new creation_date
         f_out.setncattr("creation_date",datetime.now().strftime(settings.FMT))
 
@@ -269,7 +274,7 @@ def set_attributes_create(outpath,res=None):
         # close output file
         f_out.close()
     else:
-        log.error("File does not exist: (%s)" % outpath)
+        logger.error("File does not exist: (%s)" % outpath)
 
 
 # -----------------------------------------------------------------------------
@@ -345,8 +350,10 @@ def get_out_dir(var,res,cm_type):
     if cm_type != '':
         outpath = create_outpath(res,var)
         outpath = "%s/%s" % (settings.DirOut,outpath)
-        if not os.path.isdir(outpath):
+        try:
             os.makedirs(outpath)
+        except:
+            pass
         return outpath
     else:
         return ""
@@ -433,7 +440,6 @@ def do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir):
             outdir=outdir+"/"+config.get_config_value('settings','chunk_into')
         if not os.path.isdir(outdir):
             os.makedirs(outdir)
-
         outpath = "%s/%s" % (outdir,outfile)
 
         # TODO: correct this to first step and last step
@@ -632,10 +638,10 @@ def add_coordinates(f_out):
         f_coor = Dataset(settings.coordinates_file,'r')
         # copy lon
         copy_var(f_coor,f_out,'lon')
-        log.info("Variable lon added!")
+        logger.info("Variable lon added!")
         # copy lat
         copy_var(f_coor,f_out,'lat')
-        log.info("Variable lat added!")
+        logger.info("Variable lat added!")
         # commit changes
         f_out.sync()
 
@@ -914,9 +920,9 @@ def proc_seasonal_mean(params,year):
 
     #create possible filenames and check their existence -> skip or overwrite file
     outdir = get_out_dir(var,res,cm_type)
-    outfile1 = create_filename(var,res,year+"03",year+"11")
+    outfile1 = create_filename(var,res,year+"03",year+"11",logger=logger)
     outpath1 = "%s/%s" % (outdir,outfile1)
-    outfile2 = create_filename(var,res,str(int(year)-1)+"12",year+"11")
+    outfile2 = create_filename(var,res,str(int(year)-1)+"12",year+"11",logger=logger)
     outpath2 = "%s/%s" % (outdir,outfile2)
 
     if os.path.isfile(outpath1) or os.path.isfile(outpath2):
@@ -953,14 +959,13 @@ def proc_seasonal_mean(params,year):
                 year_act=f.split("_")[-1][:4]
                 if year_act != year: #only process file if the year is correct
                     i=i+1
+
                     continue
                 else:
                     input_exist=True
-                if config.get_config_value('boolean','use_search_string') and f.find(settings.search_input_string) > 0 and f.find(settings.search_input_string.replace('_','-')) > 0:
-                    continue
 
                 # first a temp file
-                ftmp_name = "%s/%s%s" % (settings.DirWork,str(uuid.uuid1()),'-help.nc')
+                ftmp_name = "%s/%s-%s%s" % (settings.DirWork,year,str(uuid.uuid1()),'-help.nc')
                 # generate outpath with outfile and outdir
                 f = "%s/%s" % (dirpath,f)
 
@@ -968,20 +973,23 @@ def proc_seasonal_mean(params,year):
                 if i == 0:
                     cmd = "cdo -f %s -seas%s -selmonth,3/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f,ftmp_name)
                     retval=shell(cmd)
+
                 else:
                     # first: last December of previous year
-                    f_hlp12 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False)
+                    f_hlp12 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     f_prev = "%s/%s" % (dirpath,f_lst[i-1])
+                    if config.get_config_value("boolean","multi"):
+                        timepkg.sleep(3)#wait for previous year to definitely finish when multiprocessing
                     cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
                     retval = shell(cmd)
 
                     # second: month 1...11 of actual year
-                    f_hlp1_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False)
+                    f_hlp1_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     cmd = "cdo -f %s selmonth,1/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f,f_hlp1_11.name)
                     retval = shell(cmd)
 
                     # now concatenate all 12 month
-                    f_hlp12_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False)
+                    f_hlp12_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     cmd = "ncrcat -h -O %s %s %s" % (f_hlp12.name,f_hlp1_11.name,f_hlp12_11.name)
                     retval = shell(cmd)
 
@@ -992,9 +1000,9 @@ def proc_seasonal_mean(params,year):
                     retval = shell(cmd)
 
                     # remove all temp files
-                    os.remove(f_hlp12.name)
-                    os.remove(f_hlp1_11.name)
-                    os.remove(f_hlp12_11.name)
+                  #  os.remove(f_hlp12.name)
+                   # os.remove(f_hlp1_11.name)
+                    #os.remove(f_hlp12_11.name)
 
                 # create netcdf4 object from file
                 f_tmp = Dataset(ftmp_name,'r+')
@@ -1055,17 +1063,17 @@ def proc_seasonal_mean(params,year):
                 f_tmp.close()
 
                 # create outpath to store
-                outfile = create_filename(var,res,dt_start,dt_stop)
+                outfile = create_filename(var,res,dt_start,dt_stop,logger=logger)
                 outpath = "%s/%s" % (outdir,outfile)
                 if not os.path.isfile(outpath):
                     # rename temp file to output filename outpath
                     retval = shell("mv %s %s" % (ftmp_name,outpath))
 
                     # set attributes
-                    set_attributes_create(outpath,res)
+                    set_attributes_create(outpath,res,year)
                     # correct netcdf version
                     if config.get_config_value('boolean','nc_compress') == True:
-                        compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')])
+                        compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')],year)
 
                     # exist in some output (e.g. CCLM) in CORDEX, default: False
                     if config.get_config_value('boolean','add_vertices') == True:
@@ -1078,6 +1086,8 @@ def proc_seasonal_mean(params,year):
                 i += 1
             if not input_exist:
                 logger.warning("Input file (daily resolution) for seasonal processing does not exist. Skipping this year...")
+            else:
+                break
         else:
             logger.warning("No cell method set for this variable (%s) and time resolution (%s)." % (var,res))
 
@@ -1385,10 +1395,8 @@ def derotate_uv():
     for var in var_list_rotated:
         params = settings.param[var]
         out_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
-        if os.path.isdir(out_dir) == False:
-            log.info("Output directory does not exist: %s. Creating..." % out_dir)
+        if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
-
     for var in var_list_rotate_u:
         log.debug(var)
         params = settings.param[var]
@@ -1526,7 +1534,7 @@ def process_file(params,in_file,var,reslist,year):
 
 
     if switch_infile == True: ## and dt_in_year_chk < settings.alt_start_year:
-        in_file_new = "%s/%s-%s" % (settings.DirWork,str(uuid.uuid1()),os.path.basename(in_file))
+        in_file_new = "%s/%s-%s-%s" % (settings.DirWork,year,str(uuid.uuid1()),os.path.basename(in_file))
         # that does not work!!
 #        cmd = "cdo -f %s -s selyear,%d %s %s" % (config.get_config_value('settings', 'cdo_nctype'),dt_in_year,in_file,in_file_new)
         # only December istsupported
@@ -1630,7 +1638,7 @@ def process_file(params,in_file,var,reslist,year):
             outdir = get_out_dir(var,res,cm_type)
 
             # get file name
-            outfile = create_filename(var,res,dt_start_in,dt_stop_in)
+            outfile = create_filename(var,res,dt_start_in,dt_stop_in,logger=logger)
             # create complete outpath: outdir + outfile
             outpath = "%s/%s" % (outdir,outfile)
             # skip file if exist
@@ -1706,12 +1714,12 @@ def process_file(params,in_file,var,reslist,year):
                 idx_to = int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip()) + 1
                 arr = {}
                 for i in range(idx_from,idx_to):
-                    f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False)
+                    f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
                     arr[i] = f_hlp.name
                     retval = shell("cdo -f %s sellevidx,%d %s %s" %(config.get_config_value('settings', 'cdo_nctype'),i,in_file,arr[i]))
 
                 # now calculate the sum
-                f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False)
+                f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
                 #write files in arr into str with whitespace separation for cdo command
                 files_str=" ".join(arr.values())
                 cmd = "%s %s %s" % (cmd1,files_str,f_hlp.name)
@@ -1719,7 +1727,7 @@ def process_file(params,in_file,var,reslist,year):
                 # multiply with factor 1000 (from csv table)
                 # switch from original in_file to the new in_file for these variables
                 #in_file = "%s/%s-%s.nc" % (settings.DirWork,'help','1000')
-                in_file_help = "%s/help-%s-%s.nc" % (settings.DirWork,var,str(uuid.uuid1()))
+                in_file_help = "%s/help-%s-%s-%s.nc" % (settings.DirWork,year,var,str(uuid.uuid1()))
 #                in_file = tempfile.NamedTemporaryFile(dir=settings.DirWork)
                 cmd = "cdo mulc,%d %s %s" % (int(params[config.get_config_value('index','INDEX_COVERT_FACTOR')]),f_hlp.name,in_file_help)
                 retval = shell(cmd)
@@ -1730,7 +1738,7 @@ def process_file(params,in_file,var,reslist,year):
                 in_file_org = in_file
                 in_file = in_file_help
 
-            ftmp_name = "%s/%s-%s.nc" % (settings.DirWork,str(uuid.uuid1()),var)
+            ftmp_name = "%s/%s-%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()),var)
 #            fp_tmp = open(ftmp_name, 'w+')
             # exchange in_file name
             #if var in ['mrso','mrfso'] and os.path.isfile(in_file_help):
@@ -1772,7 +1780,7 @@ def process_file(params,in_file,var,reslist,year):
             # monthy data
             elif res == 'mon':
                 # get file with daily data from the same input (if exist)
-                DayFile = create_filename(var,'day',dt_start_in,dt_stop_in)
+                DayFile = create_filename(var,'day',dt_start_in,dt_stop_in,logger=logger)
                 DayPath = "%s/%s" % (get_out_dir(var,'day',cm_type),DayFile)
                 # use day files or prcess this step before
                 if os.path.isfile(DayPath):
@@ -2175,11 +2183,11 @@ def process_file(params,in_file,var,reslist,year):
             os.remove(ftmp_name)
 
             # set attributes: frequency,tracking_id,creation_date
-            set_attributes_create(outpath,res)
+            set_attributes_create(outpath,res,year,logger=logger)
 
             # ncopy file to correct output format
             if config.get_config_value('boolean','nc_compress') == True:
-                compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')])
+                compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')],year,logger=logger)
             logger.info("Variable attributes set!")
 
             # close tmp file

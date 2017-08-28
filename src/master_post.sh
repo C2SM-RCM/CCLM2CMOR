@@ -1,9 +1,9 @@
 #!/bin/ksh
 #SBATCH --account=pr04
 #SBATCH --nodes=1
-##SBATCH --partition=prepost
-#SBATCH --time=04:00:00
-#SBATCH --constraint=gpu
+#SBATCH --partition=prepost
+#SBATCH --time=00:30:00
+#SBATCH --constraint=mc
 #SBATCH --output=/scratch/snx1600/mgoebel/CMOR/logs/shell/CMOR_sh_%j.out
 #SBATCH --error=/scratch/snx1600/mgoebel/CMOR/logs/shell/CMOR_sh_%j.err
 #SBATCH --job-name="CMOR_sh"
@@ -21,7 +21,7 @@ do
   fi
 done
 
-DATE1=$(date +%s)
+TIME1=$(date +%s)
 cd ${SCRATCH}/CMOR/src
 source ./settings.sh
 
@@ -175,7 +175,7 @@ then
 fi
 
 (( NEXTYEAR=YYA+1 ))
-exit
+
 #for batch processing: process only one year per job
 if [ ${NEXTYEAR} -le ${YYE} ] && ${batch}  
 then
@@ -195,12 +195,14 @@ then
     then
       echon "Extracting years from ${startex} to  ${endex} \n\n"
       sbatch  --job-name=CMOR_sh --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR}/xfer.sh -s ${startex} -e ${endex} -g ${GCM} -x ${EXP}
+      #Submit job for the following year when all other jobs are finished
+      sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
     fi
 
+  else
+    #Submit job for the following year without waiting
+    sbatch --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
   fi
-  #Submit job for the following year after extraction jobs are finished
-  sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
-  
   #at end concatenate all log files
   if [ ${YYA} -eq ${YYE} ]
   then
@@ -214,12 +216,10 @@ then
 fi
 
 
-exit
-
 if  [ ${post_step} -ne 2 ]
 then
   CURRENT_DATE=${START_DATE}
-  echo "First processing step \n######################################################"
+  echo "###################################################### \n First  processing step \n######################################################"
  # echo "Path to input data: " ${ARCHDIR}
   echo "Start: " ${START_DATE}
   echo "Stop: " ${STOP_DATE}
@@ -231,8 +231,7 @@ fi
 if [ ${post_step} -ne 1 ]
 then
   echo ""
-  echo "######################################################"
-  echo "Second processing step \n######################################################"
+  echo "###################################################### \n Second processing step \n######################################################"
   echo "Start: " ${YYA}
   echo "Stop: " ${YYE}
   source ${SRCDIR}/second.sh
@@ -244,8 +243,8 @@ then
 fi
 
 echo "######################################################"
-DATE2=$(date +%s)
-SEC_TOTAL=$(python -c "print(${DATE2}-${DATE1})")
+TIME2=$(date +%s)
+SEC_TOTAL=$(python -c "print(${TIME2}-${TIME1})")
 echo "total time for postprocessing: ${SEC_TOTAL} s"
 
 

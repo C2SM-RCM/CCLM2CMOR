@@ -66,6 +66,9 @@ def process_resolution(params,reslist):
 
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
+        if len(filenames)==0:
+            log.warning("No files found! Skipping this variable...")
+
         i=0
         for f in sorted(filenames):
             year=f.split("_")[-1][:4]
@@ -73,9 +76,9 @@ def process_resolution(params,reslist):
             if config.get_config_value("boolean","multi"):
                 log = logging.getLogger("cmorlight_"+year)
                 log.info("\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (var, varRCM))
-                log.info(datetime.now())
+                log.info("Start processing at: "+str(datetime.now()))
             #if limit_range is set: skip file if it is out of range
-            if config.get_config_value('boolean','limit_range'):
+            if config.get_config_value('boolean','limit_range') and var not in config.get_model_value('var_list_fixed'):
                 if int(year) < config.get_config_value('integer','proc_start') or int(year) > config.get_config_value('integer','proc_end'):
                     log.debug("File %s out of time range! Skipping ..." % f)
                     continue
@@ -95,6 +98,7 @@ def process_resolution(params,reslist):
                     else:
                         if config.get_config_value("boolean","multi"):
                             multilst.append([params,in_file,var,reslist,year])
+
                         else:
                             reslist=tools.process_file(params,in_file,var,reslist,year)
 
@@ -104,17 +108,24 @@ def process_resolution(params,reslist):
             i=i+1
 
             #process as many files simultaneously as there are cores specified
-            if config.get_config_value("boolean","multi") and i==cores:
-                R=[]
+            if (config.get_config_value("boolean","multi") and i==cores):
                 pool=Pool(processes=cores)
-                R.extend(pool.map(process_file_unpack,multilst))
+                R=pool.map(process_file_unpack,multilst)
                 pool.terminate()
                 #start new
                 multilst=[]
                 i=0
                 #change reslist
-               # reslist=R[0]
+                reslist=R[0]
+
+    #process remaining files
+    if len(multilst)!=0:
+        pool=Pool(processes=cores)
+        R=pool.map(process_file_unpack,multilst)
+        pool.terminate()
+
     log.info("Variable '%s' finished!" % (var))
+
     return True
 
 
@@ -183,7 +194,7 @@ def main():
                             help="Overwrite existent output files")
     parser.add_option("-f", "--force_proc",
                             action="store_false", dest="process_table_only", default = True,
-                            help="Process variable at specific resolution only if this resolution is declared in the parameter table")
+                            help="Try to process variable at specific resolution regardless of what is written in the parameter table")
     parser.add_option("-S", "--silent",
                             action="store_false", dest="normal_log", default = True,
                             help="Write only minimal information to log (variables and resolutions in progress, warnings and errors)")
@@ -250,7 +261,8 @@ def main():
     LOG_BASE = settings.DirLog
     if os.path.isdir(LOG_BASE) == False:
         print("Creatubg logging directory: %s" % LOG_BASE)
-        os.makedirs(LOG_BASE)
+        if not os.path.isdir(LOG_BASE):
+            os.makedirs(LOG_BASE)
     LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')
     logext = datetime.now().strftime("%d-%m-%Y")+'.log'
 
@@ -272,12 +284,14 @@ def main():
 
     # creating working directory if not exist
     if not os.path.isdir(settings.DirWork):
-        log.info("Working directory does not exist, creating: %s" % (settings.DirWork))
-        os.makedirs(settings.DirWork)
+        log.debug("Working directory does not exist, creating: %s" % (settings.DirWork))
+        if not os.path.isdir(settings.DirWork):
+            os.makedirs(settings.DirWork)
 
     if not os.path.isdir(settings.DirOut):
-        log.info("Output directory does not exist, creating: %s" % (settings.DirOut))
-        os.makedirs(settings.DirOut)
+        log.debug("Output directory does not exist, creating: %s" % (settings.DirOut))
+        if not os.path.isdir(settings.DirOut):
+            os.makedirs(settings.DirOut)
 
     # assing some new parameter
     if config.get_config_value('boolean','add_version_to_outpath'):
@@ -316,23 +330,9 @@ def main():
         tools.proc_test_var(process_list,varlist,reslist)
         return
 
-    #Remove variables in var_skip_list from varlist
-    if settings.var_skip_list[0]!="":
-        log.info("Variables %s were found in var_skip_list. Skip these variables" % settings.var_skip_list)
-        new_varlist=list(varlist)
-        for var in varlist:
-            params = settings.param[var]
-            varCCLM = params[config.get_config_value('index','INDEX_VAR')]
-            varRCM= params[config.get_config_value('index','INDEX_RCM_NAME')]
-            if (varCCLM in settings.var_skip_list) or (varRCM in settings.var_skip_list):
-                new_varlist.remove(var)
-        varlist=list(new_varlist)
-
-
     log.info("Configuration read from: %s" % os.path.abspath(varfile))
     log.info("Variable(s): %s " % varlist)
     log.info("Requested time output resolution(s): %s " % reslist)
-    log.info("Used RCM: %s" % config.get_config_value('settings','model'))
     if options.process_table_only:
         log.info("For each variable processing only resolutions declared in parameter table")
     else:
@@ -340,42 +340,45 @@ def main():
 
     # process all var in varlist with input model and input experiment for proc_list item
     for var in varlist:
-        reslist_act=list(reslist) #new copy of reslist
-        for res in reslist:
-            if tools.check_resolution(params,res,options.process_table_only) == False:
-                reslist_act.remove(res) #remove resolution from list if it is not in table or if it is not supported
         if var not in settings.param:
             log.warning("Variable '%s' not supported!" % (var))
             continue
-        else:
-            # get parameter for next variable in the list
-            params = settings.param[var]
-            varCCLM = params[config.get_config_value('index','INDEX_VAR')]
-            varRCM= params[config.get_config_value('index','INDEX_RCM_NAME')]
-            log.log(35,"\n\n\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (varCCLM, varRCM))
+        params = settings.param[var]
+        varCMOR= params[config.get_config_value('index','INDEX_VAR')]
+        varRCM= params[config.get_config_value('index','INDEX_RCM_NAME')]
+        if (varCMOR in settings.var_skip_list) or (varRCM in settings.var_skip_list):
+            log.debug("###########################################################")
+            log.debug("Variable was found in var_skip_list. Skip this variables")
+            continue
+        log.log(35,"\n\n\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (varCMOR, varRCM))
 
-            log.debug("Used parameter for variable '%s': %s" % (var,params))
+        if var not in config.get_model_value('var_list_fixed'):
+            reslist_act=list(reslist) #new copy of reslist
+            for res in reslist:
+                if tools.check_resolution(params,res,options.process_table_only) == False:
+                    reslist_act.remove(res) #remove resolution from list (for this variable) if it is not in table or if it is not supported
+
+        log.debug("Used parameter for variable '%s': %s" % (var,params))
 
         if reslist_act==[]:
             log.warning("None of the given resolutions appears in the table! Skipping variable...")
             continue
-        if params:
-            # set global attributes in the dictionary
-            tools.set_attributes(params,process_list)
+        # set global attributes in the dictionary
+        tools.set_attributes(params,process_list)
 
-            # skip fixed fields from chunking, makes no sense to chunk
-            if options.chunk_var == True and not var in config.get_model_value('var_list_fixed'):
-                log.log(35, "Chunking files \n #######################")
-                tools.proc_chunking(params,reslist_act)
+        # skip fixed fields from chunking, makes no sense to chunk
+        if options.chunk_var == True and not var in config.get_model_value('var_list_fixed'):
+            log.log(35, "Chunking files \n #######################")
+            tools.proc_chunking(params,reslist_act)
 
-            # some procs for correction or cleanup files later
-            elif options.corr_var == True:
-                for res in reslist_act:
-                    tools.proc_corr_var(params,res,key=options.corr_key)
+        # some procs for correction or cleanup files later
+        elif options.corr_var == True:
+            for res in reslist_act:
+                tools.proc_corr_var(params,res,key=options.corr_key)
 
-            # process all vars from varlist with all output resolutions from reslist
-            else:
-                process_resolution(params,reslist_act)
+        # process all vars from varlist with all output resolutions from reslist
+        else:
+            process_resolution(params,reslist_act)
 
 
 #########################################################
@@ -389,7 +392,7 @@ if __name__ == "__main__":
     #clean up temp files
     shutil.rmtree(settings.DirWork)
 
-    #Clean up .tmp files in output directory (if on last run program crashed while writing a file)
+  #  Clean up .tmp files in output directory (if on last run program crashed while writing a file)
     for root, dirs, files in os.walk(settings.DirOut):
         for file in files:
             if file[-4:]==".tmp":

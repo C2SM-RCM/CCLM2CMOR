@@ -53,7 +53,7 @@ fi
 
 #skip already extracted years
 (( NEXTYEAR=startyear + 1 ))
-while [ -d ${INPDIR}/*${NEXTYEAR} ]
+while [ -d ${INPDIR}/*${NEXTYEAR} ] && [ ${NEXTYEAR} -le ${endyear} ]
 do
   echo "Input files for year ${NEXTYEAR} have already been extracted. Skipping..."
   (( NEXTYEAR=NEXTYEAR + 1 ))

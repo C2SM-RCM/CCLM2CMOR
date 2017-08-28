@@ -38,7 +38,7 @@ CMORLIGHT:
 
     - fehler bei derotate_uv : cdo rotuvb:  Only rotated lon/lat grids supported!
     - spezialfall: prhmax -> berechnen wenn stündlicher output vorliegt
-    
+    - multi only for py3 -> check conflict in the beginning, change exist_ok
     - sachen in proc_corr_var schauen ob die schon passen
     - chunking: in extra folder -> do something better!
     - every step in process_file needed to be carried out for every file??? -> raise performance!
@@ -88,3 +88,4 @@ CMORLIGHT:
     - can set global attributes in .ini file or take from input files (if present) by adding to global_attr_file list
     - file name conventions for input: var_*.nc or for constant variables var.nc (var can be variable name from CMOR or RCM)
     if not met -> file not processed!
+    - multi only for py3
