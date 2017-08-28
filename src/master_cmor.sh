@@ -9,7 +9,7 @@
 #SBATCH --job-name="CMOR_py"
 
 cores=3
-python_script="/scratch/snx1600/mgoebel/CMOR/src/CMORlight/cmorlight2.py"
+python_script="${SCRATCH}/CMOR/src/CMORlight/cmorlight2.py"
 
 
 multi=false # run several jobs simultaneously

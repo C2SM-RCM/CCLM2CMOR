@@ -28,7 +28,7 @@ LOGGER = logging.getLogger("cmorlight")
 # -----------------------------------------------------------------------------
 
 
-def get_config_value(section, option, inifile=None):
+def get_config_value(section, option):
     """Get desired value from  configuration files
     :param section: section in configuration files
     :type section: string
@@ -76,7 +76,7 @@ def get_model_value(option):
 
 
 # -----------------------------------------------------------------------------
-def set_config_value(section, option, value,inifile=None):
+def set_config_value(section, option, value):
     ''' '''
     if not CONFIG:
         sys.exit("ERROR: Load configuration file before getting/setting config values! Exiting...")

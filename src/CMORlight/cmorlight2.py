@@ -249,10 +249,8 @@ def main():
     # create logger
     LOG_BASE = settings.DirLog
     if os.path.isdir(LOG_BASE) == False:
-        print("Logging directory does not exist: %s" % LOG_BASE)
+        print("Creatubg logging directory: %s" % LOG_BASE)
         os.makedirs(LOG_BASE)
-        if os.path.isdir(LOG_BASE) == True:
-            print("Logging directory created: %s" % LOG_BASE)
     LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')
     logext = datetime.now().strftime("%d-%m-%Y")+'.log'
 

@@ -4,7 +4,7 @@ post_step=0 #to limit post processing to step 1 or 2, for all other values both 
 #Simulation details
 
 GCM=HadGEM2-ES     
-EXP=RCP85
+EXP=Hist
 
 EXPPATH=${GCM}/${EXP}
 ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived

@@ -5,10 +5,10 @@
 #SBATCH --time=4:00:00
 #SBATCH --output=/scratch/snx1600/mgoebel/CMOR/logs/shell/xfer_%j.out
 #SBATCH --error=/scratch/snx1600/mgoebel/CMOR/logs/shell/xfer_%j.err
-#SBATCH --job-name="CMOR_sh"
+#SBATCH --job-name="xfer_sh"
 
 
-BASEDIR=/scratch/snx1600/mgoebel/CMOR
+BASEDIR=${SCRATCH}/CMOR
 
 source ${BASEDIR}/src/settings.sh
 args=""
@@ -44,18 +44,25 @@ done
 
 EXPPATH=${GCM}/${EXP}
 INPDIR=${INDIR_BASE1}/${EXPPATH}
+xfer=${SCRATCH}/CMOR/logs/shell/${GCM}_${EXP}_xfer
 
 if [ ! -d ${INPDIR} ]
 then
   mkdir -p ${INPDIR}
 fi
 
-
+#skip already extracted years
 (( NEXTYEAR=startyear + 1 ))
+while [ -d ${INPDIR}/*${NEXTYEAR} ]
+do
+  echo "Input files for year ${NEXTYEAR} have already been extracted. Skipping..."
+  (( NEXTYEAR=NEXTYEAR + 1 ))
+done
+
 
 if [ ${NEXTYEAR} -le ${endyear} ]
 then
- sbatch ${SRCDIR}/xfer.sh -s ${NEXTYEAR} ${args}
+  sbatch  --job-name=CMOR_sh --error=${xfer}.${NEXTYEAR}.err --output=${xfer}.${NEXTYEAR}.out ${SRCDIR}/xfer.sh -s ${NEXTYEAR} ${args}
 fi
 
 
@@ -68,7 +75,7 @@ then
     rm -r ${INPDIR}/${startyear}/input
 
   else
-    echo "Cannot find .tar file in archive directory! Exiting..."
+    echo "Cannot find .tar file for year ${startyear} in archive directory! Exiting..."
     exit 1
   fi
 else

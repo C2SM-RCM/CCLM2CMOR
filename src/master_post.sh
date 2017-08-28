@@ -8,6 +8,7 @@
 #SBATCH --error=/scratch/snx1600/mgoebel/CMOR/logs/shell/CMOR_sh_%j.err
 #SBATCH --job-name="CMOR_sh"
 
+
 #Check if all functions are available
 funcs="ncrcat ncks ncap2 ncatted"
 for f in $funcs
@@ -21,15 +22,21 @@ do
 done
 
 DATE1=$(date +%s)
-cd /scratch/snx1600/mgoebel/CMOR/src
+cd ${SCRATCH}/CMOR/src
 source ./settings.sh
 
+#default values
 overwrite=false #overwrite output if it exists
 n=true #normal printing mode
 v=false #verbose printing mode
 clean=false #clean  files in WORKDIR  
-batch=false
+batch=true #create batch jobs continously always for one year
+extract=10 #number of years to extract at once
+
+
 args=""
+concat=false
+
 while [[ $# -gt 0 ]]
 do
   key="$1"
@@ -57,6 +64,10 @@ do
       FIRST=$2
       shift
       ;;
+      -E|--extract)
+      extract=$2
+      shift
+      ;;
       --first)
       post_step=1
       args="${args} --first"
@@ -77,9 +88,9 @@ do
       overwrite=true
       args="${args} -O"
       ;;
-      --batch)
-      batch=true
-      args="${args} --batch"
+      --no_batch)
+      batch=false
+      args="${args} --no_batch"
       ;;
       --clean)
       clean=true
@@ -91,6 +102,11 @@ do
   esac
   shift
 done
+
+#log base names
+CMOR=${SCRATCH}/CMOR/logs/shell/${GCM}_${EXP}_CMOR_sh
+xfer=${SCRATCH}/CMOR/logs/shell/${GCM}_${EXP}_xfer
+delete=${SCRATCH}/CMOR/logs/shell/${GCM}_${EXP}_delete
 
 
 #printing modes
@@ -142,42 +158,63 @@ else
   STOP_DATE=$(echo ${STOP_DATE} | cut -c1-6) 
 fi
 
-(( NEXT_YEAR=YYA+1 ))
-
-
-echo "GCM:" ${GCM}
-echo "Experiment:" ${GCM}
-echo "######################################################"
- 
-#for batch processing: process only one year per job
-if [ ${NEXT_YEAR} -le ${YYE} ] && ${batch}  
+#if no archives have been extracted in the beginning:
+if [ ! -d ${INDIR1}/*${YYA} ]
 then
+    (( endex=YYA+extract-1 ))
+    #limit to extraction to end year
+    if [ ${endex} -gt ${YYE} ]
+    then
+      endex=${YYE}
+    fi
+    echon "Extracting years ${YYA} to ${endex} \n\n"
+    sbatch --job-name=CMOR_sh --error=${xfer}.${YYA}.err --output=${xfer}.${YYA}.out ${SRCDIR}/xfer.sh -s ${YYA} -e ${endex} -g ${GCM} -x ${EXP}
+    #abort running job and restart it after extraction is done
+    sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${YYA} -F ${FIRST} 
+    exit
+fi
 
-
+(( NEXTYEAR=YYA+1 ))
+exit
+#for batch processing: process only one year per job
+if [ ${NEXTYEAR} -le ${YYE} ] && ${batch}  
+then
   #Extract archived years every 10 years
   (( d=YYA-FIRST ))
-  (( mod=d%10 ))
+  (( mod=d%extract ))
   if [ $mod -eq 0 ]
   then
-    (( startex=YYA+10 ))
-    (( endex=YYA+19 ))
-    echon "Extracting years ${startex} to  ${endex} \n\n"
-    sbatch  ${SRCDIR}/xfer.sh -s ${startex} -e ${endex} -g ${GCM} -x ${EXP}
-    #Submit job for the following year after all other jobs (including extraction) are finished
-    sbatch --dependency=singleton master_post.sh ${args} -s ${NEXT_YEAR} -F ${FIRST} 
-  else
-    sbatch master_post.sh ${args} -s ${NEXT_YEAR} -F ${FIRST} 
+    (( startex=YYA+extract ))
+    (( endex=YYA+2*extract-1 ))
+    #limit to extraction to end year
+    if [ ${endex} -gt ${YYE} ]
+    then
+      endex=${YYE}
+    fi
+    if [ ${startex} -le ${YYE} ]
+    then
+      echon "Extracting years from ${startex} to  ${endex} \n\n"
+      sbatch  --job-name=CMOR_sh --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR}/xfer.sh -s ${startex} -e ${endex} -g ${GCM} -x ${EXP}
+    fi
+
   fi
-
-
+  #Submit job for the following year after extraction jobs are finished
+  sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
+  
+  #at end concatenate all log files
+  if [ ${YYA} -eq ${YYE} ]
+  then
+    concat=true
+  fi
+  
   #Set stop years to start years to process only one year per job
   YYE=${YYA}
   ((STOP_DATE=START_DATE+100 )) #increase by one year (months are also in there)
-
+  
 fi
 
 
-
+exit
 
 if  [ ${post_step} -ne 2 ]
 then
@@ -199,7 +236,6 @@ then
   echo "Start: " ${YYA}
   echo "Stop: " ${YYE}
   source ${SRCDIR}/second.sh
-
 fi
 
 if ${clean}
@@ -212,6 +248,23 @@ DATE2=$(date +%s)
 SEC_TOTAL=$(python -c "print(${DATE2}-${DATE1})")
 echo "total time for postprocessing: ${SEC_TOTAL} s"
 
+
+
 #Delete input data
 echo "deleting input data"
-sbatch  ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP}
+sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP}  
+
+
+#at end concatenate all log files
+if ${concat}
+then
+  year=${FIRST}
+  while [ year -le ${YYE} ]
+  do
+    echo "CMOR STEP 1 \n GCM: ${GCM} \n Experiment: ${GCM} \n Years: ${FIRST} - ${YYE} ######################################################" >> ${CMOR}.log
+    cat ${xfer}.${year}.out >> ${CMOR}.log
+    cat ${CMOR}.${year}.out >> ${CMOR}.log
+    echo "######################################################\n\n"
+    (( year=year+1 ))
+  done 
+fi

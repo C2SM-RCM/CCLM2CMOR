@@ -8,7 +8,7 @@
 #SBATCH --job-name="delete"
 
 
-BASEDIR=/scratch/snx1600/mgoebel/CMOR
+BASEDIR=${SCRATCH}/CMOR
 
 source ${BASEDIR}/src/settings.sh
 args=""

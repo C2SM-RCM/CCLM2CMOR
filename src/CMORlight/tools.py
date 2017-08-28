@@ -40,7 +40,7 @@ def shell(cmd):
     prc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     prc.wait()
     if prc.returncode != 0:
-        raise Exception('Shell Error: %s' % prc.communicate()[0])
+        raise Exception('Shell Error: %s \n for command: %s' % (prc.communicate()[0], cmd) )
     return prc.communicate()[0]
 
 
