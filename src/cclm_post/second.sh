@@ -217,7 +217,7 @@ do
           echo "Error: Start date  ${TDA} ${THA}"
           echo in "${FILEIN} "
           echo "is not correct! Exiting..."
-          exit
+          continue
         fi
         if [[ ${TDE} -eq ${LASTDAY} && ${THE} -eq ${EHH} ]]
         then
@@ -237,7 +237,7 @@ do
           else
             echo "Try to append first date from next month's file but"
             echo ${FILENEXT} does not exist
-            exit
+            continue
           fi
         elif [[ ${TDE} -eq 01 &&  ${THE} -eq 00 ]]
         then
@@ -249,7 +249,7 @@ do
           echo "END date  ${TDE} ${THE}"
           echo in "${FILEIN} "
           echo "is not correct"
-          exit
+          continue
         fi
         ENDFILE=${OUTDIR2}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YP}${MP}0100.nc
   #     shift time variable by DHH/2*3600 and transfer time from seconds in days       
@@ -266,9 +266,9 @@ do
           echo "Start date " ${TDA} ${THA}
           echo in "${FILEIN} "
           echo "is not correct"
-          exit       
+          continue       
         fi
-        if [[ ${TDE} -eq ${LASTDAY}  && ${THE} -eq ${EHH} ]]
+        if [[ ${TDE} -ge 28  && ${THE} -eq ${EHH} ]]
         then
           echov "Last date of instantaneous file is OK"
           mv ${FILEOUT}_tmp1.nc ${FILEOUT}_tmp3.nc
@@ -277,14 +277,17 @@ do
           (( NTM=NT-2 )) 
           echov "Last date of instantaneous file is removed"
           ncks -O -h -d time,0,${NTM} ${FILEOUT}_tmp1.nc ${FILEOUT}_tmp3.nc 
+          #change TDE
+          VT=($(cdo -s showtimestamp ${FILEOUT}_tmp3.nc))
+          TDE=$(echo ${VT} | cut -c9-10)
         else
           echo "END date " ${TDE} ${THE}
           echo in "${FILEIN} "
           echo "is not correct"
           echo ${EHH}
-          exit       
+          continue       
         fi
-        ENDFILE=${OUTDIR2}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YY}${ME}${LASTDAY}${EHH}.nc
+        ENDFILE=${OUTDIR2}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YY}${ME}${TDE}${EHH}.nc
   #     transfer time from seconds in days and remove time_bnds from instantaneous fields
         echov "Modifying time values and attributes"
   #      ncap2 -O -h -s "time_bnds=time_bnds/86400" -s "time_bnds(:,0)=time_bnds(:,1)" ${FILEOUT}_tmp3.nc ${ENDFILE}

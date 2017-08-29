@@ -51,10 +51,9 @@ def shell(cmd):
 
 # -----------------------------------------------------------------------------
 # get list of variables to rotate
-def get_input_path(var):
+def get_input_path(derotated=False):
     ''' '''
-    var_list_rotated = get_derotate_vars(flt=None)
-    if var in var_list_rotated:
+    if derotated:
         retVal = settings.DirOutRotated
     else:
 
@@ -68,9 +67,9 @@ def get_var_lists():
     '''
     lst = []
     for row in sorted(settings.param):
-        varRCM=settings.param[row][config.get_config_value('index','INDEX_RCM_NAME')]
-        if not varRCM in lst: #to not append variables twice as they appear twice in params
-            lst.append(varRCM)
+        var=settings.param[row][config.get_config_value('index','INDEX_VAR')]
+        if not var in lst: #to not append variables twice as they appear twice in params
+            lst.append(var)
     return sorted(lst)
 
 
@@ -1108,10 +1107,10 @@ def proc_test_var(process_list,varlist,reslist):
         params = settings.param[var]
         set_attributes(params,process_list)
 
-        in_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
+        in_dir = "%s/%s" % (get_input_path(),params[config.get_config_value('index','INDEX_RCM_NAME')])
         log.info("Looking for input dir: %s" % (in_dir))
         if os.path.isdir(in_dir) == False:
-            in_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')].replace('p',''))
+            in_dir = "%s/%s" % (get_input_path(),params[config.get_config_value('index','INDEX_RCM_NAME')].replace('p',''))
             log.info("Looking for input dir: %s" % (in_dir))
         if os.path.isdir(in_dir) == True:
             log.info("###############################################################")
@@ -1383,89 +1382,99 @@ def proc_corr_var(params,res,key):
 
 
 # -----------------------------------------------------------------------------
-def derotate_uv():
+def derotate_uv(params,in_file,var,logger=log):
     """
     derotate u and v variables
     """
-    log.info("Start derotating")
-    var_list_rotate_u = get_derotate_vars(flt='u')
-    var_list_rotated = get_derotate_vars(flt=None)
+    logger.info("Derotating file")
+    #set environment variable correct
+    #TODO: not working?
+    cmd="export IGNORE_ATT_COORDINATES=1"
+    os.system(cmd)
 
-    # assign process list to variable
-    for var in var_list_rotated:
-        params = settings.param[var]
-        out_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
-        if not os.path.isdir(out_dir):
-            os.makedirs(out_dir)
-    for var in var_list_rotate_u:
-        log.debug(var)
-        params = settings.param[var]
-        log.debug(params)
-        out_dir = "%s/%s" % (get_input_path(var),params[config.get_config_value('index','INDEX_RCM_NAME')])
-        in_dir_base = settings.DirIn
+    if var not in get_derotate_vars():
+        logger.warning("Variable not derotated as this was not declared in parameter table!")
+        return
 
-        in_var_u = params[config.get_config_value('index','INDEX_RCM_NAME')]
-        in_dir_u = "%s/%s" % (in_dir_base,in_var_u)
-        in_var_v = params[config.get_config_value('index','INDEX_RCM_NAME')].replace('U','V')
-        in_dir_v = "%s/%s" % (in_dir_base,in_var_v)
-        out_dir_u = "%s/%s" % (get_input_path(var),in_var_u)
-        out_dir_v = "%s/%s" % (get_input_path(var),in_var_v)
-        if not os.path.isdir(in_dir_u) or not os.path.isdir(in_dir_v):
-            log.warning("Path %s or %s do not exist! Skipping these variables..." % (in_dir_u,in_dir_v))
-            continue
-        for dirpath,dirnames,filenames in os.walk(in_dir_u, followlinks=True):
-            for f in sorted(filenames):
-                log.info("Derotate %s" % f)
-                start_range = f[f.rindex('_')+1:f.rindex('.')]
-                in_file_u = "%s/%s" % (in_dir_u,f)
-                in_file_v = "%s/%s" % (in_dir_v,f.replace('U','V'))
-                out_file_u = "%s/%s" % (out_dir_u,f)
-                out_file_v = "%s/%s" % (out_dir_v,f.replace('U','V'))
-                # input files available?
-                if os.path.isfile(in_file_u) and os.path.isfile(in_file_v):
-                    # start if output files do NOT exist
-                    if not os.path.isfile(out_file_u) or not os.path.isfile(out_file_v):
-                        out_file = "%s/UV_%s-%s_%s.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
-                        out_file_derotate = "%s/UV_%s-%s_%s_derotate.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
-                        if not os.path.isfile(out_file):
-                            cmd = "cdo merge %s %s %s" % (in_file_u,in_file_v,out_file)
-                            retval = shell(cmd)
-                        # only these two have the names as CCLM variable in the file
-                        if in_var_u == "U_10M" or in_var_v == "V_10M":
-                            if not os.path.isfile(out_file_derotate):
-                                cmd = "cdo rotuvb,%s,%s %s %s" % (in_var_u,in_var_v,out_file,out_file_derotate)
-                                retval = shell(cmd)
-                            if not os.path.isfile(out_file_u):
-                                cmd = "cdo selvar,%s %s %s" % (in_var_u,out_file_derotate,out_file_u)
-                                retval = shell(cmd)
-                            if not os.path.isfile(out_file_v):
-                                cmd = "cdo selvar,%s %s %s" % (in_var_v,out_file_derotate,out_file_v)
-                                retval = shell(cmd)
+    #assign u and v variables
+    filename = in_file.split("/")[-1]
+    varRCM = params[config.get_config_value('index','INDEX_RCM_NAME')]
+    if var.find("u") == 0:
+        in_var_u = varRCM
+        in_var_v =  varRCM.replace('U','V')
+        filename_u = filename
+        filename_v = filename.replace('U','V')
 
-                            ## remove temp files
-                            os.remove(out_file)
-                            if os.path.isfile(out_file_derotate):
-                                os.remove(out_file_derotate)
+    elif var.find("v") == 0:
+        in_var_v = varRCM
+        in_var_u =  varRCM.replace('V','U')
+        filename_v = filename
+        filename_u = filename.replace('V','U')
 
-                        # all other have only U and V inside
-                        else:
-                            if not os.path.isfile(out_file_derotate):
-                                cmd = "cdo rotuvb,U,V %s %s" % (out_file,out_file_derotate)
-                                retval = shell(cmd)
-                            if not os.path.isfile(out_file_u):
-                                cmd = "cdo selvar,U %s %s" % (out_file_derotate,out_file_u)
-                                retval = shell(cmd)
-                            if not os.path.isfile(out_file_v):
-                                cmd = "cdo selvar,V %s %s" % (out_file_derotate,out_file_v)
-                                retval = shell(cmd)
+    else:
+        logger.error("Error in parameter table. Variable to be derotated starts with neither 'u' nor 'v' ! Exiting...")
+        sys.exit("Error in parameter table. Variable to be derotated starts with neither 'u' nor 'v' ! Exiting...")
 
-                        # remove temp files
-                        os.remove(out_file)
-                        if os.path.isfile(out_file_derotate):
-                            os.remove(out_file_derotate)
+    #filenames
+    in_file_v = "%s/%s/%s" % (settings.DirIn,in_var_v,filename_v)
+    in_file_u = "%s/%s/%s" % (settings.DirIn,in_var_u,filename_u)
+    if not os.path.isfile(in_file_u) or not os.path.isfile(in_file_v):
+        logger.warning("Files %s or %s do not exist! Skipping derotation..." % (in_file_u,in_file_v))
+        return
+    out_dir_u = "%s/%s" % (get_input_path(True),in_var_u)
+    out_dir_v = "%s/%s" % (get_input_path(True),in_var_v)
+    out_file_u = "%s/%s" % (out_dir_u,filename_u)
+    out_file_v = "%s/%s" % (out_dir_v,filename_v)
 
-                else:
-                    log.warning("Files %s or %s do not exist! Skipping these variables..." % (in_file_u,in_file_v))
+    # make directories
+    if not os.path.isdir(out_dir_u):
+        os.makedirs(out_dir_u)
+    if not os.path.isdir(out_dir_v):
+        os.makedirs(out_dir_v)
+
+    start_range = in_file[in_file.rindex('_')+1:in_file.rindex('.')]
+
+    # start if output files do NOT exist
+    if (not os.path.isfile(out_file_u) or not os.path.isfile(out_file_v)) or config.get_config_value('boolean','overwrite'):
+        out_file = "%s/UV_%s-%s_%s.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
+        out_file_derotate = "%s/UV_%s-%s_%s_derotate.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
+        if not os.path.isfile(out_file) or config.get_config_value('boolean','overwrite'):
+            cmd = "cdo -O merge %s %s %s" % (in_file_u,in_file_v,out_file)
+            retval = shell(cmd)
+        # only these two have the names as CCLM variable in the file
+        try:
+            if in_var_u == "U_10M" or in_var_v == "V_10M":
+                if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O rotuvb,%s,%s %s %s" % (in_var_u,in_var_v,out_file,out_file_derotate)
+                    retval = shell(cmd)
+                if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O selvar,%s %s %s" % (in_var_u,out_file_derotate,out_file_u)
+                    retval = shell(cmd)
+                if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O selvar,%s %s %s" % (in_var_v,out_file_derotate,out_file_v)
+                    retval = shell(cmd)
+
+            # all other have only U and V inside
+            else:
+                if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O rotuvb,U,V %s %s" % (out_file,out_file_derotate)
+                    retval = shell(cmd)
+                if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O selvar,U %s %s" % (out_file_derotate,out_file_u)
+                    retval = shell(cmd)
+                if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O selvar,V %s %s" % (out_file_derotate,out_file_v)
+                    retval = shell(cmd)
+        except Exception:
+            logger.error("Please type 'export IGNORE_ATT_COORDINATES=1' into your shell before starting the script to make the derotation possible. Exiting..." )
+            sys.exit("ERROR: Please type 'export IGNORE_ATT_COORDINATES=1' into your shell before starting the script to make the derotation possible. Exiting..." )
+
+        # remove temp files
+      #  if os.path.isfile(out_file):
+       #     os.remove(out_file)
+       # if os.path.isfile(out_file_derotate):
+        #    os.remove(out_file_derotate)
+
 
 # -----------------------------------------------------------------------------
 def process_file(params,in_file,var,reslist,year):
@@ -1479,9 +1488,12 @@ def process_file(params,in_file,var,reslist,year):
     else:
         logger = logging.getLogger("cmorlight")
 
-   # params=settings.param[var]
+    #derotate if required
+    if var in get_derotate_vars() and config.get_config_value('boolean','derotate_uv'):
+        derotate_uv(params,in_file,var,logger)
 
     # create object from netcdf file to access all parameters and attributes
+
     f_in = Dataset(in_file,"r")
 
     for name in f_in.ncattrs():

@@ -195,14 +195,17 @@ then
     then
       echon "Extracting years from ${startex} to  ${endex} \n\n"
       sbatch  --job-name=CMOR_sh --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR}/xfer.sh -s ${startex} -e ${endex} -g ${GCM} -x ${EXP}
-      #Submit job for the following year when all other jobs are finished
+       #Submit job for the following year when all other jobs (to wait for extraction) are finished
       sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
+    else
+      #Submit job for the following year without waiting
+      sbatch --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
     fi
-
   else
     #Submit job for the following year without waiting
     sbatch --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
   fi
+  
   #at end concatenate all log files
   if [ ${YYA} -eq ${YYE} ]
   then

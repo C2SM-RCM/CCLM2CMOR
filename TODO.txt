@@ -3,26 +3,21 @@ bash scripts:
 
 
     post.job.tmpl:
-        - NBOUNDCAT: number boundary lines cut off from data -> what to choose?
       	- folder strucure YYYY/output/out01 -> should not be hardcoded maybe?
         -are global attribute correct?
     CCLM sh:
-        - why 31 days, we use 30 -> problem?
         - first timestep of next month included in concatenation? (line 185) --> cannot use last year (in our case)!
 
 
 CMORLIGHT:
 
     cmorlight.py:
-        - change optparse to argparse
         - only ',' as delimiter for reslist, varlist allowed
 
     control_cmor2.ini:
         - CLEAN and DOCUMENT
         - update model_id and rcm_version_id
 
-    variables_table:
-        - label columns?
 
     tools.py:
         - process_file_fix: ensemble member 'r0i0p0' -> is the dir structure for fix variables as requested by CORDEX?
@@ -37,8 +32,7 @@ CMORLIGHT:
 
 
     - fehler bei derotate_uv : cdo rotuvb:  Only rotated lon/lat grids supported!
-    - spezialfall: prhmax -> berechnen wenn stündlicher output vorliegt
-    - multi only for py3 -> check conflict in the beginning, change exist_ok
+    
     - sachen in proc_corr_var schauen ob die schon passen
     - chunking: in extra folder -> do something better!
     - every step in process_file needed to be carried out for every file??? -> raise performance!
@@ -46,20 +40,15 @@ CMORLIGHT:
     - mrso: 6hr: bounds not available??; 2019 seems to be 2020 -> switch infile comes in ?
     - process derotated vars: if folder not available -> derotate, if infile for this not available: error!
     - Hans_jürgens Kommentare ausprobieren,  beheben
-    - last folder (in variable folder): day of post-processing -> needed?
     - wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
     - check sanity of parameter table before processing each variable: for subdaily: check if agg. method given, otherwise skip subdaily!
-    - created filename for subdaily data fix with 0000, 0130 as start time and 2100, 2230 as end time for i and a data (3hr) -> is this ok?
     - zwei wege welche var prozessiert werden sollen:
       1. schau in tabelle und mach alle die tatsächlich vorhanden sind, warning für fehlende
       2. schau in order und prozessiere alle die in tabelle sind, warning für fehlende in tabelle bzw fehlende in ordner
-    - W_SNOW und TOT_PREC kommen doppelt in Tabelle vor! -> aus gleicher variable berechnet? -> sollte in vorherigem script passieren;
+    - W_SNOW berechnen
 
-
-    - error bei compressing output?
     -should be possible to use cclm_const file instead of processing FR_LAND and HSURF
     - dimension bounds steht noch drin bei instantanen variablen obwohl überflüssig ->  bei inputdaten mit ncks -x rausschneiden (evtl. vorher mit ncatted bearbeiten)
-      -> bei akk. und averag. daten neu setzen mit links rechts von zeitstempel
     - rlon rlat in coordinates_cordex_eur11.nc nachschauen wenn nicht vorhanden
     - deutlicher dass es sich um programmabbruch handelt
     - CCLM subversion in attributen angeben -> COSMO_5.0_clm6?
@@ -89,3 +78,4 @@ CMORLIGHT:
     - file name conventions for input: var_*.nc or for constant variables var.nc (var can be variable name from CMOR or RCM)
     if not met -> file not processed!
     - multi only for py3
+    - use --all

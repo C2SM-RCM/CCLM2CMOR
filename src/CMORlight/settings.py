@@ -48,6 +48,9 @@ def init(varfile):
     global var_skip_list
     var_skip_list =  config.get_config_value('settings', 'var_skip_list').split(',')
 
+    global var_list_fixed
+    var_list_fixed =  config.get_model_value('var_list_fixed').split(',')
+
     global search_input_string
     search_input_string = config.get_config_value('settings','search_input_string')
 
@@ -82,10 +85,12 @@ def init(varfile):
     with open(varfile,'rt') as csvfile:
         reader = csv.reader(csvfile,delimiter=';')
         for row in reader:
-            if row[config.get_config_value('index','INDEX_RCM_NAME_ORG')] != '' and row[config.get_config_value('index','INDEX_VAR')] != '':
+            var=row[config.get_config_value('index','INDEX_VAR')]
+            if row[config.get_config_value('index','INDEX_RCM_NAME_ORG')] != '' and var != '':
                 #create dictionary entries for variables names of CORDEX as well as of the RCM
-                param[row[config.get_config_value('index','INDEX_VAR')]] = row
-                param[row[config.get_config_value('index','INDEX_RCM_NAME')]] = row
+                param[var] = row
+                if var!="prhmax": #as RCM name in table is equal to pr
+                    param[row[config.get_config_value('index','INDEX_RCM_NAME')]] = row
             #if row[config.INDEX_VAR] == variable:
                 #return row
 

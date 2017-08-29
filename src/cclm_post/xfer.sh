@@ -52,17 +52,17 @@ then
 fi
 
 #skip already extracted years
-(( NEXTYEAR=startyear + 1 ))
-while [ -d ${INPDIR}/*${NEXTYEAR} ] && [ ${NEXTYEAR} -le ${endyear} ]
+(( NEXT_YEAR=startyear + 1 ))
+while [ -d ${INPDIR}/*${NEXT_YEAR} ] && [ ${NEXT_YEAR} -le ${endyear} ]
 do
-  echo "Input files for year ${NEXTYEAR} have already been extracted. Skipping..."
-  (( NEXTYEAR=NEXTYEAR + 1 ))
+  echo "Input files for year ${NEXT_YEAR} have already been extracted. Skipping..."
+  (( NEXT_YEAR=NEXT_YEAR + 1 ))
 done
 
 
-if [ ${NEXTYEAR} -le ${endyear} ]
+if [ ${NEXT_YEAR} -le ${endyear} ]
 then
-  sbatch  --job-name=CMOR_sh --error=${xfer}.${NEXTYEAR}.err --output=${xfer}.${NEXTYEAR}.out ${SRCDIR}/xfer.sh -s ${NEXTYEAR} ${args}
+  sbatch  --job-name=CMOR_sh --error=${xfer}.${NEXT_YEAR}.err --output=${xfer}.${NEXT_YEAR}.out ${SRCDIR}/xfer.sh -s ${NEXT_YEAR} ${args}
 fi
 
 

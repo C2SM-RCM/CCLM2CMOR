@@ -9,7 +9,8 @@
 #SBATCH --job-name="CMOR_py"
 
 cores=3
-python_script="${SCRATCH}/CMOR/src/CMORlight/cmorlight2.py"
+script_folder="${SCRATCH}/CMOR/src/CMORlight"
+python_script="${script_folder}/cmorlight2.py"
 
 
 multi=false # run several jobs simultaneously
@@ -59,7 +60,7 @@ then
   (( STOP=START+cores-1 )) #STOP year for this batch
 fi
 
-
+cd ${script_folder}
 python ${python_script} ${args} -s ${START} -e ${STOP}
 
 
