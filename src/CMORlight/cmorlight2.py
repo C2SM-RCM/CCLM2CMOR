@@ -68,7 +68,7 @@ def process_resolution(params,reslist):
         return
 
     multilst=[] #argument list for multiprocessing
-    cores=config.get_config_value("integer","cores")
+    cores=config.get_config_value("integer","cores",exitprog=False)
 
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
@@ -91,10 +91,6 @@ def process_resolution(params,reslist):
             log.info("\n###########################################################")
             if f.find("%s_" % var) == 0 or f.find("%s.nc" % var) == 0 or f.find("%s_" % varRCM) == 0 or f.find("%s.nc" % varRCM) == 0 or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
                 in_file = "%s/%s" % (dirpath,f)
-                # workaround for error in last input files of CCLM data from DWD
-                # use only file with e.g. _2100 in filename (only if USE_SEARCH==True)
-                if config.get_config_value('boolean', 'use_search_string') and in_file.find(settings.search_input_string) < 0:
-                    continue
                 log.log(35,"Input from: %s" % (in_file))
                 if os.access(in_file, os.R_OK) == False:
                     log.error("Could not read file '%s', no permission!" % in_file)
@@ -394,11 +390,12 @@ if __name__ == "__main__":
 
     #start timing
     time1=datetime.now()
+
     # call main function
     main()
-    #clean up temp files
-   # shutil.rmtree(settings.DirWork)
 
+    #clean up temp files
+    shutil.rmtree(settings.DirWork)
   #  Clean up .tmp files in output directory (if on last run program crashed while writing a file)
     for root, dirs, files in os.walk(settings.DirOut):
         for file in files:
@@ -413,7 +410,7 @@ if __name__ == "__main__":
     hours, remainder = divmod(time_diff.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
 
-    log.log(35,'Total processing time: %s hours %s minutes %s seconds' % (int(hours),int(minutes),round(seconds)))
+    log.log(35,'\nTotal processing time: %s hours %s minutes %s seconds' % (int(hours),int(minutes),round(seconds)))
     log.log(35,'\n##################################\n########  End of script.  ########\n##################################')
     ######################
     # END of program!!!  #

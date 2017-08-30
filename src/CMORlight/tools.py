@@ -3,7 +3,6 @@
 # system tools
 import os
 import sys
-import glob
 
 # netcdf4 Library
 from netCDF4 import Dataset
@@ -28,13 +27,12 @@ import uuid
 
 
 import time as timepkg
-import __init__ as base
 
 # support logging
 import logging
 log = logging.getLogger("cmorlight")
 # -----------------------------------------------------------------------------
-def shell(cmd):
+def shell(cmd,logger=log):
     '''
     Call a shell command
     '''
@@ -42,9 +40,9 @@ def shell(cmd):
     prc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     prc.wait()
     if prc.returncode != 0:
-        raise Exception('Shell Error: %s \n for command: %s' % (prc.communicate()[0], cmd) )
+        raise Exception('Shell Error: %s for command: %s' % (prc.communicate()[0], cmd) )
     else:
-        log.debug(cmd)
+        logger.debug(cmd)
 
     return prc.communicate()[0]
 
@@ -125,7 +123,6 @@ def create_outpath(res,var):
     result = ""
 
     if res == 'fx':
-        # for example: cordex/output/EUR-11/CLMcom/MIROC-MIROC5/historical/r1i1p1/r0i0p0/v1/fx/orog/v20170227
         result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
                     (settings.Global_attributes["project_id"],
                      settings.Global_attributes["product"],
@@ -241,7 +238,7 @@ def compress_output(outpath,index_per_day=8,year=0,logger=log):
                 cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
             else:
                 cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
-            retval=shell(cmd)
+            retval=shell(cmd,logger=logger)
             # remove help file
             os.remove(outpath)
             retval=shell("mv %s %s" % (ftmp_name,outpath))
@@ -297,8 +294,8 @@ def set_coord_attributes(f_var,f_out):
         if 'lon' in f_out.variables and 'lat' in f_out.variables:
             f_var.coordinates = 'plev lat lon'
         else:
-            log.error("No lon/lat coordinates available, exiting...")
-            sys.exit()
+            cmd = "No lon/lat coordinates available!"
+            raise Exception(cmd)
         #elif 'rlon' in f_out.variables and 'rlat' in f_out.variables:
             #f_var.coordinates = 'plev rlat rlon'
         #else:
@@ -313,10 +310,8 @@ def set_coord_attributes(f_var,f_out):
         if 'lon' in f_out.variables and 'lat' in f_out.variables:
             f_var.coordinates = 'height lat lon'
         else:
-            cmd = "No lon/lat coordinates available, exiting..."
-            log.error(cmd)
-
-            sys.exit()
+            cmd = "No lon/lat coordinates available!"
+            raise Exception(cmd)
         #elif 'rlon' in f_out.variables and 'rlat' in f_out.variables:
             #f_var.coordinates = 'height rlat rlon'
         #else:
@@ -327,7 +322,7 @@ def set_coord_attributes(f_var,f_out):
         else:
             cmd = "No lon/lat coordinates available, exiting..."
             log.error(cmd)
-            sys.exit()
+            raise Exception(cmd)
         #elif 'rlon' in f_out.variables and 'rlat' in f_out.variables:
             #f_var.coordinates = 'rlat rlon'
 
@@ -435,8 +430,8 @@ def do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir):
         outfile = create_filename(var,res,str(start_yr),str(stop_yr))
         # generate outpath with outfile and outdir
         #extra directory to put chunked files into
-        if config.get_config_value('settings','chunk_into')!="":
-            outdir=outdir+"/"+config.get_config_value('settings','chunk_into')
+        if config.get_config_value('settings','chunk_into',exitprog=False)!="":
+            outdir=outdir+"/"+config.get_config_value('settings','chunk_into',exitprog=False)
         if not os.path.isdir(outdir):
             os.makedirs(outdir)
         outpath = "%s/%s" % (outdir,outfile)
@@ -478,7 +473,7 @@ def leap_year(year, calendar='standard'):
 
 
 # -----------------------------------------------------------------------------
-def add_vertices(f_out):
+def add_vertices(f_out,logger=log):
     """
     add vertices to output from vertices file
     """
@@ -504,13 +499,13 @@ def add_vertices(f_out):
                 else:
                     var_out.units = "degrees_east"
                 if not 'lon' in f_out.variables.keys():
-                    copy_var(f_vert,f_out,'lon')
+                    copy_var(f_vert,f_out,'lon',logger=logger)
             else:
                 var_out.units = "degrees_east"
             f_out_lon = f_out.variables['lon']
             f_out_lon.bounds = 'lon_vertices'
             var_out[:] = lon_vertices[:]
-            log.info("Vertices (lon) set!")
+            logger.info("Vertices (lon) set!")
         if 'lat_vertices' in f_vert.variables.keys() and 'lat_vertices' not in f_out.variables.keys():
             lat_vertices = f_vert.variables['lat_vertices']
             # create lat_vertices in output
@@ -524,13 +519,13 @@ def add_vertices(f_out):
                 else:
                     var_out.units = "degrees_north"
                 if not 'lat' in f_out.variables.keys():
-                    copy_var(f_vert,f_out,'lat')
+                    copy_var(f_vert,f_out,'lat',logger=logger)
             else:
                 var_out.units = "degrees_north"
             f_out_lat = f_out.variables['lat']
             f_out_lat.bounds = 'lat_vertices'
             var_out[:] = lat_vertices[:]
-            log.info("Vertices (lat) set!")
+            logger.info("Vertices (lat) set!")
 
         # commit changes
         f_out.sync()
@@ -593,7 +588,7 @@ def get_attr_list(var_name):
 
 
 # -----------------------------------------------------------------------------
-def copy_var(f_in,f_out,var_name):
+def copy_var(f_in,f_out,var_name,logger=log):
     '''
     copy variable from in_file to out_file
     '''
@@ -623,11 +618,11 @@ def copy_var(f_in,f_out,var_name):
         var_out.setncatts(att_lst)
         # copy content to new datatype
         var_out[:] = var_in[:]
-        log.info("Copy: %s" % (var_out.name))
+        logger.info("Copy: %s" % (var_out.name))
 
 
 # -----------------------------------------------------------------------------
-def add_coordinates(f_out):
+def add_coordinates(f_out,logger=log):
     """
     add lat/lon to output from coordinates file
     """
@@ -636,10 +631,10 @@ def add_coordinates(f_out):
     if os.path.isfile(settings.coordinates_file):
         f_coor = Dataset(settings.coordinates_file,'r')
         # copy lon
-        copy_var(f_coor,f_out,'lon')
+        copy_var(f_coor,f_out,'lon',logger=logger)
         logger.info("Variable lon added!")
         # copy lat
-        copy_var(f_coor,f_out,'lat')
+        copy_var(f_coor,f_out,'lat',logger=logger)
         logger.info("Variable lat added!")
         # commit changes
         f_out.sync()
@@ -732,7 +727,6 @@ def process_file_fix(params,in_file):
     if mulc_factor == 0:
         log.warning("Conversion factor for %s is set to 0 in parameter table. Setting it to 1..." % params[config.get_config_value('index','INDEX_RCM_NAME')])
         mulc_factor = 1.0
-#    sys.exit()
     for var_name, variable in f_in.variables.items():
         # don't copy time_bnds if cm == point or variable time_bnds
         log.debug("VAR: %s" % (var_name))
@@ -971,7 +965,7 @@ def proc_seasonal_mean(params,year):
                 # for season the last month from previous year is needed
                 if i == 0:
                     cmd = "cdo -f %s -seas%s -selmonth,3/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f,ftmp_name)
-                    retval=shell(cmd)
+                    retval=shell(cmd,logger=logger)
 
                 else:
                     # first: last December of previous year
@@ -980,23 +974,23 @@ def proc_seasonal_mean(params,year):
                     if config.get_config_value("boolean","multi"):
                         timepkg.sleep(3)#wait for previous year to definitely finish when multiprocessing
                     cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
-                    retval = shell(cmd)
+                    retval = shell(cmd,logger=logger)
 
                     # second: month 1...11 of actual year
                     f_hlp1_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     cmd = "cdo -f %s selmonth,1/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f,f_hlp1_11.name)
-                    retval = shell(cmd)
+                    retval = shell(cmd,logger=logger)
 
                     # now concatenate all 12 month
                     f_hlp12_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     cmd = "ncrcat -h -O %s %s %s" % (f_hlp12.name,f_hlp1_11.name,f_hlp12_11.name)
-                    retval = shell(cmd)
+                    retval = shell(cmd,logger=logger)
 
 #                    cmd = "cdo -f %s -s timsel%s,3,2 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f_hlp2.name,ftmp_name)
 #                    cmd = "cdo -f %s -s timsel%s,3 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f_hlp12_11.name,ftmp_name)
 #                    cmd = "cdo -f %s timsel%s,3 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f_hlp12_11.name,ftmp_name)
                     cmd = "cdo -f %s seas%s,3 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f_hlp12_11.name,ftmp_name)
-                    retval = shell(cmd)
+                    retval = shell(cmd,logger=logger)
 
                     # remove all temp files
                   #  os.remove(f_hlp12.name)
@@ -1020,7 +1014,7 @@ def proc_seasonal_mean(params,year):
                     if not 'rotated_pole' in f_tmp.variables.keys():
                         var_name = 'rotated_pole'
                         if var_name in f_in.variables.keys():
-                            copy_var(f_in,f_tmp,var_name)
+                            copy_var(f_in,f_tmp,var_name,logger=logger)
                 except:
                     logger.info("Variable '%s' does not exist." % ("rotated_pole"))
 
@@ -1028,7 +1022,7 @@ def proc_seasonal_mean(params,year):
                 for var_name in ['lat','lon','rotated_pole','plev','height']:
 #                    print var_name,var_name in f_in.variables.keys(),var_name not in f_tmp.variables
                     if var_name in f_in.variables.keys() and var_name not in f_tmp.variables.keys():
-                        copy_var(f_in,f_tmp,var_name)
+                        copy_var(f_in,f_tmp,var_name,logger=logger)
                 f_var.setncattr('grid_mapping','rotated_pole')
                 if params[config.get_config_value('index','INDEX_CM_AREA')]=='':
                     f_var.cell_methods = "time: %s" % (cm_type)
@@ -1102,7 +1096,7 @@ def proc_test_var(process_list,varlist,reslist):
     log.info("Start Test")
     for var in varlist:
 
-        if var in config.get_model_value('var_list_fixed'):
+        if var in settings.var_list_fixed:
             continue
         params = settings.param[var]
         set_attributes(params,process_list)
@@ -1133,18 +1127,9 @@ def proc_test_var(process_list,varlist,reslist):
                     if 'calendar' in time_in.ncattrs():
                         in_calendar = str(time_in.calendar)
                     else:
-                        g_attr = 'driving_model_id'
-                        if g_attr in f_in.ncattrs():
-                            if 'MIROC' in f_in.getncattr(g_attr):
-                                in_calendar = '365_day'
-                            elif 'CanESM2' in f_in.getncattr(g_attr):
-                                in_calendar = '365_day'
-                            elif 'HadGEM2' in f_in.getncattr(g_attr):
-                                in_calendar = '360_day'
-                            else:
-                                in_calendar = 'standard'
-                        else:
-                            in_calendar = 'standard'
+                        in_calendar = config.get_model_value("calendar",exitprog=False)
+                        if in_calendar=="":
+                            raise Exception("Calendar attribute not found in file! Specify calendar in .ini file instead!")
 
                     if config.get_config_value('boolean','use_alt_units'):
                         time_in_units = config.get_config_value('settings','alt_units')
@@ -1388,9 +1373,6 @@ def derotate_uv(params,in_file,var,logger=log):
     """
     logger.info("Derotating file")
     #set environment variable correct
-    #TODO: not working?
-    cmd="export IGNORE_ATT_COORDINATES=1"
-    os.system(cmd)
 
     if var not in get_derotate_vars():
         logger.warning("Variable not derotated as this was not declared in parameter table!")
@@ -1412,8 +1394,9 @@ def derotate_uv(params,in_file,var,logger=log):
         filename_u = filename.replace('V','U')
 
     else:
-        logger.error("Error in parameter table. Variable to be derotated starts with neither 'u' nor 'v' ! Exiting...")
-        sys.exit("Error in parameter table. Variable to be derotated starts with neither 'u' nor 'v' ! Exiting...")
+        cmd="Error in parameter table. Variable to be derotated starts with neither 'u' nor 'v' !"
+        logger.error(cmd)
+        raise Exception(cmd)
 
     #filenames
     in_file_v = "%s/%s/%s" % (settings.DirIn,in_var_v,filename_v)
@@ -1426,13 +1409,16 @@ def derotate_uv(params,in_file,var,logger=log):
     out_file_u = "%s/%s" % (out_dir_u,filename_u)
     out_file_v = "%s/%s" % (out_dir_v,filename_v)
 
+    logger.debug("Filenames set")
     # make directories
-    if not os.path.isdir(out_dir_u):
+    try:
         os.makedirs(out_dir_u)
-    if not os.path.isdir(out_dir_v):
         os.makedirs(out_dir_v)
+    except:
+        pass
 
     start_range = in_file[in_file.rindex('_')+1:in_file.rindex('.')]
+    logger.debug("Start commands")
 
     # start if output files do NOT exist
     if (not os.path.isfile(out_file_u) or not os.path.isfile(out_file_v)) or config.get_config_value('boolean','overwrite'):
@@ -1440,34 +1426,40 @@ def derotate_uv(params,in_file,var,logger=log):
         out_file_derotate = "%s/UV_%s-%s_%s_derotate.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
         if not os.path.isfile(out_file) or config.get_config_value('boolean','overwrite'):
             cmd = "cdo -O merge %s %s %s" % (in_file_u,in_file_v,out_file)
-            retval = shell(cmd)
+            retval = shell(cmd,logger=logger)
+            logger.debug("UV files merged")
+
         # only these two have the names as CCLM variable in the file
         try:
             if in_var_u == "U_10M" or in_var_v == "V_10M":
                 if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
                     cmd = "cdo -O rotuvb,%s,%s %s %s" % (in_var_u,in_var_v,out_file,out_file_derotate)
-                    retval = shell(cmd)
+                    retval = shell(cmd,logger=logger)
                 if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
                     cmd = "cdo -O selvar,%s %s %s" % (in_var_u,out_file_derotate,out_file_u)
-                    retval = shell(cmd)
+                    retval = shell(cmd,logger=logger)
                 if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
                     cmd = "cdo -O selvar,%s %s %s" % (in_var_v,out_file_derotate,out_file_v)
-                    retval = shell(cmd)
+                    retval = shell(cmd,logger=logger)
+                logger.debug("Derotation done 10M")
 
             # all other have only U and V inside
             else:
                 if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
                     cmd = "cdo -O rotuvb,U,V %s %s" % (out_file,out_file_derotate)
-                    retval = shell(cmd)
+                    retval = shell(cmd,logger=logger)
                 if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
                     cmd = "cdo -O selvar,U %s %s" % (out_file_derotate,out_file_u)
-                    retval = shell(cmd)
+                    retval = shell(cmd,logger=logger)
                 if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
                     cmd = "cdo -O selvar,V %s %s" % (out_file_derotate,out_file_v)
-                    retval = shell(cmd)
-        except Exception:
-            logger.error("Please type 'export IGNORE_ATT_COORDINATES=1' into your shell before starting the script to make the derotation possible. Exiting..." )
-            sys.exit("ERROR: Please type 'export IGNORE_ATT_COORDINATES=1' into your shell before starting the script to make the derotation possible. Exiting..." )
+                    retval = shell(cmd,logger=logger)
+                logger.debug("Derotation done 10M")
+
+        except Exception as e:
+            cmd=str(e)+"\n Derotation failed. Typing 'export IGNORE_ATT_COORDINATES=1' into your shell before starting the script might solve the problem."
+            logger.error(cmd)
+            raise Exception(cmd)
 
         # remove temp files
       #  if os.path.isfile(out_file):
@@ -1475,7 +1467,7 @@ def derotate_uv(params,in_file,var,logger=log):
        # if os.path.isfile(out_file_derotate):
         #    os.remove(out_file_derotate)
 
-
+        return out_file_u, out_file_v
 # -----------------------------------------------------------------------------
 def process_file(params,in_file,var,reslist,year):
     '''
@@ -1490,7 +1482,13 @@ def process_file(params,in_file,var,reslist,year):
 
     #derotate if required
     if var in get_derotate_vars() and config.get_config_value('boolean','derotate_uv'):
-        derotate_uv(params,in_file,var,logger)
+        in_file_u, in_file_v = derotate_uv(params,in_file,var,logger)
+        #change input file
+        if var.find("u")!=-1:
+            in_file=in_file_u
+        else:
+            in_file=in_file_v
+        logger.info("Changed input file to derotated file: %s" % in_file)
 
     # create object from netcdf file to access all parameters and attributes
 
@@ -1510,18 +1508,9 @@ def process_file(params,in_file,var,reslist,year):
     if 'calendar' in time_in.ncattrs():
         in_calendar = str(time_in.calendar)
     else:
-        g_attr = 'driving_model_id'
-        if g_attr in f_in.ncattrs():
-            if 'MIROC' in f_in.getncattr(g_attr):
-                in_calendar = '365_day'
-            elif 'CanESM2' in f_in.getncattr(g_attr):
-                in_calendar = '365_day'
-            elif 'HadGEM2' in f_in.getncattr(g_attr):
-                in_calendar = '360_day'
-            else:
-                in_calendar = 'standard'
-        else:
-            in_calendar = 'standard'
+        in_calendar = config.get_model_value("calendar",exitprog = False)
+        if in_calendar=="":
+            raise Exception("Calendar attribute not found in file! Specify calendar in .ini file instead!")
 
    # in_calendar=config.get_model_value("calendar")
 
@@ -1535,6 +1524,7 @@ def process_file(params,in_file,var,reslist,year):
     dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
     dt_in_year = num2date(time_in[0],time_in_units,calendar=in_calendar).year
 
+
     switch_infile = False
     for n in range(len(time_in)):
         if num2date(time_in[n],time_in_units,calendar=in_calendar).year == dt_in_year:
@@ -1544,7 +1534,7 @@ def process_file(params,in_file,var,reslist,year):
     # add one count
     data_max_len = data_max_len + 1
 
-
+#TODO: remove this?
     if switch_infile == True: ## and dt_in_year_chk < settings.alt_start_year:
         in_file_new = "%s/%s-%s-%s" % (settings.DirWork,year,str(uuid.uuid1()),os.path.basename(in_file))
         # that does not work!!
@@ -1554,7 +1544,7 @@ def process_file(params,in_file,var,reslist,year):
         t0 = num2date(time_in[0],"days since 1949-12-01 00:00:00",time_in.calendar)
         shift_days = (t1 - t0).days # one month (January): 31
         cmd = "cdo -f %s -s selyear,%d  -shifttime,%ddays -setreftime,%s,%s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),dt_in_year,shift_days,config.get_config_value('settings','alt_units_cdo_date'),config.get_config_value('settings','alt_units_cdo_time'),in_file,in_file_new)
-        retval = shell(cmd)
+        retval = shell(cmd,logger=logger)
         in_file = in_file_new
         # close old obejct before
         f_in.close()
@@ -1577,6 +1567,8 @@ def process_file(params,in_file,var,reslist,year):
                 data_max_len = n
         # add one count
         data_max_len = data_max_len + 1
+
+
 
     ## get start and stop date from in_file
 
@@ -1699,10 +1691,8 @@ def process_file(params,in_file,var,reslist,year):
                 #elif time.calendar == '366_day':
                     #nstep = (366 * 24 / (tdelta_seconds/3600)) / 4
 
-            # use VAR_CORR_LIST for reduce the list
             if params[config.get_config_value('index','INDEX_COVERT_FACTOR')] != '' and float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.')) != 0 \
                     and float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.')) != 1:
-                    #and not var in config.VAR_CORR_LIST:
                 cmd_mul = ' -mulc,%s ' % (params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.'))
                 # to use the time steps from input to correct the conversation factor
                 # commented out for now!!
@@ -1715,7 +1705,6 @@ def process_file(params,in_file,var,reslist,year):
             else:
                 cmd_mul = ""
             logger.debug("mulc factor for variable(%s): %s" % (var,cmd_mul))
-            #sys.exit()
 
             # create help output file which is at the zthe new in_file
             if var in ['mrso','mrfso'] and not os.path.isfile(in_file_help):
@@ -1735,14 +1724,14 @@ def process_file(params,in_file,var,reslist,year):
                 #write files in arr into str with whitespace separation for cdo command
                 files_str=" ".join(arr.values())
                 cmd = "%s %s %s" % (cmd1,files_str,f_hlp.name)
-                retval = shell(cmd)
+                retval = shell(cmd,logger=logger)
                 # multiply with factor 1000 (from csv table)
                 # switch from original in_file to the new in_file for these variables
                 #in_file = "%s/%s-%s.nc" % (settings.DirWork,'help','1000')
                 in_file_help = "%s/help-%s-%s-%s.nc" % (settings.DirWork,year,var,str(uuid.uuid1()))
 #                in_file = tempfile.NamedTemporaryFile(dir=settings.DirWork)
                 cmd = "cdo mulc,%d %s %s" % (int(params[config.get_config_value('index','INDEX_COVERT_FACTOR')]),f_hlp.name,in_file_help)
-                retval = shell(cmd)
+                retval = shell(cmd,logger=logger)
                 # remove all help files
                 os.remove(f_hlp.name)
                 for i in range(idx_from,idx_to):
@@ -1801,11 +1790,11 @@ def process_file(params,in_file,var,reslist,year):
                     # day and mon: same cell methods (cm)
                     cmd = "cdo -f %s -s -mon%s -day%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,cm,cmd_mul,in_file,ftmp_name)
             # do cmd
-            retval = shell(cmd)
+            retval = shell(cmd,logger=logger)
 
             ## move file
             #cmd = "mv %s %s" % (fp_tmp.name,outpath)
-            #retval = shell(cmd)
+            #retval = shell(cmd,logger=logger)
 
             ## check output file
             #if not os.path.isfile(outpath):
@@ -1947,7 +1936,6 @@ def process_file(params,in_file,var,reslist,year):
                     # copy content to new datatype
                     var_out[:] = var_in[:]
                     logger.debug("Copy from input: %s" % (var_out.name))
-#            sys.exit()
 
             ##############################
             # now correct time,time_bnds #
@@ -2021,7 +2009,7 @@ def process_file(params,in_file,var,reslist,year):
                 num = 1. / 24.
                 # set time and time_bnds
                 if cm != 'point':
-                    logger.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
+                    logger.debug("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
                     for n in range(data_len):
                         time_bnds[n,0] = num_refdate_diff + (n * num)
                         time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
@@ -2082,7 +2070,7 @@ def process_file(params,in_file,var,reslist,year):
                 # only 12 month a year!!
                 for n in range(data_len):
                     time_bnds[n,0] = num_refdate_diff
-                    logger.info("bnds1: %s" % (num2date(num_refdate_diff,time.units,calendar=in_calendar)))
+                    logger.debug("bnds1: %s" % (num2date(num_refdate_diff,time.units,calendar=in_calendar)))
 
                     #d = num2date(time[n],time.units,time.calendar)
                     d = num2date(num_refdate_diff,time.units,calendar=in_calendar)
@@ -2093,14 +2081,14 @@ def process_file(params,in_file,var,reslist,year):
                     # add one day in February of leap year
                     if leap_year(d.year,time.calendar) and m == 1:
                         days += 1
-                    logger.info("Add DAYs: %d,%d,%d" % (days,d.year,d.month))
+                    logger.debug("Add DAYs: %d,%d,%d" % (days,d.year,d.month))
 
                     num_refdate_diff += days
-                    logger.info("bnds2: %s" % (num2date(num_refdate_diff,time.units,calendar=in_calendar)))
+                    logger.debug("bnds2: %s" % (num2date(num_refdate_diff,time.units,calendar=in_calendar)))
                     time_bnds[n,1] = num_refdate_diff
                     time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
                 end = num_refdate_diff
-                logger.info("time_bnds difference: %s" % (str(end - start)))
+                logger.debug("time_bnds difference: %s" % (str(end - start)))
 
             # commit changes
             f_out.sync()
@@ -2112,7 +2100,7 @@ def process_file(params,in_file,var,reslist,year):
             try:
                 f_out.renameVariable(settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['cf_name'])
             except:
-                logger.info("Variable has cf name already: %s" % (var))
+                logger.debug("Variable has cf name already: %s" % (var))
 
             # no time_bnds if cell method is 'point'
             if cm == 'point':
@@ -2155,7 +2143,7 @@ def process_file(params,in_file,var,reslist,year):
 
             # exist in some output (e.g. CCLM) in CORDEX, default: False
             if config.get_config_value('boolean','add_vertices') == True:
-                add_vertices(f_out)
+                add_vertices(f_out,logger=logger)
 
             # create variable object to output file
             f_var = f_out.variables[settings.netCDF_attributes['cf_name']]
@@ -2172,7 +2160,7 @@ def process_file(params,in_file,var,reslist,year):
 #            print f_out.variables,not 'lon' in f_out.variables,not 'lat' in f_out.variables
             if not 'lon' in f_out.variables and not 'lat' in f_out.variables:
                 # add lon/lat
-                add_coordinates(f_out)
+                add_coordinates(f_out,logger=logger)
 
             # set attribute coordinates
             set_coord_attributes(f_var,f_out)
@@ -2210,16 +2198,15 @@ def process_file(params,in_file,var,reslist,year):
             #if (correct_fillvalue == True or var in ['mrfso','mrro','mrros','mrso','snw']) and os.path.isfile(outpath):
                 #_FillValue = config._parser.getfloat('settings','missing_value')
                 #cmd = "ncatted -h -O -a missing_value,%s,m,f,-%s -a _FillValue,%s,m,f,-%s %s" %  (var,_FillValue,var,_FillValue,outpath)
-                #retval = shell(cmd)
+                #retval = shell(cmd,logger=logger)
                 #cmd = "ncatted -h -O -a missing_value,%s,m,f,%s -a _FillValue,%s,m,f,%s %s" %  (var,_FillValue,var,_FillValue,outpath)
-                #retval = shell(cmd)
+                #retval = shell(cmd,logger=logger)
 
             ## ATTENTION: 'in_file' is only to be deleted here for these variables, otherwise it is read-only!!
             #if var in ['mrso','mrfso']:
                 #in_file = in_file_org
                 #os.remove(in_file_help)
             # only on file
-            #sys.exit()
         else:
             cmd = "No cell method set for this variable (%s) and time resolution (%s)." % (var,res)
             logger.warning(cmd)

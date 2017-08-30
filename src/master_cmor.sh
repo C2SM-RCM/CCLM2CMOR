@@ -12,6 +12,8 @@ cores=3
 script_folder="${SCRATCH}/CMOR/src/CMORlight"
 python_script="${script_folder}/cmorlight2.py"
 
+#necessary for derotation
+export IGNORE_ATT_COORDINATES=1
 
 multi=false # run several jobs simultaneously
 args=""
@@ -61,7 +63,9 @@ then
 fi
 
 cd ${script_folder}
+echo "Starting Python script for years ${START} to ${STOP}..."
 python ${python_script} ${args} -s ${START} -e ${STOP}
+echo "finished"
 
 
 

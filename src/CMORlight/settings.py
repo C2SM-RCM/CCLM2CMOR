@@ -46,19 +46,16 @@ def init(varfile):
     varlist_reject =  config.get_config_value('settings', 'varlist_reject').split(',')
 
     global var_skip_list
-    var_skip_list =  config.get_config_value('settings', 'var_skip_list').split(',')
+    var_skip_list =  config.get_config_value('settings', 'var_skip_list',exitprog=False).split(',')
 
     global var_list_fixed
-    var_list_fixed =  config.get_model_value('var_list_fixed').split(',')
-
-    global search_input_string
-    search_input_string = config.get_config_value('settings','search_input_string')
+    var_list_fixed =  config.get_model_value('var_list_fixed',exitprog=False).split(',')
 
     global FMT
     FMT = '%Y-%m-%d %H:%M:%S'
 
     global vertices_file
-    vertices_file = ("%s/%s" % (DirProg,config.get_model_value('vertices_file')))
+    vertices_file = ("%s/%s" % (DirProg,config.get_model_value('vertices_file', exitprog = False)))
 
     global coordinates_file
     coordinates_file = ("%s/%s" % (DirProg,config.get_model_value('coordinates_file')))
@@ -75,10 +72,7 @@ def init(varfile):
     use_version = ''
 
     global use_alt_units
-    use_alt_units = config.get_config_value('boolean','use_alt_units')
-
-    global alt_start_year
-    alt_start_year = config.get_config_value('integer','alt_start_year')
+    use_alt_units = config.get_config_value('boolean','use_alt_units',exitprog=False)
 
     global param
     param = {}

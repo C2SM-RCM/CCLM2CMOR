@@ -28,7 +28,7 @@ LOGGER = logging.getLogger("cmorlight")
 # -----------------------------------------------------------------------------
 
 
-def get_config_value(section, option):
+def get_config_value(section, option, exitprog = True):
     """Get desired value from  configuration files
     :param section: section in configuration files
     :type section: string
@@ -38,7 +38,7 @@ def get_config_value(section, option):
     """
 
     if not CONFIG:
-        sys.exit("ERROR: Load configuration file before getting/setting config values! Exiting...")
+        raise Exception("ERROR: Load configuration file before getting/setting config values! Exiting...")
 
     value = ''
 
@@ -58,6 +58,9 @@ def get_config_value(section, option):
     else:
         LOGGER.error("Section %s in configuration file does not exist!" % (section))
 
+    if value == "" and exitprog:
+        raise Exception("Option %s in section %s in configuration file does not exist!" % (option,section))
+
     if section == 'index':
         value = int(value)
     elif section == 'float':
@@ -68,11 +71,11 @@ def get_config_value(section, option):
 
 
 # -----------------------------------------------------------------------------
-def get_model_value(option):
+def get_model_value(option, exitprog = True):
     """Get value from model section."""
 
     model = get_config_value('settings','model')
-    return get_config_value("settings_%s" % (model), option)
+    return get_config_value("settings_%s" % (model), option, exitprog)
 
 
 # -----------------------------------------------------------------------------

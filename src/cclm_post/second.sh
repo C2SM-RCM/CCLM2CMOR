@@ -219,7 +219,7 @@ do
           echo "is not correct! Exiting..."
           continue
         fi
-        if [[ ${TDE} -eq ${LASTDAY} && ${THE} -eq ${EHH} ]]
+        if [[ ${TDE} -ge 28 && ${THE} -eq ${EHH} ]]
         then
           YP=${YY}
           (( MP=TME+1 ))
