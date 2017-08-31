@@ -36,7 +36,6 @@ def shell(cmd,logger=log):
     '''
     Call a shell command
     '''
-  #  log.debug("Command: '%s'" % cmd)
     prc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     prc.wait()
     if prc.returncode != 0:
@@ -604,7 +603,7 @@ def copy_var(f_in,f_out,var_name,logger=log):
             new_datatype = 'd'
         else:
             new_datatype = var_in.datatype
-        log.debug(new_dimensions)
+        logger.debug(new_dimensions)
         var_out = f_out.createVariable(var_name,datatype=new_datatype,dimensions=new_dimensions)
         # set all as character converted with str() function
         if var_name in ['lat','lon']:
@@ -627,7 +626,7 @@ def add_coordinates(f_out,logger=log):
     add lat/lon to output from coordinates file
     """
     # read vertices from file if exist
-    log.debug(os.path.isfile(settings.coordinates_file))
+    logger.debug(os.path.isfile(settings.coordinates_file))
     if os.path.isfile(settings.coordinates_file):
         f_coor = Dataset(settings.coordinates_file,'r')
         # copy lon
@@ -1409,7 +1408,6 @@ def derotate_uv(params,in_file,var,logger=log):
     out_file_u = "%s/%s" % (out_dir_u,filename_u)
     out_file_v = "%s/%s" % (out_dir_v,filename_v)
 
-    logger.debug("Filenames set")
     # make directories
     try:
         os.makedirs(out_dir_u)
@@ -1418,48 +1416,47 @@ def derotate_uv(params,in_file,var,logger=log):
         pass
 
     start_range = in_file[in_file.rindex('_')+1:in_file.rindex('.')]
-    logger.debug("Start commands")
 
     # start if output files do NOT exist
-    if (not os.path.isfile(out_file_u) or not os.path.isfile(out_file_v)) or config.get_config_value('boolean','overwrite'):
+    if (not os.path.isfile(out_file_u)) or (not os.path.isfile(out_file_v)) or (config.get_config_value('boolean','overwrite')):
         out_file = "%s/UV_%s-%s_%s.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
         out_file_derotate = "%s/UV_%s-%s_%s_derotate.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
+        logger.debug("Before merge")
         if not os.path.isfile(out_file) or config.get_config_value('boolean','overwrite'):
             cmd = "cdo -O merge %s %s %s" % (in_file_u,in_file_v,out_file)
             retval = shell(cmd,logger=logger)
-            logger.debug("UV files merged")
 
-        # only these two have the names as CCLM variable in the file
-        try:
-            if in_var_u == "U_10M" or in_var_v == "V_10M":
-                if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
-                    cmd = "cdo -O rotuvb,%s,%s %s %s" % (in_var_u,in_var_v,out_file,out_file_derotate)
-                    retval = shell(cmd,logger=logger)
-                if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
-                    cmd = "cdo -O selvar,%s %s %s" % (in_var_u,out_file_derotate,out_file_u)
-                    retval = shell(cmd,logger=logger)
-                if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
-                    cmd = "cdo -O selvar,%s %s %s" % (in_var_v,out_file_derotate,out_file_v)
-                    retval = shell(cmd,logger=logger)
-                logger.debug("Derotation done 10M")
+            # only these two have the names as CCLM variable in the file
+            try:
+                if in_var_u == "U_10M" or in_var_v == "V_10M":
+                    if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
+                        cmd = "cdo -O rotuvb,%s,%s %s %s" % (in_var_u,in_var_v,out_file,out_file_derotate)
+                        retval = shell(cmd,logger=logger)
 
-            # all other have only U and V inside
-            else:
-                if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
-                    cmd = "cdo -O rotuvb,U,V %s %s" % (out_file,out_file_derotate)
-                    retval = shell(cmd,logger=logger)
-                if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
-                    cmd = "cdo -O selvar,U %s %s" % (out_file_derotate,out_file_u)
-                    retval = shell(cmd,logger=logger)
-                if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
-                    cmd = "cdo -O selvar,V %s %s" % (out_file_derotate,out_file_v)
-                    retval = shell(cmd,logger=logger)
-                logger.debug("Derotation done 10M")
+                    if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
+                        cmd = "cdo -O selvar,%s %s %s" % (in_var_u,out_file_derotate,out_file_u)
+                        retval = shell(cmd,logger=logger)
 
-        except Exception as e:
-            cmd=str(e)+"\n Derotation failed. Typing 'export IGNORE_ATT_COORDINATES=1' into your shell before starting the script might solve the problem."
-            logger.error(cmd)
-            raise Exception(cmd)
+                    if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
+                        cmd = "cdo -O selvar,%s %s %s" % (in_var_v,out_file_derotate,out_file_v)
+                        retval = shell(cmd,logger=logger)
+
+                # all other have only U and V inside
+                else:
+                    if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
+                        cmd = "cdo -O rotuvb,U,V %s %s" % (out_file,out_file_derotate)
+                        retval = shell(cmd,logger=logger)
+                    if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
+                        cmd = "cdo -O selvar,U %s %s" % (out_file_derotate,out_file_u)
+                        retval = shell(cmd,logger=logger)
+                    if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
+                        cmd = "cdo -O selvar,V %s %s" % (out_file_derotate,out_file_v)
+                        retval = shell(cmd,logger=logger)
+
+            except Exception as e:
+                cmd=str(e)+"\n Derotation failed. Typing 'export IGNORE_ATT_COORDINATES=1' into your shell before starting the script might solve the problem."
+                logger.error(cmd)
+                raise Exception(cmd)
 
         # remove temp files
       #  if os.path.isfile(out_file):
@@ -1467,7 +1464,7 @@ def derotate_uv(params,in_file,var,logger=log):
        # if os.path.isfile(out_file_derotate):
         #    os.remove(out_file_derotate)
 
-        return out_file_u, out_file_v
+    return out_file_u, out_file_v
 # -----------------------------------------------------------------------------
 def process_file(params,in_file,var,reslist,year):
     '''

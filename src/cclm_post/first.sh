@@ -3,7 +3,7 @@
 #
 # Burkhardt Rockel / Helmholtz-Zentrum Geesthacht, modified by Matthias Göbel / ETH Zürich
 # Initial Version: 2009/09/02
-# Latest Version:  2017/08/22 (Version 2.3)
+# Latest Version:  2017/09/15 
 #
 
 

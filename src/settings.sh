@@ -3,7 +3,7 @@ post_step=0 #to limit post processing to step 1 or 2, for all other values both 
 
 #Simulation details
 
-GCM=HadGEM2-ES     
+GCM=EC-EARTH
 EXP=RCP85
 
 EXPPATH=${GCM}/${EXP}
@@ -14,8 +14,8 @@ ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation a
 SIM_START=1949120100 # start date of simulation YYYYMMDDHH[mmss]: needed for constant file
 
 #for step 1:
-START_DATE=200601      #Start year and month for processing (if not given in command line) YYYYMM
-STOP_DATE=209912    #End year and month for processing (if not given in command line)  YYYYMM
+START_DATE=200501      #Start year and month for processing (if not given in command line) YYYYMM
+STOP_DATE=210012    #End year and month for processing (if not given in command line)  YYYYMM
 #SIM_STOP=2099123000  # end date of simulation YYYYMMDDHH[mmss]
 
 #for step 2:

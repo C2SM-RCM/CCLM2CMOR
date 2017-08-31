@@ -159,7 +159,7 @@ else
 fi
 
 #if no archives have been extracted in the beginning:
-if [ ! -d ${INDIR1}/*${YYA} ]
+if [ ! -d ${INDIR1}/*${YYA} ] && [ ${post_step} -ne 2 ]
 then
     (( endex=YYA+extract-1 ))
     #limit to extraction to end year
@@ -182,7 +182,7 @@ then
   #Extract archived years every 10 years
   (( d=YYA-FIRST ))
   (( mod=d%extract ))
-  if [ $mod -eq 0 ]
+  if [ $mod -eq 0 ] && [ ${post_step} -ne 2 ]
   then
     (( startex=YYA+extract ))
     (( endex=YYA+2*extract-1 ))
@@ -251,11 +251,12 @@ SEC_TOTAL=$(python -c "print(${TIME2}-${TIME1})")
 echo "total time for postprocessing: ${SEC_TOTAL} s"
 
 
-
-#Delete input data
-echo "deleting input data"
-sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP}  
-
+if [ ${post_step} -ne 2 ]
+then
+  #Delete input data
+  echo "deleting input data"
+  sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP}  
+fi
 
 #at end concatenate all log files
 if ${concat}

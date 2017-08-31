@@ -1,23 +1,31 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Jul 21 15:17:37 2017
 
+This python script uses the CORDEX variables table to determine which variables are needed for CORDEX
+and on which pressure level (if any). The INPUT_IO file of the CCLM model is used
+to find out in which output stream (outXX) the variables are located.
+All this information is written to a file that is executed in the first step
+of the post-processing (first.sh).
+If variables occur more than once in the INPUT_IO file only the first appearance is taken into account.
 
-To write model variables for each outXX stream from INPUT_IO file to post.job.tmpl file
-
-@author: mgoebel
+@author: Matthias Göbel, 08/2017
 """
 
 import itertools
 import numpy as np
 import csv
 
-path="/project/pr04/mgoebel/CMOR/misc/"
-path_cclm="/project/pr04/mgoebel/CMOR/src/cclm_post/"
-infile=open(path+"INPUT_IO.1949","r")
+path="../../misc/"
 varfile=path+"CORDEX_CMOR_CCLM_variables_table.csv"
+infile=open(path+"INPUT_IO.1949","r")
+
+path_cclm="../cclm_post/"
+
 cordex_only=True #only process variables needed for CORDEX
+
+#additionally needed variables to calculate CORDEX variables
+add=["SNOW_GSP","SNOW_CON","RAIN_CON","RUNOFF_G","ASOB_T","ASWDIR_S","ASWDIFD_S","TQC"]
 
 def listit(v):
     s=v.replace(" ","").replace("'","").replace("=","")
@@ -87,8 +95,7 @@ with open(varfile,'rt') as csvfile:
                     PLEVS[row[1]].append(row[0][-4:-1])
                 else:
                     PLEVS[row[1]]=[row[0][-4:-1]]
-#additionally needed variables to calculate CORDEX variables
-add=["SNOW_GSP","SNOW_CON","RAIN_CON","RUNOFF_G","ASOB_T","ASWDIR_S","ASWDIFD_S","TQC"]
+
 cordex_vars.extend(add)
 
 #write into file
@@ -114,7 +121,7 @@ for o,out in enumerate(outvar):
 jobf.close()
 
 
-#write proc_list into file
+#write proc_list into file (can be used for the seconds processing step if desired)
 proc_list=open(path_cclm+"proc_list","w")
 
 for var in sorted(flat_l):
@@ -129,7 +136,7 @@ proc_list.close()
 cordex_vars=np.array(cordex_vars)
 mask=np.in1d(cordex_vars,flat_l)
 ava=np.ma.masked_where(mask, cordex_vars)
-print(ava[~ava.mask])
+print("Variables required by CORDEX but not yet delivered by CCLM (have to be calculated in the postprocessing):\n"+str(ava[~ava.mask]))
 
 
 

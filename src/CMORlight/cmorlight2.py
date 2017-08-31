@@ -86,7 +86,6 @@ def process_resolution(params,reslist):
             #if limit_range is set: skip file if it is out of range
             if config.get_config_value('boolean','limit_range') and var not in settings.var_list_fixed:
                 if int(year) < config.get_config_value('integer','proc_start') or int(year) > config.get_config_value('integer','proc_end'):
-                    log.debug("File %s out of time range! Skipping ..." % f)
                     continue
             log.info("\n###########################################################")
             if f.find("%s_" % var) == 0 or f.find("%s.nc" % var) == 0 or f.find("%s_" % varRCM) == 0 or f.find("%s.nc" % varRCM) == 0 or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
@@ -360,8 +359,6 @@ def main():
                 if tools.check_resolution(params,res,options.process_table_only) == False:
                     reslist_act.remove(res) #remove resolution from list (for this variable) if it is not in table or if it is not supported
 
-        log.debug("Used parameter for variable '%s': %s" % (var,params))
-
         if reslist_act==[]:
             log.warning("None of the given resolutions appears in the table! Skipping variable...")
             continue
@@ -401,6 +398,7 @@ if __name__ == "__main__":
         for file in files:
             if file[-4:]==".tmp":
                 os.remove(os.path.join(root, file))
+
 
     time2=datetime.now()
     log = logging.getLogger('cmorlight')

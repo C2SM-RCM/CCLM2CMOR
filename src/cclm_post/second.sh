@@ -4,7 +4,8 @@
 # Concatenats monthly time series files produced by CCLM chain script post
 # to annual file for a given time period of years 
 # 
-# K. Keuler, Matthias Göbel Stand: 08.08.2017
+# K. Keuler, Matthias Göbel 
+#latest version: 15.09.2017
 #-------------------------------------------------------------------------
 
 typeset -Z2 MM MA ME MP MMA MME DHH EHH
@@ -290,8 +291,6 @@ do
         ENDFILE=${OUTDIR2}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YY}${ME}${TDE}${EHH}.nc
   #     transfer time from seconds in days and remove time_bnds from instantaneous fields
         echov "Modifying time values and attributes"
-  #      ncap2 -O -h -s "time_bnds=time_bnds/86400" -s "time_bnds(:,0)=time_bnds(:,1)" ${FILEOUT}_tmp3.nc ${ENDFILE}
-  #      ncatted -O -h -a units,time_bnds,o,c,"${REFTIME}" ${ENDFILE}
         ncap2 -O -h  -s "time=time/86400" ${FILEOUT}_tmp3.nc ${ENDFILE}
         ncks -O -C -h -x -v time_bnds ${ENDFILE} ${ENDFILE}
         ncatted -O -h -a units,time,o,c,"${REFTIME}" -a bounds,time,d,, ${ENDFILE}    
@@ -344,7 +343,7 @@ do
         chmod ${PERM} ${file3}
         rm temp1.nc
       else
-        echon "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..."
+        echov "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..."
       fi
     else
       echo "Input Files for generating SP_10M are not available"
@@ -374,7 +373,7 @@ do
         chmod ${PERM} ${file3}
         rm temp1.nc 
       else
-        echon "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..." 
+        echov "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..." 
       fi
     else
       echo "Input Files for generating ASWD_S are not available"
@@ -404,7 +403,7 @@ do
         chmod ${PERM} ${file3}
         rm temp1.nc 
       else
-        echon "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..." 
+        echov "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..." 
       fi
     else
       echo "Input Files for generating ASOU_T are not available"
@@ -434,7 +433,7 @@ do
         chmod ${PERM} ${file3}
         rm temp1.nc 
       else
-        echon "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
+        echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
       fi
     else
       echo "Input Files for generating RUNOFF_T are not available"
@@ -464,7 +463,7 @@ do
         chmod ${PERM} ${file3}
         rm temp1.nc 
       else
-        echon "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
+        echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
       fi
     else
       echo "Input Files for generating PREC_CON are not available"
@@ -494,7 +493,7 @@ do
         chmod ${PERM} ${file3}
         rm temp1.nc 
       else
-        echon "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
+        echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
       fi
     else
       echo "Input Files for generating TOT_SNOW are not available"
@@ -524,7 +523,7 @@ do
         chmod ${PERM} ${file3}
         rm temp1.nc 
       else
-        echon "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..."
+        echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..."
       fi
     else
       echo "Input Files for generating TQW are not available"
