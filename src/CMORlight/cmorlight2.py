@@ -16,7 +16,7 @@ from datetime import datetime
 #from datetime import timedelta
 
 #for multiprocessing
-from multiprocessing import Process,Pool
+from multiprocessing import Pool
 
 # command line parser
 import argparse
@@ -135,7 +135,7 @@ def process_resolution(params,reslist):
 def main():
     ''' main program, first read command line parameter '''
 
-    parser = argparse.ArgumentParser() #VERSION)
+    parser = argparse.ArgumentParser()
 
     parser.add_argument("-i", "--ini",
                             action="store", dest = "inifile", default = "control_cmor2.ini",

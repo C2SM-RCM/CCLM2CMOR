@@ -44,6 +44,8 @@ done
 
 EXPPATH=${GCM}/${EXP}
 INPDIR=${INDIR_BASE1}/${EXPPATH}
+ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived
+ARCHDIR=${ARCH_BASE}/${ARCH_SUB} # join archive paths
 xfer=${SCRATCH}/CMOR/logs/shell/${GCM}_${EXP}_xfer
 
 if [ ! -d ${INPDIR} ]
@@ -75,7 +77,7 @@ then
     rm -r ${INPDIR}/${startyear}/input
 
   else
-    echo "Cannot find .tar file for year ${startyear} in archive directory! Exiting..."
+    echo "Cannot find .tar file for year ${startyear} in archive directory! Skipping..."
     exit 1
   fi
 else

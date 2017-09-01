@@ -2,7 +2,6 @@
 
 # system tools
 import os
-import sys
 
 # netcdf4 Library
 from netCDF4 import Dataset

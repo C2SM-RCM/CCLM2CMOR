@@ -6,15 +6,13 @@ post_step=0 #to limit post processing to step 1 or 2, for all other values both 
 GCM=EC-EARTH
 EXP=RCP85
 
-EXPPATH=${GCM}/${EXP}
-ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived
 #ARCH_SUB=HadGEM2-ES_Hist_RCP85/RCP85
 
 # time settings
 SIM_START=1949120100 # start date of simulation YYYYMMDDHH[mmss]: needed for constant file
 
 #for step 1:
-START_DATE=200501      #Start year and month for processing (if not given in command line) YYYYMM
+START_DATE=200601      #Start year and month for processing (if not given in command line) YYYYMM
 STOP_DATE=210012    #End year and month for processing (if not given in command line)  YYYYMM
 #SIM_STOP=2099123000  # end date of simulation YYYYMMDDHH[mmss]
 
@@ -25,7 +23,6 @@ YYE= #End year for processing
 #... directory path settings
 BASEDIR=/scratch/snx1600/mgoebel/CMOR
 ARCH_BASE=/store/c2sm/ch4/ssilje/Archive_cosmo_runs # directory where the raw data of the simulations are archived
-ARCHDIR=${ARCH_BASE}/${ARCH_SUB} # join archive paths
 SRCDIR=${BASEDIR}/src/cclm_post           # directory where the post processing scripts are stored
 WORKDIR=${SCRATCH}/work/post # work directory, CAUTION: WITH OPTION "--clean" ALL FILES IN THIS FOLDER WILL BE DELETED!
 

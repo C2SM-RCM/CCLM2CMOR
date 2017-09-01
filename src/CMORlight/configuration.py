@@ -9,13 +9,9 @@
 ######################################################################################################
 import logging
 import pkg_resources
-import os
 import sys
-import settings
-#import csv
 
-from _compat import PY2
-if PY2:
+if (sys.version_info < (3, 0)):
     import ConfigParser
 else:
     import configparser
@@ -103,7 +99,7 @@ def load_configuration(inifile):
     global CONFIG
 
   #  LOGGER.info('loading configuration from %s' % inifile)
-    if PY2:
+    if (sys.version_info < (3, 0)):
         CONFIG = ConfigParser.SafeConfigParser()
     else:
         CONFIG = configparser.ConfigParser()

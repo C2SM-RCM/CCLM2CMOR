@@ -1,9 +1,9 @@
 #!/bin/ksh
 #SBATCH --account=pr04
 #SBATCH --nodes=1
-#SBATCH --partition=prepost
-#SBATCH --time=00:30:00
-#SBATCH --constraint=mc
+##SBATCH --partition=prepost
+#SBATCH --time=02:00:00
+#SBATCH --constraint=gpu
 #SBATCH --output=/scratch/snx1600/mgoebel/CMOR/logs/shell/CMOR_sh_%j.out
 #SBATCH --error=/scratch/snx1600/mgoebel/CMOR/logs/shell/CMOR_sh_%j.err
 #SBATCH --job-name="CMOR_sh"
@@ -103,6 +103,7 @@ do
   shift
 done
 
+
 #log base names
 CMOR=${SCRATCH}/CMOR/logs/shell/${GCM}_${EXP}_CMOR_sh
 xfer=${SCRATCH}/CMOR/logs/shell/${GCM}_${EXP}_xfer
@@ -136,6 +137,8 @@ OUTDIR1=${OUTDIR_BASE1}/${EXPPATH}
 INDIR2=${INDIR_BASE2}/${EXPPATH}
 OUTDIR2=${OUTDIR_BASE2}/${EXPPATH}
 
+ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived
+ARCHDIR=${ARCH_BASE}/${ARCH_SUB} # join archive paths
 
 #range for second script
 YYA=$(echo ${START_DATE} | cut -c1-4) 
@@ -223,7 +226,6 @@ if  [ ${post_step} -ne 2 ]
 then
   CURRENT_DATE=${START_DATE}
   echo "###################################################### \n First  processing step \n######################################################"
- # echo "Path to input data: " ${ARCHDIR}
   echo "Start: " ${START_DATE}
   echo "Stop: " ${STOP_DATE}
   source ${SRCDIR}/first.sh
@@ -238,25 +240,19 @@ then
   echo "Start: " ${YYA}
   echo "Stop: " ${YYE}
   source ${SRCDIR}/second.sh
+  
+  #Delete input data
+  echo "deleting input data"
+  sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP} -I ${INDIR1}
 fi
 
-if ${clean}
-then
-  rm -r ${WORKDIR}
-fi
+
 
 echo "######################################################"
 TIME2=$(date +%s)
 SEC_TOTAL=$(python -c "print(${TIME2}-${TIME1})")
 echo "total time for postprocessing: ${SEC_TOTAL} s"
 
-
-if [ ${post_step} -ne 2 ]
-then
-  #Delete input data
-  echo "deleting input data"
-  sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP}  
-fi
 
 #at end concatenate all log files
 if ${concat}
@@ -270,4 +266,9 @@ then
     echo "######################################################\n\n"
     (( year=year+1 ))
   done 
+  
+  if ${clean}
+  then
+    rm -r ${WORKDIR}
+  fi
 fi
