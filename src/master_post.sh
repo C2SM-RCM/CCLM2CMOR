@@ -162,7 +162,7 @@ else
 fi
 
 #if no archives have been extracted in the beginning:
-if [ ! -d ${INDIR1}/*${YYA} ] && [ ${post_step} -ne 2 ]
+if [ ! -d ${INDIR1}/*${YYA} ] && [ ${post_step} -ne 2 ] && ${batch}
 then
     (( endex=YYA+extract-1 ))
     #limit to extraction to end year
@@ -225,7 +225,9 @@ fi
 if  [ ${post_step} -ne 2 ]
 then
   CURRENT_DATE=${START_DATE}
-  echo "###################################################### \n First  processing step \n######################################################"
+  echo "######################################################"
+  echo "First processing step"
+  echo "######################################################"  
   echo "Start: " ${START_DATE}
   echo "Stop: " ${STOP_DATE}
   source ${SRCDIR}/first.sh
@@ -236,14 +238,19 @@ fi
 if [ ${post_step} -ne 1 ]
 then
   echo ""
-  echo "###################################################### \n Second processing step \n######################################################"
+  echo "######################################################"
+  echo "Second processing step"
+  echo "######################################################"
   echo "Start: " ${YYA}
   echo "Stop: " ${YYE}
   source ${SRCDIR}/second.sh
   
   #Delete input data
-  echo "deleting input data"
-  sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP} -I ${INDIR1}
+  if ${batch}
+  then
+    echo "deleting input data"
+    sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP} -I ${INDIR1}
+  fi
 fi
 
 

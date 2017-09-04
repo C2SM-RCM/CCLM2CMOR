@@ -5,9 +5,9 @@ bash scripts:
     post.job.tmpl:
       	- folder strucure YYYY/output/out01 -> should not be hardcoded maybe?
         -are global attribute correct?
+        - IE_SPONGE berechnen
     CCLM sh:
-        - first timestep of next month included in concatenation? (line 185) --> cannot use last year (in our case)!
-
+    
 
 CMORLIGHT:
 
@@ -29,6 +29,8 @@ CMORLIGHT:
 
 
     GENERAL
+    -NBOUNDCUT -> 13 from Archive specs (table domain)?
+     IE_TOT-> calculate from file?    
     
     - sachen in proc_corr_var schauen ob die schon passen
     - chunking: in extra folder -> do something better!

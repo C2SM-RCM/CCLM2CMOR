@@ -105,7 +105,6 @@ fi
 
 
 #... set number of boundary lines to be cut off in the time series data
-NBOUNDCUT=${NBOUNDCUT}
 let "IESPONGE = ${IE_TOT} - NBOUNDCUT - 1"
 let "JESPONGE = ${JE_TOT} - NBOUNDCUT - 1"
 

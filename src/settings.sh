@@ -3,7 +3,7 @@ post_step=0 #to limit post processing to step 1 or 2, for all other values both 
 
 #Simulation details
 
-GCM=EC-EARTH
+GCM=HadGEM2-ES
 EXP=RCP85
 
 #ARCH_SUB=HadGEM2-ES_Hist_RCP85/RCP85
@@ -21,10 +21,10 @@ YYA=  #Start year for processing
 YYE= #End year for processing 
 
 #... directory path settings
-BASEDIR=/scratch/snx1600/mgoebel/CMOR
+BASEDIR=/home/matze/CMORfull
 ARCH_BASE=/store/c2sm/ch4/ssilje/Archive_cosmo_runs # directory where the raw data of the simulations are archived
 SRCDIR=${BASEDIR}/src/cclm_post           # directory where the post processing scripts are stored
-WORKDIR=${SCRATCH}/work/post # work directory, CAUTION: WITH OPTION "--clean" ALL FILES IN THIS FOLDER WILL BE DELETED!
+WORKDIR=${BASEDIR}/work/post # work directory, CAUTION: WITH OPTION "--clean" ALL FILES IN THIS FOLDER WILL BE DELETED!
 
 #input/output directory for first step
 INDIR_BASE1=${BASEDIR}/input     # directory to where the raw data archives are extracted
@@ -50,15 +50,14 @@ const_list="FR_LAND HSURF"
 
 #Special settings for first step
 
-NBOUNDCUT=10 # number of boundary lines to be cut off in the time series data 
-IE_TOT=101 # number of gridpoints in zonal direction?
-JE_TOT=111 # number of gridpoints in meridional direction
+NBOUNDCUT=13 # number of boundary lines to be cut off in the time series data 
+IE_TOT=132 # number of gridpoints in longitudinal direction?
+JE_TOT=129 # number of gridpoints in latitudinal direction
 PLEVS=(200. 500. 850. 925.)  # list of pressure levels to output.The list must be the same as or a subset	of the list in the specific GRIBOUT. 
 ZLEVS=(100. 1000. 2000. 5000.) # list of height levels to output (similar to PLEVS)
 
 #Special settings for second step
 
-LASTDAY=30   #Last day of each month (e.g. 30 or 31) TODO: some gcms use greogorian calendar!
 proc_list="TOT_SNOW" #which variables to process (set proc_all=false for this to take effect)
 proc_all=true  #process all available variables (not only those in proc_list)
 

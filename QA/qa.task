@@ -1,14 +1,12 @@
 #----------------------------------------
 PROJECT=CORDEX
-PROJECT_DATA=/scratch/snx1600/mgoebel/CMOR/output/CORDEX/output/
+PROJECT_DATA=/home/matze/CMORfull/OUT/CORDEX/output
 SELECT EUR-44/ETHZ/HadGEM2-ES/RCP85
-QA_RESULTS=/scratch/snx1600/mgoebel/CMOR/QAchecker/QA_Results/
-
-HDF5_DISABLE_VERSION_CHECK=1
-
-DRS_PATH_BASE=output
-LOG_PATH_INDEX=3,4
-CT_PATH_INDEX=3,4
+QA_RESULTS=/home/matze/CMORfull/QA/results
+#QA_HOME=/home/matze/.qa_home/QA_HOME
+DRS_PATH_BASE=OUT
+LOG_PATH_INDEX=5,6,10,11
+CT_PATH_INDEX=5,6,10,11
 #LOG_PATH_BASE=EUR-11
 #LOG_PATH_BASE=cordex
 

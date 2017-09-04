@@ -24,6 +24,7 @@ from datetime import datetime
 # uuid support
 import uuid
 
+import numpy as np
 
 import time as timepkg
 
@@ -106,8 +107,8 @@ def set_attributes(params,proc_list=None):
     settings.netCDF_attributes['long_name'] = params[config.get_config_value('index','INDEX_VAR_LONG_NAME')]
     settings.netCDF_attributes['standard_name'] = params[config.get_config_value('index','INDEX_VAR_STD_NAME')]
     settings.netCDF_attributes['units'] = params[config.get_config_value('index','INDEX_UNIT')]
-    settings.netCDF_attributes['missing_value'] = config.get_config_value('settings','missing_value')
-    settings.netCDF_attributes['_FillValue'] = config.get_config_value('settings','missing_value')
+    settings.netCDF_attributes['missing_value'] = config.get_config_value('float','missing_value')
+    settings.netCDF_attributes['_FillValue'] = config.get_config_value('float','missing_value')
     settings.netCDF_attributes['coordinates'] = 'lon lat'
 
 
@@ -298,6 +299,7 @@ def set_coord_attributes(f_var,f_out):
             #f_var.coordinates = 'plev rlat rlon'
         #else:
             #f_var.coordinates = 'plev'
+
     elif 'height' in f_out.variables:
         var_out = f_out.variables ['height']
         var_out.units = "m"
@@ -1875,8 +1877,8 @@ def process_file(params,in_file,var,reslist,year):
                 else:
                     att_lst = {}
                     for k in var_in.ncattrs():
-                        if k in ['_FillValue','missing_value']:
-                            att_lst[k] = var_in.getncattr(k)
+                        if k in ['_FillValue','missing_value','grid_north_pole_latitude','grid_north_pole_longitude']:
+                            att_lst[k] = np.float32(var_in.getncattr(k))
                         else:
                             att_lst[k] = str(var_in.getncattr(k))
                 var_out.setncatts(att_lst)

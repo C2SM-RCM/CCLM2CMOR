@@ -17,7 +17,6 @@ MMA=01
 MME=12
 
 
-
 # create subdirectory for full time series
 [[ -d ${OUTDIR2} ]] || mkdir -p  ${OUTDIR2}
 #Create and change to WORKDIR
