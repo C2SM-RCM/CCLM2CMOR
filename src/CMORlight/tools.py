@@ -793,6 +793,8 @@ def process_file_fix(params,in_file):
                     continue
                 if k != '_FillValue':
                     att_lst[k] = str(var_in.getncattr(k))
+                if k in ['grid_north_pole_latitude','grid_north_pole_longitude']:
+                    att_lst[k] = np.float32(var_in.getncattr(k))
             if var_name == 'rlon':
                 att_lst['axis'] = 'X'
                 att_lst['long_name'] = 'longitude in rotated pole grid'
@@ -1844,7 +1846,7 @@ def process_file(params,in_file,var,reslist,year):
                 # at variable creation set fill_vlue, later is impossible
                 # also set the compression
                 if config.get_config_value('boolean','nc_compress') == True:
-                    logger.info("COMPRESS variable: %s" % (var_name))
+                    logger.debug("COMPRESS variable: %s" % (var_name))
 
                 # skip 'pressure'!!
                 my_lst = []
@@ -2164,7 +2166,7 @@ def process_file(params,in_file,var,reslist,year):
             set_coord_attributes(f_var,f_out)
 
             # set attribute missing_value
-            f_var.missing_value = settings.netCDF_attributes['missing_value']
+           # f_var.missing_value = settings.netCDF_attributes['missing_value']*(-1)
 
             try:
                 f_var.setncattr('grid_mapping','rotated_pole')

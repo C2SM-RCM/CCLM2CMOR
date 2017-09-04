@@ -31,6 +31,8 @@ CMORLIGHT:
     GENERAL
     -NBOUNDCUT -> 13 from Archive specs (table domain)?
      IE_TOT-> calculate from file?    
+     - CCLM subversion and institute ID (CLMcom?)
+     - mean where land: how is it averaged? -> needs bounds
     
     - sachen in proc_corr_var schauen ob die schon passen
     - chunking: in extra folder -> do something better!
