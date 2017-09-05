@@ -256,6 +256,11 @@ def set_attributes_create(outpath,res=None,year=0,logger=log):
         # set resolution if passed
         if res:
             f_out.setncattr("frequency",res)
+        try:
+            f_out.variables["lon"].delncattr("_CoordinateAxisType")
+            f_out.variables["lat"].delncattr("_CoordinateAxisType")
+        except:
+            pass
         # set (new) tracking_id
         f_out.setncattr("tracking_id",str(year)+str(uuid.uuid1()))
         # set new creation_date
@@ -1033,11 +1038,7 @@ def proc_seasonal_mean(params,year):
                 # set attribute coordinates
                 set_coord_attributes(f_var=f_tmp.variables[var],f_out=f_tmp)
                 #Delete unnecessary argument
-                try:
-                    f_tmp.variables["lon"].delncattr("_CoordinateAxisType")
-                    f_tmp.variables["lat"].delncattr("_CoordinateAxisType")
-                except:
-                    pass
+
                 # commit changes
                 f_tmp.sync()
 
@@ -1058,23 +1059,21 @@ def proc_seasonal_mean(params,year):
                 # create outpath to store
                 outfile = create_filename(var,res,dt_start,dt_stop,logger=logger)
                 outpath = "%s/%s" % (outdir,outfile)
-                if not os.path.isfile(outpath):
-                    # rename temp file to output filename outpath
-                    retval = shell("mv %s %s" % (ftmp_name,outpath))
+                # rename temp file to output filename outpath
+                retval = shell("mv %s %s" % (ftmp_name,outpath))
 
-                    # set attributes
-                    set_attributes_create(outpath,res,year)
-                    # correct netcdf version
-                    if config.get_config_value('boolean','nc_compress') == True:
-                        compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')],year)
+                # set attributes
+                set_attributes_create(outpath,res,year)
+                # correct netcdf version
+                if config.get_config_value('boolean','nc_compress') == True:
+                    compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')],year)
 
-                    # exist in some output (e.g. CCLM) in CORDEX, default: False
-                    if config.get_config_value('boolean','add_vertices') == True:
-                        f_out = Dataset(outpath,'r+')
-                        add_vertices(f_out)
-                        f_out.close()
-                else:
-                    os.remove(ftmp_name)
+                # exist in some output (e.g. CCLM) in CORDEX, default: False
+                if config.get_config_value('boolean','add_vertices') == True:
+                    f_out = Dataset(outpath,'r+')
+                    add_vertices(f_out)
+                    f_out.close()
+
                 # next file index in the list
                 i += 1
             if not input_exist:
