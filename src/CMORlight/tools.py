@@ -530,7 +530,8 @@ def add_vertices(f_out,logger=log):
         # commit changes
         f_out.sync()
 
-
+    else:
+        logger.error("Vertices file %s does not exist! No vertices added..." % config.get_model_value("vertices_file") )
 # -----------------------------------------------------------------------------
 def check_resolution(params,res,process_table_only):
     '''
@@ -853,12 +854,7 @@ def process_file_fix(params,in_file):
     f_var.units = settings.netCDF_attributes['units']
     #add coordinates attribute to fx-variables
     f_var.coordinates = settings.netCDF_attributes['coordinates']
-    #if params[config.get_config_value('index','INDEX_CM_AREA')]=='':
-        #f_var.cell_methods = "time: %s" % (cm_type)
-    #else:
-        #f_var.cell_methods = "time: %s area: %s" % (cm_type,params[config.get_config_value('index','INDEX_CM_AREA')])
-    # set attribute coordinates
-    #set_coord_attributes(params,f_var,f_out)
+   
 
     # set attribute missing_value
     f_var.missing_value = settings.netCDF_attributes['missing_value']
@@ -1026,10 +1022,7 @@ def proc_seasonal_mean(params,year):
                     if var_name in f_in.variables.keys() and var_name not in f_tmp.variables.keys():
                         copy_var(f_in,f_tmp,var_name,logger=logger)
                 f_var.setncattr('grid_mapping','rotated_pole')
-                if params[config.get_config_value('index','INDEX_CM_AREA')]=='':
-                    f_var.cell_methods = "time: %s" % (cm_type)
-                else:
-                    f_var.cell_methods = "time: %s area: %s" % (cm_type,params[config.get_config_value('index','INDEX_CM_AREA')])
+                f_var.cell_methods = "time: %s" % (cm_type)
 
                 # commit changes
                 f_tmp.sync()
@@ -1039,7 +1032,11 @@ def proc_seasonal_mean(params,year):
 
                 # set attribute coordinates
                 set_coord_attributes(f_var=f_tmp.variables[var],f_out=f_tmp)
-
+                #Delete unnecessary argument
+                try:
+                    f_tmp.variables["lon"].delncattr("_CoordinateAxisType")
+                except:
+                    pass
                 # commit changes
                 f_tmp.sync()
 
@@ -1404,7 +1401,7 @@ def derotate_uv(params,in_file,var,logger=log):
     in_file_v = "%s/%s/%s" % (settings.DirIn,in_var_v,filename_v)
     in_file_u = "%s/%s/%s" % (settings.DirIn,in_var_u,filename_u)
     if not os.path.isfile(in_file_u) or not os.path.isfile(in_file_v):
-        logger.warning("Files %s or %s do not exist! Skipping derotation..." % (in_file_u,in_file_v))
+        logger.warning("File %s or %s does not exist! Skipping this variable..." % (in_file_u,in_file_v))
         return
     out_dir_u = "%s/%s" % (get_input_path(True),in_var_u)
     out_dir_v = "%s/%s" % (get_input_path(True),in_var_v)
@@ -1482,7 +1479,10 @@ def process_file(params,in_file,var,reslist,year):
 
     #derotate if required
     if var in get_derotate_vars() and config.get_config_value('boolean','derotate_uv'):
-        in_file_u, in_file_v = derotate_uv(params,in_file,var,logger)
+        try:
+            in_file_u, in_file_v = derotate_uv(params,in_file,var,logger)
+        except:
+            return reslist
         #change input file
         if var.find("u")!=-1:
             in_file=in_file_u
@@ -1740,11 +1740,7 @@ def process_file(params,in_file,var,reslist,year):
                 in_file = in_file_help
 
             ftmp_name = "%s/%s-%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()),var)
-#            fp_tmp = open(ftmp_name, 'w+')
-            # exchange in_file name
-            #if var in ['mrso','mrfso'] and os.path.isfile(in_file_help):
-                #in_file_org = in_file
-                #in_file = in_file_help
+#          
             # get type of function to create the output file: point,mean,maximum,minimum,sum
             # extract cell method from string
             t_delim = 'mean over days'
@@ -1792,15 +1788,6 @@ def process_file(params,in_file,var,reslist,year):
             # do cmd
             retval = shell(cmd,logger=logger)
 
-            ## move file
-            #cmd = "mv %s %s" % (fp_tmp.name,outpath)
-            #retval = shell(cmd,logger=logger)
-
-            ## check output file
-            #if not os.path.isfile(outpath):
-                #logger.info("Output file: %s does not exist!" % (outpath))
-                ## if not exist for some reason return and go ahead
-                #return
 
             ####################################################
             # open to output file
@@ -1869,8 +1856,7 @@ def process_file(params,in_file,var,reslist,year):
                         var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims,complevel=4)
                     else:
                         var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims)
-                #if '_FillValue' in var_in.ncattrs() and var_in._FillValue < 0:
-                    #correct_fillvalue = True
+      
                 logger.debug("Dimensions (of variable %s): %s" % (var_name,str(f_out.dimensions)))
                 # set all character fields as character converted with str() function
                 # create attribute list
@@ -1881,6 +1867,12 @@ def process_file(params,in_file,var,reslist,year):
                     for k in var_in.ncattrs():
                         if k in ['_FillValue','missing_value','grid_north_pole_latitude','grid_north_pole_longitude']:
                             att_lst[k] = np.float32(var_in.getncattr(k))
+                            
+                            #also set the respective other value
+                            if k=='_FillValue':
+                                att_lst['missing_value'] = np.float32(var_in.getncattr(k))
+                            elif k=='missing_value':
+                                att_lst['_FillValue'] = np.float32(var_in.getncattr(k))
                         else:
                             att_lst[k] = str(var_in.getncattr(k))
                 var_out.setncatts(att_lst)
@@ -2151,10 +2143,7 @@ def process_file(params,in_file,var,reslist,year):
             f_var.standard_name = settings.netCDF_attributes['standard_name']
             f_var.long_name = settings.netCDF_attributes['long_name']
             f_var.units = settings.netCDF_attributes['units']
-            if params[config.get_config_value('index','INDEX_CM_AREA')]=='':
-                f_var.cell_methods = "time: %s" % (cm_type)
-            else:
-                f_var.cell_methods = "time: %s area: %s" % (cm_type,params[config.get_config_value('index','INDEX_CM_AREA')])
+            f_var.cell_methods = "time: %s" % (cm_type)
 
             # check wether lon/lat exist
 #            print f_out.variables,not 'lon' in f_out.variables,not 'lat' in f_out.variables
@@ -2166,7 +2155,7 @@ def process_file(params,in_file,var,reslist,year):
             set_coord_attributes(f_var,f_out)
 
             # set attribute missing_value
-           # f_var.missing_value = settings.netCDF_attributes['missing_value']*(-1)
+            f_var.missing_value = settings.netCDF_attributes['missing_value']
 
             try:
                 f_var.setncattr('grid_mapping','rotated_pole')
@@ -2190,23 +2179,8 @@ def process_file(params,in_file,var,reslist,year):
                 compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')],year,logger=logger)
             logger.info("Variable attributes set!")
 
-            # close tmp file
-#            fp_tmp.close()
 
-            # now correct missing_value (is actual negativ
-            # TODO: set additional correct list?
-            #if (correct_fillvalue == True or var in ['mrfso','mrro','mrros','mrso','snw']) and os.path.isfile(outpath):
-                #_FillValue = config._parser.getfloat('settings','missing_value')
-                #cmd = "ncatted -h -O -a missing_value,%s,m,f,-%s -a _FillValue,%s,m,f,-%s %s" %  (var,_FillValue,var,_FillValue,outpath)
-                #retval = shell(cmd,logger=logger)
-                #cmd = "ncatted -h -O -a missing_value,%s,m,f,%s -a _FillValue,%s,m,f,%s %s" %  (var,_FillValue,var,_FillValue,outpath)
-                #retval = shell(cmd,logger=logger)
-
-            ## ATTENTION: 'in_file' is only to be deleted here for these variables, otherwise it is read-only!!
-            #if var in ['mrso','mrfso']:
-                #in_file = in_file_org
-                #os.remove(in_file_help)
-            # only on file
+           
         else:
             cmd = "No cell method set for this variable (%s) and time resolution (%s)." % (var,res)
             logger.warning(cmd)

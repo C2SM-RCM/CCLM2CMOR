@@ -28,7 +28,7 @@ YY=$YYA
 #copy constant variables
 for constVar in ${const_list}
 do 
-  if [ ! -f ${OUTDIR2}/${constVar}/${constVar}.nc ]
+  if [ ! -f ${OUTDIR2}/${constVar}/${constVar}.nc ] || ${overwrite} 
   then
     if [ -f ${INDIR2}/${constVar}.nc ]
     then
@@ -41,7 +41,7 @@ do
   fi
 done
 
-
+exit
 
 while [ ${YY} -le ${YYE} ]      # year loop
 do

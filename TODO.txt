@@ -1,6 +1,6 @@
 
 bash scripts:
-
+    
 
     post.job.tmpl:
       	- folder strucure YYYY/output/out01 -> should not be hardcoded maybe?
@@ -33,13 +33,13 @@ CMORLIGHT:
      IE_TOT-> calculate from file?    
      - CCLM subversion and institute ID (CLMcom?)
      - mean where land: how is it averaged? -> needs bounds
+    - performance gain of shell scripts: don't concatenate monthly but yearly directly -> skip one step
+    
     
     - sachen in proc_corr_var schauen ob die schon passen
     - chunking: in extra folder -> do something better!
     - every step in process_file needed to be carried out for every file??? -> raise performance!
     - seasonal mean integrated in process_file but not perfectly economic?
-    - mrso: 6hr: bounds not available??; 2019 seems to be 2020 -> switch infile comes in ?
-    - Hans_jürgens Kommentare ausprobieren,  beheben
     - wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
     - check sanity of parameter table before processing each variable: for subdaily: check if agg. method given, otherwise skip subdaily!
     - zwei wege welche var prozessiert werden sollen:

@@ -1,6 +1,6 @@
 #----------------------------------------
 PROJECT=CORDEX
-PROJECT_DATA=/home/matze/CMORfull/OUT/CORDEX/output
+PROJECT_DATA=/home/matze/CMORfull/OUT/CORDEX/output/
 SELECT EUR-44/ETHZ/HadGEM2-ES/RCP85
 QA_RESULTS=/home/matze/CMORfull/QA/results
 #QA_HOME=/home/matze/.qa_home/QA_HOME
