@@ -1035,6 +1035,7 @@ def proc_seasonal_mean(params,year):
                 #Delete unnecessary argument
                 try:
                     f_tmp.variables["lon"].delncattr("_CoordinateAxisType")
+                    f_tmp.variables["lat"].delncattr("_CoordinateAxisType")
                 except:
                     pass
                 # commit changes
