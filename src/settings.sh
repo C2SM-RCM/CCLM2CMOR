@@ -21,7 +21,7 @@ YYA=  #Start year for processing
 YYE= #End year for processing 
 
 #... directory path settings
-BASEDIR=/home/matze/CMORfull
+BASEDIR=${SCRATCH}/CMOR
 ARCH_BASE=/store/c2sm/ch4/ssilje/Archive_cosmo_runs # directory where the raw data of the simulations are archived
 SRCDIR=${BASEDIR}/src/cclm_post           # directory where the post processing scripts are stored
 WORKDIR=${BASEDIR}/work/post # work directory, CAUTION: WITH OPTION "--clean" ALL FILES IN THIS FOLDER WILL BE DELETED!

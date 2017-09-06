@@ -41,7 +41,6 @@ do
   fi
 done
 
-exit
 
 while [ ${YY} -le ${YYE} ]      # year loop
 do
