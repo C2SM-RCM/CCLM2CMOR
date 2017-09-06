@@ -81,9 +81,6 @@ then
   mkdir -p ${WORKDIR}/${EXPPATH}
 fi
 
-
-
-
 if [ ! -d ${INDIR1} ]
 then
   mkdir -p ${INDIR1}
@@ -108,8 +105,6 @@ fi
 let "IESPONGE = ${IE_TOT} - NBOUNDCUT - 1"
 let "JESPONGE = ${JE_TOT} - NBOUNDCUT - 1"
 
-
-
 while [ ${CURRENT_DATE} -le ${STOP_DATE} ]
 do
   YYYY_MM=${YYYY}_${MM}
@@ -118,53 +113,59 @@ do
   echon "# Processing time ${YYYY_MM}"
   echon "################################"
 
-  if [ -d ${INDIR1}/${YYYY} ]
+  if [ ! -d ${INDIR1}/${YYYY} ]
   then
-
-    if [ ! -d ${OUTDIR1}/${YYYY_MM} ]
+    if ${batch}
     then
-      mkdir -p ${OUTDIR1}/${YYYY_MM}
+      echo "Cannot find input directory for year ${YYYY}. Skipping..."
+      continue
+    else
+      echo "Cannot find input directory for year ${YYYY}. Extracting..."
+      tar -xf ${ARCHDIR}/*${YYYY}.tar -C ${INDIR1}
     fi
-
-    DATE_START=$(date +%s)
-    DATE1=${DATE_START}
-
-    ##################################################################################################
-    # build time series
-    ##################################################################################################
-
-    export IGNORE_ATT_COORDINATES=1  # setting for better rotated coordinate handling in CDO
-
-
-
-    #... cut of the boundary lines from the constant data file and copy it
-    if [ ! -f ${WORKDIR}/${EXPPATH}/cclm_const.nc ]
-    then
-      echon "Copy constant file"
-      ncks -h -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} ${INDIR1}/${YYYY}/output/out01/lffd${SIM_START}c.nc ${WORKDIR}/${EXPPATH}/cclm_const.nc
-    fi
-    
-    #start timing
-    DATE_START=$(date +%s)
-
-    #process constant variables
-    constVar FR_LAND
-    constVar HSURF
-    constDone=true
-
-    # --- build time series for selected variables
-    cd ${SRCDIR}
-    source ./jobf.sh
-
-    #stop timing and print information
-    DATE2=$(date +%s)
-    SEC_TOTAL=$(python -c "print(${DATE2}-${DATE_START})")
-    echon "Time for postprocessing: ${SEC_TOTAL} s"
-    
-  else
-    echo "Cannot find input directory for year ${YYYY}. Skipping..."
-    #tar -xf ${ARCHDIR}/*${YYYY}.tar -C ${INDIR1}
   fi
+
+  if [ ! -d ${OUTDIR1}/${YYYY_MM} ]
+  then
+    mkdir -p ${OUTDIR1}/${YYYY_MM}
+  fi
+
+  DATE_START=$(date +%s)
+  DATE1=${DATE_START}
+
+  ##################################################################################################
+  # build time series
+  ##################################################################################################
+
+  export IGNORE_ATT_COORDINATES=1  # setting for better rotated coordinate handling in CDO
+
+
+
+  #... cut of the boundary lines from the constant data file and copy it
+  if [ ! -f ${WORKDIR}/${EXPPATH}/cclm_const.nc ]
+  then
+    echon "Copy constant file"
+    ncks -h -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} ${INDIR1}/${YYYY}/output/out01/lffd${SIM_START}c.nc ${WORKDIR}/${EXPPATH}/cclm_const.nc
+  fi
+  
+  #start timing
+  DATE_START=$(date +%s)
+
+  #process constant variables
+  constVar FR_LAND
+  constVar HSURF
+  constDone=true
+
+  # --- build time series for selected variables
+  cd ${SRCDIR}
+  source ./jobf.sh
+
+  #stop timing and print information
+  DATE2=$(date +%s)
+  SEC_TOTAL=$(python -c "print(${DATE2}-${DATE_START})")
+  echon "Time for postprocessing: ${SEC_TOTAL} s"
+  
+
   # step ahead in time
   MMint=$(python -c "print(int("${MMint}")+1)")
   if [ ${MMint} -ge 13 ]
