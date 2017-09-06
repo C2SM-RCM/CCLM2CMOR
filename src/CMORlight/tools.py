@@ -325,7 +325,7 @@ def set_coord_attributes(f_var,f_out):
         if 'lon' in f_out.variables and 'lat' in f_out.variables:
             f_var.coordinates = 'lat lon'
         else:
-            cmd = "No lon/lat coordinates available, exiting..."
+            cmd = "No lon/lat coordinates available!"
             log.error(cmd)
             raise Exception(cmd)
         #elif 'rlon' in f_out.variables and 'rlat' in f_out.variables:
@@ -637,14 +637,18 @@ def add_coordinates(f_out,logger=log):
     if os.path.isfile(settings.coordinates_file):
         f_coor = Dataset(settings.coordinates_file,'r')
         # copy lon
-        copy_var(f_coor,f_out,'lon',logger=logger)
-        logger.info("Variable lon added!")
-        # copy lat
-        copy_var(f_coor,f_out,'lat',logger=logger)
-        logger.info("Variable lat added!")
-        # commit changes
-        f_out.sync()
-
+        try:
+            copy_var(f_coor,f_out,'lon',logger=logger)
+            logger.info("Variable lon added!")
+            # copy lat
+            copy_var(f_coor,f_out,'lat',logger=logger)
+            logger.info("Variable lat added!")
+            # commit changes
+            f_out.sync()
+        except IndexError as e:
+            raise IndexError(str(e)+"\n Coordinates file does not have the same resolution as the input data! Change it!")
+    else:
+        raise Exception("Coordinates file %s does not exist!" % settings.coordinates_file)
 
 # -----------------------------------------------------------------------------
 def get_derotate_vars(flt=None):
@@ -817,8 +821,13 @@ def process_file_fix(params,in_file):
             var_out[:] = var_in[:]
         else:
             var_out[:] = mulc_factor * var_in[:]
+            
         #add lon and lat coordinates to output files
+        if os.path.isfile(settings.coordinates_file):
             f_coor = Dataset(settings.coordinates_file,'r')
+        else:
+            raise Exception("Coordinates file %s does not exist!" % settings.coordinates_file)
+
         # copy lon
             copy_var(f_coor,f_out,'lon')
             log.info("Variable lon added!")
@@ -2144,10 +2153,9 @@ def process_file(params,in_file,var,reslist,year):
             f_var.long_name = settings.netCDF_attributes['long_name']
             f_var.units = settings.netCDF_attributes['units']
             f_var.cell_methods = "time: %s" % (cm_type)
-
+            
             # check wether lon/lat exist
-#            print f_out.variables,not 'lon' in f_out.variables,not 'lat' in f_out.variables
-            if not 'lon' in f_out.variables and not 'lat' in f_out.variables:
+            if not 'lon' in f_out.variables or not 'lat' in f_out.variables:
                 # add lon/lat
                 add_coordinates(f_out,logger=logger)
 
