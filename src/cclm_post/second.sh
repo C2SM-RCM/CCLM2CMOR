@@ -207,11 +207,11 @@ do
         if [[ ${TDA} -eq 01 && ${THA} -eq 00 ]]
         then
           echov "Eliminating first time step from tmp1-File"
-          ncks -O -h -d time,1, ${FILEIN} ${FILEOUT}_tmp1.nc
+          ncks -O -h -d time,1, ${FILEIN} ${FILEOUT}_tmp1_${YY}.nc
         elif [[ ${TDA} -eq 01 &&  ${THA} -eq ${DHH} ]]
         then
           echov "Number of timesteps in tmp1-File is OK"
-          cp ${FILEIN} ${FILEOUT}_tmp1.nc
+          cp ${FILEIN} ${FILEOUT}_tmp1_${YY}.nc
         else
           echo "Error: Start date  ${TDA} ${THA}"
           echo in "${FILEIN} "
@@ -231,8 +231,8 @@ do
           if [ -f ${FILENEXT} ]
           then
             echov "Append first date from next month's file to the end of current month"
-            ncks -O -h -d time,0 ${FILENEXT} ${FILEOUT}_tmp2.nc
-            ncrcat -O -h  ${FILEOUT}_tmp1.nc ${FILEOUT}_tmp2.nc ${FILEOUT}_tmp3.nc
+            ncks -O -h -d time,0 ${FILENEXT} ${FILEOUT}_tmp2_${YY}.nc
+            ncrcat -O -h  ${FILEOUT}_tmp1_${YY}.nc ${FILEOUT}_tmp2_${YY}.nc ${FILEOUT}_tmp3_${YY}.nc
           else
             echo "Try to append first date from next month's file but"
             echo ${FILENEXT} does not exist
@@ -243,7 +243,7 @@ do
           (( MP=TME ))
           (( YP=TYE ))
           echov "Last timestep in tmp3-File is OK"
-          mv ${FILEOUT}_tmp1.nc ${FILEOUT}_tmp3.nc
+          mv ${FILEOUT}_tmp1_${YY}.nc ${FILEOUT}_tmp3_${YY}.nc
         else
           echo "END date  ${TDE} ${THE}"
           echo in "${FILEIN} "
@@ -253,14 +253,14 @@ do
         ENDFILE=${OUTDIR2}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YP}${MP}0100.nc
   #     shift time variable by DHH/2*3600 and transfer time from seconds in days       
         echov "Modifying time and time_bnds values and attributes"
-        ncap2 -O -h -s "time_bnds=time_bnds/86400" -s "time=(time-${DTS})/86400" ${FILEOUT}_tmp3.nc ${ENDFILE}
+        ncap2 -O -h -s "time_bnds=time_bnds/86400" -s "time=(time-${DTS})/86400" ${FILEOUT}_tmp3_${YY}.nc ${ENDFILE}
         ncatted -O -h -a units,time,o,c,"${REFTIME}" -a units,time_bnds,o,c,"${REFTIME}" ${ENDFILE}
       else
   #   Check dates in files for instantaneous variables
         if [[ ${TDA} -eq 01 && ${THA} -eq 00 ]]
         then
           echov "First date of instantaneous file is OK"
-          cp ${FILEIN} ${FILEOUT}_tmp1.nc          
+          cp ${FILEIN} ${FILEOUT}_tmp1_${YY}.nc          
         else
           echo "Start date " ${TDA} ${THA}
           echo in "${FILEIN} "
@@ -270,14 +270,14 @@ do
         if [[ ${TDE} -ge 28  && ${THE} -eq ${EHH} ]]
         then
           echov "Last date of instantaneous file is OK"
-          mv ${FILEOUT}_tmp1.nc ${FILEOUT}_tmp3.nc
+          mv ${FILEOUT}_tmp1_${YY}.nc ${FILEOUT}_tmp3_${YY}.nc
         elif  [[ ${TDE} -eq 01 && ${THE} -eq 00 ]]
         then
           (( NTM=NT-2 )) 
           echov "Last date of instantaneous file is removed"
-          ncks -O -h -d time,0,${NTM} ${FILEOUT}_tmp1.nc ${FILEOUT}_tmp3.nc 
+          ncks -O -h -d time,0,${NTM} ${FILEOUT}_tmp1_${YY}.nc ${FILEOUT}_tmp3_${YY}.nc 
           #change TDE
-          VT=($(cdo -s showtimestamp ${FILEOUT}_tmp3.nc))
+          VT=($(cdo -s showtimestamp ${FILEOUT}_tmp3_${YY}.nc))
           TDE=$(echo ${VT} | cut -c9-10)
         else
           echo "END date " ${TDE} ${THE}
@@ -289,7 +289,7 @@ do
         ENDFILE=${OUTDIR2}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YY}${ME}${TDE}${EHH}.nc
   #     transfer time from seconds in days and remove time_bnds from instantaneous fields
         echov "Modifying time values and attributes"
-        ncap2 -O -h  -s "time=time/86400" ${FILEOUT}_tmp3.nc ${ENDFILE}
+        ncap2 -O -h  -s "time=time/86400" ${FILEOUT}_tmp3_${YY}.nc ${ENDFILE}
         ncks -O -C -h -x -v time_bnds ${ENDFILE} ${ENDFILE}
         ncatted -O -h -a units,time,o,c,"${REFTIME}" -a bounds,time,d,, ${ENDFILE}    
       fi
@@ -299,7 +299,7 @@ do
       chmod ${PERM} ${ENDFILE}
   #
   #   clean temporary files
-      rm -f ${FILEOUT}_tmp?.nc
+      rm -f ${FILEOUT}_tmp?_${YY}.nc
       rm ${FILEIN}
 
     done                    # var name loopende
@@ -333,13 +333,13 @@ do
       then
         echon "Create SP_10M"
         [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1.nc
-        ncap2 -h -O -s "${name3}=sqrt(${name1}^2+${name2}^2)" temp1.nc temp1.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1.nc ${file3}
+        cp ${file1} temp1_${YY}.nc
+        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
+        ncap2 -h -O -s "${name3}=sqrt(${name1}^2+${name2}^2)" temp1_${YY}.nc temp1_${YY}.nc 
+        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
         ncatted -h -a long_name,${name3},m,c,"wind speed of 10m wind" -a standard_name,${name3},m,c,"wind_speed" ${file3}
         chmod ${PERM} ${file3}
-        rm temp1.nc
+        rm temp1_${YY}.nc
       else
         echov "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..."
       fi
@@ -363,13 +363,13 @@ do
       then
         echon "Create ASWD_S"
         [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1.nc
-        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1.nc temp1.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1.nc ${file3}
+        cp ${file1} temp1_${YY}.nc
+        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
+        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1_${YY}.nc temp1_${YY}.nc 
+        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
         ncatted -h -a long_name,${name3},m,c,"averaged total downward sw radiation at the surface" ${file3}
         chmod ${PERM} ${file3}
-        rm temp1.nc 
+        rm temp1_${YY}.nc 
       else
         echov "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..." 
       fi
@@ -393,13 +393,13 @@ do
       then
         echon "Create ASOU_T"
         [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1.nc
-        ncap2 -h -O -s "${name3}=${name1}-${name2}" temp1.nc temp1.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1.nc ${file3}
+        cp ${file1} temp1_${YY}.nc
+        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
+        ncap2 -h -O -s "${name3}=${name1}-${name2}" temp1_${YY}.nc temp1_${YY}.nc 
+        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
         ncatted -h -a long_name,${name3},m,c,"averaged solar upward radiataion at top" ${file3}
         chmod ${PERM} ${file3}
-        rm temp1.nc 
+        rm temp1_${YY}.nc 
       else
         echov "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..." 
       fi
@@ -423,13 +423,13 @@ do
       then
         echon "Create RUNOFF_T"
         [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1.nc
-        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1.nc temp1.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1.nc ${file3}
+        cp ${file1} temp1_${YY}.nc
+        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
+        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1_${YY}.nc temp1_${YY}.nc 
+        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
         ncatted -h -a long_name,${name3},m,c,"total runoff" -a standard_name,${name3},m,c,"total_runoff_amount" ${file3}
         chmod ${PERM} ${file3}
-        rm temp1.nc 
+        rm temp1_${YY}.nc 
       else
         echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
       fi
@@ -453,13 +453,13 @@ do
       then
         echon "Create PREC_CON"
         [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1.nc
-        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1.nc temp1.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1.nc ${file3}
+        cp ${file1} temp1_${YY}.nc
+        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
+        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1_${YY}.nc temp1_${YY}.nc 
+        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
         ncatted -h -a long_name,${name3},m,c,"convective precipitation" -a standard_name,${name3},m,c,"convective_precipitation_amount" ${file3}
         chmod ${PERM} ${file3}
-        rm temp1.nc 
+        rm temp1_${YY}.nc 
       else
         echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
       fi
@@ -483,13 +483,13 @@ do
       then
         echon "Create TOT_SNOW"
         [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1.nc
-        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1.nc temp1.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1.nc ${file3}
+        cp ${file1} temp1_${YY}.nc
+        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
+        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1_${YY}.nc temp1_${YY}.nc 
+        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
         ncatted -h -a long_name,${name3},m,c,"total snowfall" -a standard_name,${name3},m,c,"total_snowfall_amount" ${file3}
         chmod ${PERM} ${file3}
-        rm temp1.nc 
+        rm temp1_${YY}.nc 
       else
         echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
       fi
@@ -513,13 +513,13 @@ do
       then
         echon "Create TQW"
         [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1.nc
-        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1.nc temp1.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1.nc ${file3}
+        cp ${file1} temp1_${YY}.nc
+        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
+        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1_${YY}.nc temp1_${YY}.nc 
+        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
         ncatted -h -a long_name,${name3},m,c,"vertiacl integrated cloud condensed water" -a standard_name,${name3},m,c,"atmosphere_cloud_condensed_water_content" ${file3}
         chmod ${PERM} ${file3}
-        rm temp1.nc 
+        rm temp1_${YY}.nc 
       else
         echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..."
       fi
