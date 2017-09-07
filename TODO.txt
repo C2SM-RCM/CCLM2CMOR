@@ -31,7 +31,7 @@ CMORLIGHT:
      IE_TOT-> calculate from file?    
      - CCLM subversion and institute ID (CLMcom?)
     - performance gain of shell scripts: don't concatenate monthly but yearly directly -> skip one step
-    
+    - negative values for missingValue and FillValue in some files? -> should be positive? -> find and replace?
     
     - chunking: in extra folder -> do something better!
     - every step in process_file needed to be carried out for every file??? -> raise performance!

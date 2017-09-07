@@ -110,8 +110,6 @@ def set_attributes(params,proc_list=None):
     settings.netCDF_attributes['units'] = params[config.get_config_value('index','INDEX_UNIT')]
     settings.netCDF_attributes['missing_value'] = config.get_config_value('float','missing_value')
     settings.netCDF_attributes['_FillValue'] = config.get_config_value('float','missing_value')
-    settings.netCDF_attributes['coordinates'] = 'lon lat'
-
 
 
 # -----------------------------------------------------------------------------
@@ -860,7 +858,8 @@ def process_file_fix(params,in_file):
     f_var.long_name = settings.netCDF_attributes['long_name']
     f_var.units = settings.netCDF_attributes['units']
     #add coordinates attribute to fx-variables
-    f_var.coordinates = settings.netCDF_attributes['coordinates']
+    f_var.coordinates = 'lon lat'
+
    
 
     # set attribute missing_value
@@ -1147,37 +1146,37 @@ def derotate_uv(params,in_file,var,logger=log):
             cmd = "cdo -O merge %s %s %s" % (in_file_u,in_file_v,out_file)
             retval = shell(cmd,logger=logger)
 
-            # only these two have the names as CCLM variable in the file
-            try:
-                if in_var_u == "U_10M" or in_var_v == "V_10M":
-                    if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
-                        cmd = "cdo -O rotuvb,%s,%s %s %s" % (in_var_u,in_var_v,out_file,out_file_derotate)
-                        retval = shell(cmd,logger=logger)
+        # only these two have the names as CCLM variable in the file
+        try:
+            if in_var_u == "U_10M" or in_var_v == "V_10M":
+                if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O rotuvb,%s,%s %s %s" % (in_var_u,in_var_v,out_file,out_file_derotate)
+                    retval = shell(cmd,logger=logger)
 
-                    if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
-                        cmd = "cdo -O selvar,%s %s %s" % (in_var_u,out_file_derotate,out_file_u)
-                        retval = shell(cmd,logger=logger)
+                if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O selvar,%s %s %s" % (in_var_u,out_file_derotate,out_file_u)
+                    retval = shell(cmd,logger=logger)
 
-                    if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
-                        cmd = "cdo -O selvar,%s %s %s" % (in_var_v,out_file_derotate,out_file_v)
-                        retval = shell(cmd,logger=logger)
+                if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O selvar,%s %s %s" % (in_var_v,out_file_derotate,out_file_v)
+                    retval = shell(cmd,logger=logger)
 
-                # all other have only U and V inside
-                else:
-                    if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
-                        cmd = "cdo -O rotuvb,U,V %s %s" % (out_file,out_file_derotate)
-                        retval = shell(cmd,logger=logger)
-                    if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
-                        cmd = "cdo -O selvar,U %s %s" % (out_file_derotate,out_file_u)
-                        retval = shell(cmd,logger=logger)
-                    if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
-                        cmd = "cdo -O selvar,V %s %s" % (out_file_derotate,out_file_v)
-                        retval = shell(cmd,logger=logger)
+            # all other have only U and V inside
+            else:
+                if not os.path.isfile(out_file_derotate) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O rotuvb,U,V %s %s" % (out_file,out_file_derotate)
+                    retval = shell(cmd,logger=logger)
+                if not os.path.isfile(out_file_u) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O selvar,U %s %s" % (out_file_derotate,out_file_u)
+                    retval = shell(cmd,logger=logger)
+                if not os.path.isfile(out_file_v) or config.get_config_value('boolean','overwrite'):
+                    cmd = "cdo -O selvar,V %s %s" % (out_file_derotate,out_file_v)
+                    retval = shell(cmd,logger=logger)
 
-            except Exception as e:
-                cmd=str(e)+"\n Derotation failed. Typing 'export IGNORE_ATT_COORDINATES=1' into your shell before starting the script might solve the problem."
-                logger.error(cmd)
-                raise Exception(cmd)
+        except Exception as e:
+            cmd=str(e)+"\n Derotation failed. Typing 'export IGNORE_ATT_COORDINATES=1' into your shell before starting the script might solve the problem."
+            logger.error(cmd)
+            raise Exception(cmd)
 
         # remove temp files
       #  if os.path.isfile(out_file):
@@ -1200,10 +1199,7 @@ def process_file(params,in_file,var,reslist,year):
 
     #derotate if required
     if var in get_derotate_vars() and config.get_config_value('boolean','derotate_uv'):
-        try:
-            in_file_u, in_file_v = derotate_uv(params,in_file,var,logger)
-        except:
-            return reslist
+        in_file_u, in_file_v = derotate_uv(params,in_file,var,logger)
         #change input file
         if var.find("u")!=-1:
             in_file=in_file_u
