@@ -155,24 +155,12 @@ def main():
     parser.add_argument("-c", "--chunk-var",
                             action="store_true", dest="chunk_var", default = False,
                             help="go call chunking for the variable list")
-#    parser.add_argument("-s", "--seasonal-mean",
-#                            action="store_true", dest="seasonal_mean", default=False,
-#                            help="go calculate seasonal mean from aggregated monthly data")
     parser.add_argument("-n", "--use-version",
                             action="store", dest = "use_version", default = tools.new_dataset_version(),
                             help = "version for drs (default: today in format YYYYMMDD)")
     parser.add_argument("-d", "--no_derotate",
                             action="store_false", dest = "derotate_uv", default=True,
                             help = "derotate all u and v avariables")
-    parser.add_argument("-t", "--test-var",
-                            action="store_true", dest="test_var", default = False,
-                            help="test possible resolution for all vars")
-    parser.add_argument("-k", "--corr-var",
-                            action="store_true", dest="corr_var", default = False,
-                            help="correct variable by corr_key")
-    parser.add_argument("-o", "--corr-key",
-                            action="store", dest="corr_key", default = "climatology",
-                            help="correct key to select a function")
     parser.add_argument("-y", "--alt-start-year",
                             action="store", dest="alt_start_year", default = 2100,
                             help="use alternate start year")
@@ -218,6 +206,9 @@ def main():
     parser.add_argument("-M", "--multi",
                             action="store_true", dest="multi", default = False,
                             help="Use multiprocessing with number of cores specified in .ini file.")
+    parser.add_argument("-P", "--propagate",
+                            action="store_true", dest="propagate", default = False,
+                            help="Propagate log to standard output.")
     parser.add_argument( "--remove",
                             action="store_true", dest="remove_src", default = False,
                             help="Remove source files after chunking")
@@ -254,6 +245,7 @@ def main():
     config.set_config_value('boolean','remove_src',options.remove_src)
     config.set_config_value('boolean','multi',options.multi)
     config.set_config_value('boolean','derotate_uv',options.derotate_uv)
+    config.set_config_value('boolean','propagate_log',options.propagate)
 
 
     process_list=[config.get_model_value('driving_model_id'),config.get_model_value('driving_experiment_name'),config.get_model_value('driving_model_ensemble_member')]
@@ -264,7 +256,7 @@ def main():
     # create logger
     LOG_BASE = settings.DirLog
     if os.path.isdir(LOG_BASE) == False:
-        print("Creatubg logging directory: %s" % LOG_BASE)
+        print("Create logging directory: %s" % LOG_BASE)
         if not os.path.isdir(LOG_BASE):
             os.makedirs(LOG_BASE)
     LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')
@@ -326,11 +318,6 @@ def main():
     # if nothing is set: exit the program
 
 
-    # test modus
-    if options.test_var == True:
-        tools.proc_test_var(process_list,varlist,reslist)
-        return
-
     log.info("Configuration read from: %s" % os.path.abspath(varfile))
     log.info("Variable(s): %s " % varlist)
     log.info("Requested time output resolution(s): %s " % reslist)
@@ -369,11 +356,6 @@ def main():
             log.log(35, "Chunking files \n #######################")
             tools.proc_chunking(params,reslist_act)
 
-        # some procs for correction or cleanup files later
-        elif options.corr_var == True:
-            for res in reslist_act:
-                tools.proc_corr_var(params,res,key=options.corr_key)
-
         # process all vars from varlist with all output resolutions from reslist
         else:
             process_resolution(params,reslist_act)
@@ -407,7 +389,7 @@ if __name__ == "__main__":
     time_diff=time2-time1
     hours, remainder = divmod(time_diff.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
-
+    
     log.log(35,'\nTotal processing time: %s hours %s minutes %s seconds' % (int(hours),int(minutes),round(seconds)))
     log.log(35,'\n##################################\n########  End of script.  ########\n##################################')
     ######################

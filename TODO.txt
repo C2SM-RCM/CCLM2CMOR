@@ -22,8 +22,6 @@ CMORLIGHT:
     tools.py:
         - process_file_fix: ensemble member 'r0i0p0' -> is the dir structure for fix variables as requested by CORDEX?
         - writing 0 for fx in table should not be mandatory, write anything
-        - remove reslist from test_var
-        - proc_test_var fertig machen (reslist) oder entfernen
 
 
 
@@ -32,11 +30,9 @@ CMORLIGHT:
     -NBOUNDCUT -> 13 from Archive specs (table domain)?
      IE_TOT-> calculate from file?    
      - CCLM subversion and institute ID (CLMcom?)
-     - mean where land: how is it averaged? -> needs bounds
     - performance gain of shell scripts: don't concatenate monthly but yearly directly -> skip one step
     
     
-    - sachen in proc_corr_var schauen ob die schon passen
     - chunking: in extra folder -> do something better!
     - every step in process_file needed to be carried out for every file??? -> raise performance!
     - seasonal mean integrated in process_file but not perfectly economic?
@@ -48,7 +44,6 @@ CMORLIGHT:
     - W_SNOW berechnen
 
     -should be possible to use cclm_const file instead of processing FR_LAND and HSURF
-    - dimension bounds steht noch drin bei instantanen variablen obwohl überflüssig ->  bei inputdaten mit ncks -x rausschneiden (evtl. vorher mit ncatted bearbeiten)
     - rlon rlat in coordinates_cordex_eur11.nc nachschauen wenn nicht vorhanden
     - deutlicher dass es sich um programmabbruch handelt
     - CCLM subversion in attributen angeben -> COSMO_5.0_clm6?
@@ -76,5 +71,6 @@ CMORLIGHT:
     - can set global attributes in .ini file or take from input files (if present) by adding to global_attr_file list
     - file name conventions for input: var_*.nc or for constant variables var.nc (var can be variable name from CMOR or RCM)
     if not met -> file not processed!
-    - multi only for py3
     - use --all
+    - set export IGNORE_ATT_COORDINATES=1
+     

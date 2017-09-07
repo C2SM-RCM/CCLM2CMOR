@@ -2,6 +2,7 @@
 
 # system tools
 import os
+import sys
 
 # netcdf4 Library
 from netCDF4 import Dataset
@@ -25,7 +26,7 @@ from datetime import datetime
 import uuid
 
 import numpy as np
-
+import traceback
 import time as timepkg
 
 # support logging
@@ -600,18 +601,11 @@ def copy_var(f_in,f_out,var_name,logger=log):
     '''
     if var_name in f_in.variables and var_name not in f_out.variables:
         var_in = f_in.variables[var_name]
-        if var_name in ['lat','lon']:
-            new_dimensions = var_in.dimensions #'f'
-        else:
-            new_dimensions = var_in.dimensions
-        #if var_name == 'rotated_pole':
-            #var_name = 'rotated_latitude_longitude'
-        if var_name in ['lat','lon']:
+        if var_name in ['lat','lon','rotated_latitude_longitude','rotated_pole']:
             new_datatype = 'd'
         else:
             new_datatype = var_in.datatype
-        logger.debug(new_dimensions)
-        var_out = f_out.createVariable(var_name,datatype=new_datatype,dimensions=new_dimensions)
+        var_out = f_out.createVariable(var_name,datatype=new_datatype,dimensions=var_in.dimensions )
         # set all as character converted with str() function
         if var_name in ['lat','lon']:
             att_lst = get_attr_list(var_name)
@@ -620,11 +614,13 @@ def copy_var(f_in,f_out,var_name,logger=log):
             for k in var_in.ncattrs():
                 if config.get_config_value('boolean','add_vertices') == False and k == 'bounds':
                     continue
-                att_lst[k] = str(var_in.getncattr(k))
+                att_lst[k] = var_in.getncattr(k)
+                
         var_out.setncatts(att_lst)
         # copy content to new datatype
-        var_out[:] = var_in[:]
-        logger.info("Copy: %s" % (var_out.name))
+        if var_name not in ['rotated_latitude_longitude','rotated_pole']:
+            var_out[:] = var_in[:]
+        logger.info("Variable %s added" % var_name)
 
 
 # -----------------------------------------------------------------------------
@@ -636,20 +632,24 @@ def add_coordinates(f_out,logger=log):
     logger.debug(os.path.isfile(settings.coordinates_file))
     if os.path.isfile(settings.coordinates_file):
         f_coor = Dataset(settings.coordinates_file,'r')
-        # copy lon
         try:
+            # copy lon
             copy_var(f_coor,f_out,'lon',logger=logger)
-            logger.info("Variable lon added!")
             # copy lat
             copy_var(f_coor,f_out,'lat',logger=logger)
-            logger.info("Variable lat added!")
+            #copy rotated pole
+            copy_var(f_coor,f_out,'rotated_pole',logger=logger)
+            copy_var(f_coor,f_out,'rotated_latitude_longitude',logger=logger)
+
             # commit changes
             f_out.sync()
-        except IndexError as e:
-            raise IndexError(str(e)+"\n Coordinates file does not have the same resolution as the input data! Change it!")
+            f_coor.close()
+        except IndexError as e: 
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_exception(exc_type, exc_value,exc_traceback,limit=10)
+            sys.exit("\n Coordinates file does not have the same resolution as the input data! Change it!")
     else:
         raise Exception("Coordinates file %s does not exist!" % settings.coordinates_file)
-
 # -----------------------------------------------------------------------------
 def get_derotate_vars(flt=None):
     '''
@@ -801,10 +801,10 @@ def process_file_fix(params,in_file):
                     continue
                 if k in ['coordinates']:
                     continue
-                if k != '_FillValue':
-                    att_lst[k] = str(var_in.getncattr(k))
-                if k in ['grid_north_pole_latitude','grid_north_pole_longitude']:
-                    att_lst[k] = np.float32(var_in.getncattr(k))
+               # if k != '_FillValue':
+                att_lst[k] = var_in.getncattr(k)
+                #if k in ['grid_north_pole_latitude','grid_north_pole_longitude']:
+                 #   att_lst[k] = np.float32(var_in.getncattr(k))
             if var_name == 'rlon':
                 att_lst['axis'] = 'X'
                 att_lst['long_name'] = 'longitude in rotated pole grid'
@@ -817,25 +817,14 @@ def process_file_fix(params,in_file):
 
 
         # copy content to new datatype
-        if var_name in ['rlon','rlat','rotated_pole']:
+        log.info("Copy from input: %s" % (var_out.name))
+
+        if var_name in ['rlon','rlat','rotated_pole','rotated_latitude_longitude']:
             var_out[:] = var_in[:]
         else:
             var_out[:] = mulc_factor * var_in[:]
             
-        #add lon and lat coordinates to output files
-        if os.path.isfile(settings.coordinates_file):
-            f_coor = Dataset(settings.coordinates_file,'r')
-        else:
-            raise Exception("Coordinates file %s does not exist!" % settings.coordinates_file)
 
-        # copy lon
-            copy_var(f_coor,f_out,'lon')
-            log.info("Variable lon added!")
-        # copy lat
-            copy_var(f_coor,f_out,'lat')
-            log.info("Variable lat added!")
-
-        log.info("Copy from input: %s" % (var_out.name))
 
     # commit changes
     f_out.sync()
@@ -853,6 +842,10 @@ def process_file_fix(params,in_file):
     f_out.setncatts(settings.Global_attributes)
     log.info("Global attributes set!")
 
+
+    # add lon/lat variables
+    add_coordinates(f_out)
+    
     # commit changes
     f_out.sync()
 
@@ -1091,287 +1084,6 @@ def proc_seasonal_mean(params,year):
                 break
         else:
             logger.warning("No cell method set for this variable (%s) and time resolution (%s)." % (var,res))
-
-
-# -----------------------------------------------------------------------------
-def proc_test_var(process_list,varlist,reslist):
-    '''
-    check which:
-    - variables are possible in which output resolution
-    - time settings are in input files
-    - input variable/directory is available
-    '''
-    log.info("Start Test")
-    for var in varlist:
-
-        if var in settings.var_list_fixed:
-            continue
-        params = settings.param[var]
-        set_attributes(params,process_list)
-
-        in_dir = "%s/%s" % (get_input_path(),params[config.get_config_value('index','INDEX_RCM_NAME')])
-        log.info("Looking for input dir: %s" % (in_dir))
-        if os.path.isdir(in_dir) == False:
-            in_dir = "%s/%s" % (get_input_path(),params[config.get_config_value('index','INDEX_RCM_NAME')].replace('p',''))
-            log.info("Looking for input dir: %s" % (in_dir))
-        if os.path.isdir(in_dir) == True:
-            log.info("###############################################################")
-            log.info("Input directory for cf variable '%s' exists: %s" % (var,in_dir))
-            for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
-                i = 0
-                for f in sorted(filenames):
-                    in_file = "%s/%s" % (dirpath,f)
-                    print("Infile: ",in_file) #,params[config.INDEX_MODEL_LEVEL]
-                    f_in = Dataset(in_file,'r')
-                    if params[config.get_config_value('index','INDEX_RCM_NAME')] in f_in.variables.keys():
-                        f_var = f_in.variables[params[config.get_config_value('index','INDEX_RCM_NAME')]]
-                    elif params[config.get_config_value('index','INDEX_RCM_NAME_ORG')] in f_in.variables.keys():
-                        f_var = f_in.variables[params[config.get_config_value('index','INDEX_RCM_NAME_ORG')]]
-                    else:
-                        break
-                    # get time variable from input
-                    time_in = f_in.variables['time']
-
-                    if 'calendar' in time_in.ncattrs():
-                        in_calendar = str(time_in.calendar)
-                    else:
-                        in_calendar = config.get_model_value("calendar",exitprog=False)
-                        if in_calendar=="":
-                            raise Exception("Calendar attribute not found in file! Specify calendar in .ini file instead!")
-
-                    if config.get_config_value('boolean','use_alt_units'):
-                        time_in_units = config.get_config_value('settings','alt_units')
-                    else:
-                        time_in_units = time_in.units
-
-                    dt_in1 = num2date(time_in[0],time_in_units,calendar=in_calendar)
-                    dt_in1_year = dt_in1.year
-                    log.info("Year(time): %d" % (dt_in1_year))
-                    log.info("First time step: %s" % (str(dt_in1)))
-                    dt_in2 = num2date(time_in[1],time_in_units,calendar=in_calendar)
-                    dt_in2_year = dt_in2.year
-                    log.info("Year(time): %d" % (dt_in2_year))
-                    log.info("Second time step: %s" % (str(dt_in2)))
-                    a = datetime.strptime(str(dt_in1), settings.FMT)
-                    b = datetime.strptime(str(dt_in2), settings.FMT)
-                    tdelta = b - a
-                    time_step = (24 * tdelta.days)+(tdelta.seconds / 3600)
-                    log.info("Time step interval: %s h" % time_step)
-                    dt_in_max = num2date(time_in[len(time_in)-1],time_in_units,calendar=in_calendar)
-                    log.info("Last time step: %s" % (str(dt_in_max)))
-
-                    for n in range(len(time_in)):
-                        if num2date(time_in[n],time_in_units,calendar=in_calendar).year == dt_in1_year:
-                            data_max_len = n
-                    # add one count
-                    data_max_len = data_max_len + 1
-
-                    # move the reference date to 1949-12-01T00:00:00Z
-                    # by setting time:units to: "days since 1949-12-01T00:00:00Z"
-                    # now get the difference in time.units for refdate: start point for all settings in time and time_bnds
-                    num_refdate_diff = date2num(dt_in1,units=config.get_config_value('settings','units'),calendar=in_calendar)
-                    num_refdate_diff = float(int(num_refdate_diff))
-                    # show some numbers
-                    log.info("num_refdate_diff: %s" % str(num_refdate_diff))
-                    log.info("Startdate for time settings: %s, %s" % (str(num_refdate_diff),str(num2date(num_refdate_diff,units=config.get_config_value('settings','units'),calendar=in_calendar))))
-
-                    f_in.close()
-                    i = i + 1
-                    if i > 0:
-                        break
-
-        else:
-            continue
-    log.info("End")
-
-
-# -----------------------------------------------------------------------------
-def proc_corr_var(params,res,key):
-    '''
-    correct time - climatology problem
-    '''
-
-    if key not in ['correct_fillvalue','convert_to_float','add_coordinates','climatology','missing_value','missing_value_set','division_1000','division_6','add_plev_height','remove_height']:
-        log.warning("Unknown key: %s" % (key))
-        return
-
-    # get cdf variable name
-    var = params[config.get_config_value('index','INDEX_VAR')]
-
-    # first get monthly data
-    #res = "sem"
-    cm_type = params[config.get_config_value('index','INDEX_VAR_CM_DAY')]
-    # get outdir
-    indir = get_out_dir(var,res,cm_type)
-    log.info("Inputdir: %s" % (indir))
-
-    # get files with monthly data from the same input (if exist)
-    for dirpath,dirnames,filenames in os.walk(indir):
-        f_lst = sorted(filenames)
-        #print "List: ",f_lst
-        for f in f_lst:
-            infile = "%s/%s" % (dirpath,f)
-            log.info(infile)
-
-            # correct negative missing_value
-            if key == 'correct_fillvalue': # == True or var in ['mrfso','mrro','mrros','mrso','snw']) and os.path.isfile(outpath):
-                _FillValue = config.get_config_value('float','missing_value')
-                cmd = "ncatted -h -O -a missing_value,%s,m,f,-%s -a _FillValue,%s,m,f,-%s %s" %  (var,_FillValue,var,_FillValue,infile)
-                retval = shell(cmd)
-                cmd = "ncatted -h -O -a missing_value,%s,m,f,%s -a _FillValue,%s,m,f,%s %s" %  (var,_FillValue,var,_FillValue,infile)
-                retval = shell(cmd)
-
-            # convert variable form double to float
-            elif key == 'convert_to_float':
-                # mv file to temp dir
-                f_in = Dataset(infile,'r')
-                if var in f_in.variables.keys():
-                    if 'lat' in f_in.variables.keys():
-                        f_lat = f_in['lat']
-                        if f_lat.datatype == 'float32':
-                            print(f_lat.name,"Float")
-                        else:
-                            print("###########################################")
-                            print(f_lat.name,"Double") #,f_var.datatype == 'float64'
-                    if 'lon' in f_in.variables.keys():
-                        f_lon = f_in['lon']
-                        if f_lon.datatype == 'float32':
-                            print(f_lon.name,"Float")
-                        else:
-                            print("###########################################")
-                            print(f_lon.name,"Double") #,f_var.datatype == 'float64'
-                    f_var = f_in[var]
-                    if f_var.name in [var]: #,'lon','lat','height','plev']:
-                        if f_var.datatype == 'float32':
-                            print(f_var.name,"Float")
-                        else:
-                            print("###########################################")
-                            print(f_var.name,"Double") #,f_var.datatype == 'float64'
-
-                            tmpfile = "%s/%s" % (settings.DirWork,f)
-                            cmd = "mv %s %s" % (infile,tmpfile)
-                            print(cmd)
-                            retval = shell(cmd)
-                            # now conert to float
-                            cmd = "ncap2 -s '%s=float(%s)' %s %s" % (var,var,tmpfile,infile)
-                            print(cmd)
-                            retval = shell(cmd)
-                            if os.path.isfile(tmpfile) and os.path.isfile(infile):
-                                os.remove(tmpfile)
-            # add coordinates attribute to variable or set to correct value
-            elif key == 'add_coordinates':
-                if not os.path.isfile(infile):
-                    continue
-                f_in = Dataset(infile,'r+')
-                log.info(f_in.variables.keys())
-                if 'lon' in f_in.variables.keys() and 'lat' in f_in.variables.keys():
-                    f_var = f_in.variables[var]
-                    if 'height' in f_in.variables.keys():
-                        f_var.coordinates = 'height lat lon'
-                    elif 'plev' in f_in.variables.keys():
-                        f_var.coordinates = 'plev lat lon'
-                    else:
-                        f_var.coordinates = 'lat lon'
-                    f_in.sync()
-                f_in.close()
-
-            # place holder for correction of attribute, only for some CORDEX variables defined
-            elif key == 'climatology':
-                f_in = Dataset(infile,'r')
-                f_var = f_in.variables[var]
-                print(f_var.ncattrs())
-                f_in.close()
-
-            # correct missing_value from negative to positive value
-            elif key == 'missing_value':
-                cmd = "ncatted -h -O -a missing_value,%s,m,f,-1.e20 -a _FillValue,%s,m,f,-1.e20 %s" %  (var,var,infile)
-                print(cmd)
-                retval = shell(cmd)
-                cmd = "ncatted -h -O -a missing_value,%s,m,f,1.e20 -a _FillValue,%s,m,f,1.e20 %s" %  (var,var,infile)
-                print(cmd)
-                retval = shell(cmd)
-
-            # set missing_value
-            elif key == 'missing_value_set':
-                retval = shell("ncatted -h -O -a missing_value,%s,m,f,1.e20 -a _FillValue,%s,m,f,1.e20 %s" %  (var,var,infile))
-
-            # multiply variable with 0.001!
-            elif key == 'division_1000':
-                if var in ['mrfso','mrso']:
-                    tmpfile = "%s/%s" % (settings.DirWork,f)
-                    retval = shell("mv %s %s" % (infile,tmpfile))
-                    retval = shell("ncap2 -s '%s=%s*0.001' %s %s" % (var,var,tmpfile,infile))
-                    if os.path.isfile(tmpfile):
-                        os.remove(tmpfile)
-
-            # multiply variable with 1./6.
-            elif key == 'division_6':
-                tmpfile = "%s/%s" % (settings.DirWork,f)
-                retval = shell("mv %s %s" % (infile,tmpfile))
-                #f1 = float(1./6.)
-                # 16 digits too much?
-                f1 = str("%.16f" % (1./6.))
-                retval = shell("ncap2 -s '%s=%s*%s' %s %s" % (var,var,f1,tmpfile,infile))
-                if os.path.isfile(tmpfile):
-                    os.remove(tmpfile)
-
-            # add plev | height variable to file, correct coordinates setting
-            elif key == 'add_plev_height':
-                if int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip()) > 0:
-                    f_out = Dataset(infile,'r+')
-                    # pressure level variable
-                    if params[config.get_config_value('index','INDEX_MODEL_LEVEL')] == config.get_config_value('settings','PModelType'):
-                        if not 'plev' in f_out.variables:
-                            var_out = f_out.createVariable('plev',datatype='d')
-                            var_out.units = "Pa"
-                            var_out.axis = "Z"
-                            var_out.positive = "down"
-                            var_out.long_name = "pressure"
-                            var_out.standard_name = "air_pressure"
-                            var_out[0] = params[config.get_config_value('index','INDEX_VAL_PLEV')]
-                            f_var = f_out.variables[var]
-                            f_var.coordinates = 'plev lat lon'
-                            f_out.sync()
-                    # model level variable
-                    elif params[config.get_config_value('index','INDEX_MODEL_LEVEL')] == config.get_config_value('settings','MModelType'):
-                        if not 'height' in f_out.variables:
-                            var_out = f_out.createVariable('height',datatype='d')
-                            var_out.units = "m"
-                            var_out.axis = "Z"
-                            var_out.positive = "up"
-                            var_out.long_name = "height"
-                            var_out.standard_name = "height"
-                            var_out[0] = params[config.get_config_value('index','INDEX_VAL_HEIGHT')]
-                            f_var = f_out.variables[var]
-                            f_var.coordinates = 'height lat lon'
-                            f_out.sync()
-                    f_out.close()
-
-            # remove variable height form file, correct coordinates settings for variable
-            elif key == 'remove_height':
-                if var in ['mrfso','mrso']:
-                    f_in = Dataset(infile,'r')
-                    if 'height' in f_in.variables.keys():
-                        var_in = f_in.variables[var]
-                        tmpfile = "%s/%s" % (settings.DirWork,f)
-                        retval = shell("mv %s %s" % (infile,tmpfile))
-                        retval = shell("ncks -x -v height %s %s" % (tmpfile,infile))
-                        if os.path.isfile(infile):
-                            f_in = Dataset(infile,'r+')
-                            var_in = f_in.variables[var]
-                            var_in.coordinates = var_in.coordinates.replace('height ','')
-                            f_in.sync()
-                            log.info("Var coordinates: %s" % (var_in.coordinates))
-                        if os.path.isfile(tmpfile):
-                            os.remove(tmpfile)
-                    else:
-                        log.info("Variable 'height' not in file: %s" % (infile))
-                    f_in.close()
-
-            # not supported key (list could be extended if needed)
-            else:
-                log.info("Unknown key: %s" % (key))
-                return
 
 
 # -----------------------------------------------------------------------------
@@ -1874,16 +1586,16 @@ def process_file(params,in_file,var,reslist,year):
                 else:
                     att_lst = {}
                     for k in var_in.ncattrs():
-                        if k in ['_FillValue','missing_value','grid_north_pole_latitude','grid_north_pole_longitude']:
-                            att_lst[k] = np.float32(var_in.getncattr(k))
+                       # if k in ['_FillValue','missing_value','grid_north_pole_latitude','grid_north_pole_longitude']:
+                        #    att_lst[k] = np.float32(var_in.getncattr(k))
                             
                             #also set the respective other value
-                            if k=='_FillValue':
-                                att_lst['missing_value'] = np.float32(var_in.getncattr(k))
-                            elif k=='missing_value':
-                                att_lst['_FillValue'] = np.float32(var_in.getncattr(k))
-                        else:
-                            att_lst[k] = str(var_in.getncattr(k))
+                         #   if k=='_FillValue':
+                           #     att_lst['missing_value'] = np.float32(var_in.getncattr(k))
+                          #  elif k=='missing_value':
+                            #    att_lst['_FillValue'] = np.float32(var_in.getncattr(k))
+                        #else:
+                        att_lst[k] = var_in.getncattr(k)
                 var_out.setncatts(att_lst)
 
                 # copy content to new datatype
@@ -2167,15 +1879,24 @@ def process_file(params,in_file,var,reslist,year):
 
             try:
                 f_var.setncattr('grid_mapping','rotated_pole')
-            except:
-                logger.warning("Variable '%s' does not exist." % ("rotated_pole"))
+            except Exception as e:
+                logger.warning(str(e))
 
-            # commit changes
+           # commit changes
             f_out.sync()
-
-            # close output file
-            f_out.close()
-
+  
+            #delete bounds dimension if not used:
+            if ("bnds" in f_out.dimensions) and (cm_type=="point"):
+                log.info("Deleting unused bounds dimension")
+                f_out.createVariable("help",datatype="d",dimensions=("bnds",))
+                f_out.sync()
+                f_out.close()
+                cmd="ncks -x -v help -O %s %s" % (outpath,outpath) 
+                shell(cmd)
+            else:           
+                # close output file
+                f_out.close()
+  
             # remove help file
             os.remove(ftmp_name)
 
