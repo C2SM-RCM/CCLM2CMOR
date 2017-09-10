@@ -22,7 +22,9 @@ do
 done
 
 TIME1=$(date +%s)
-cd ${SCRATCH}/CMOR/src
+#cd ${SCRATCH}/CMOR/src
+cd /home/matze/CMORfull/src
+
 source ./settings.sh
 
 #default values
@@ -31,16 +33,22 @@ n=true #normal printing mode
 v=false #verbose printing mode
 clean=false #clean  files in WORKDIR  
 batch=true #create batch jobs continously always for one year
-extract=10 #number of years to extract at once
+extract=true #whether to extract archives with tar 
+num_extract=10 #number of years to extract at once
 
 
 args=""
 concat=false
 
+
 while [[ $# -gt 0 ]]
 do
   key="$1"
   case $key in
+      -h|--help)
+      source ${SRCDIR}/help 
+      exit
+      ;;    
       -g|--gcm)
       GCM=$2
       args="${args} -g $2"
@@ -60,13 +68,16 @@ do
       args="${args} -e $2"
       shift
       ;;
-      -F|--first_year)
+      -F|--first_year) #only needed internally
       FIRST=$2
       shift
       ;;
-      -E|--extract)
-      extract=$2
+      --num_extract)
+      num_extract=$2
       shift
+      ;;
+      --no_extract)
+      extract=false
       ;;
       --first)
       post_step=1
@@ -103,11 +114,16 @@ do
   shift
 done
 
+#create logging directory
+if [ ! -d ${LOGDIR} ]
+then
+  mkdir -p ${LOGDIR}
+fi
 
 #log base names
-CMOR=${SCRATCH}/CMOR/logs/shell/${GCM}_${EXP}_CMOR_sh
-xfer=${SCRATCH}/CMOR/logs/shell/${GCM}_${EXP}_xfer
-delete=${SCRATCH}/CMOR/logs/shell/${GCM}_${EXP}_delete
+CMOR=${LOGDIR}/${GCM}_${EXP}_CMOR_sh
+xfer=${LOGDIR}/${GCM}_${EXP}_xfer
+delete=${LOGDIR}/${GCM}_${EXP}_delete
 
 
 #printing modes
@@ -128,7 +144,6 @@ function echon {
 
 
 EXPPATH=${GCM}/${EXP}
-EXPID=${GCM}_${EXP}
 
 #folders
 INDIR1=${INDIR_BASE1}/${EXPPATH}
@@ -162,9 +177,9 @@ else
 fi
 
 #if no archives have been extracted in the beginning:
-if [ ! -d ${INDIR1}/*${YYA} ] && [ ${post_step} -ne 2 ] && ${batch}
+if [ ! -d ${INDIR1}/*${YYA} ] && [ ${post_step} -ne 2 ] && ${batch} && ${extract}
 then
-    (( endex=YYA+extract-1 ))
+    (( endex=YYA+num_extract-1 ))
     #limit to extraction to end year
     if [ ${endex} -gt ${YYE} ]
     then
@@ -184,11 +199,11 @@ if [ ${NEXTYEAR} -le ${YYE} ] && ${batch}
 then
   #Extract archived years every 10 years
   (( d=YYA-FIRST ))
-  (( mod=d%extract ))
-  if [ $mod -eq 0 ] && [ ${post_step} -ne 2 ]
+  (( mod=d%num_extract ))
+  if [ $mod -eq 0 ] && [ ${post_step} -ne 2 ] && ${extract}
   then
-    (( startex=YYA+extract ))
-    (( endex=YYA+2*extract-1 ))
+    (( startex=YYA+num_extract ))
+    (( endex=YYA+2*num_extract-1 ))
     #limit to extraction to end year
     if [ ${endex} -gt ${YYE} ]
     then
