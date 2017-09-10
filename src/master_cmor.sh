@@ -10,7 +10,7 @@
 
 cores=3
 script_folder="${SCRATCH}/CMOR/src/CMORlight"
-python_script="${script_folder}/cmorlight2.py"
+python_script="${script_folder}/cmorlight.py"
 
 #necessary for derotation
 export IGNORE_ATT_COORDINATES=1

@@ -138,7 +138,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-i", "--ini",
-                            action="store", dest = "inifile", default = "control_cmor2.ini",
+                            action="store", dest = "inifile", default = "control_cmor.ini",
                             help = "configuration file (.ini)")
     parser.add_argument("-p", "--param",
                             action="store", dest = "paramfile", default = "",
