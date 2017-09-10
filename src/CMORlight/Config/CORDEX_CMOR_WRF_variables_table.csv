@@ -1,3 +1,10 @@
+WRF variable name;WRF variable name (in model output file);output variable name;to be derived from;Derotate (CORDEX);Level;Conversion factor 1);Cell Method (subdaily,CORDEX);Cell Method (daily,CORDEX);Cell Method (monthly,CORDEX);Cell Method (seasonal,CORDEX);Levelvalue (height, plev);units;"Subdaily frq
+[1/day]";ag;"Daily frq
+[1/day]";ag;"Monthly frq
+[1/mon]";ag;"Seasonal frq
+[1/sem]";ag;fx;long_name;description (CORDEX ADD);standard_name;direction of positive fluxes;"realm
+(not required, however, if included should have the value as in CMIP5)";"cell-method: area
+(optional)"
 T2;T2;tas;;;ModelLevel;;point;mean;mean;mean;2;K;8;i;1;8;1;m*8;1;s*8;;Near-Surface Air Temperature;;air_temperature;;atmos;
 T2MAX;T2MAX;tasmax;;;ModelLevel;;;maximum;maximum within days time: mean over days;maximum within days time: mean over days;0;K;;;1;;1;m;1;s;;Daily Maximum Near-Surface Air Temperature;;air_temperature;;atmos;
 T2MIN;T2MIN;tasmin;;;ModelLevel;;;minimum;minimum within days time: mean over days;minimum within days time: mean over days;0;K;;;1;;1;m;1;s;;Daily Minimum Near-Surface Air Temperature;;air_temperature;;atmos;
@@ -18,12 +25,12 @@ ACSWUPB;ACSWUPB;rsus;;;ModelLevel;;mean;mean;mean;mean;0;W m-2;8;a;1;;1;;1;;;Sur
 ACLWUPB;ACLWUPB;rlus;;;ModelLevel;;mean;mean;mean;mean;0;W m-2;8;a;1;;1;;1;;;Surface Upwelling Longwave Radiation;;surface_upwelling_longwave_flux_in_air;up;atmos;
 SFCEVP;SFCEVP;evspsbl;;;ModelLevel;;mean;mean;mean;mean;0;kg m-2 s-1;4;a;1;;1;;1;;;Evaporation;;water_evaporation_flux;;atmos;
 POTEVP;POTEVP;evspsblpot;;;;;mean;mean;mean;mean;;kg m-2 s-1;4;a;1;;;;;;;Potential Evapotranspiration;;water_potential_evaporation_flux;;atmos;
-;;mrfso;;;ModelLevel;;;;;;;kg m-2;4;i;1;4;1;m*4;1;s*4;;Soil Frozen Water Content;;soil_frozen_water_content;;land landIce;mean where land
-SFROFF;SFROFF;mrros;;;ModelLevel;;point;mean;mean;mean;0;kg m-2 s-1;4;a;1;;1;;1;;;Surface Runoff;;surface_runoff_flux;;land ;mean where land
-;;mrro;;;ModelLevel;;mean;mean;mean;mean;0;kg m-2 s-1;4;a;1;;1;;1;;;Total Runoff;;runoff_flux;;land ;mean where land
-SMOIST;SMOIST;mrso;;;ModelLevel;;mean;mean;mean;mean;;kg m-2;4;i;1;4;1;m*4;1;s*4;;Total Soil Moisture Content;;soil_moisture_content;;land ;mean where land
-SNOW;SNOW;snw;;;ModelLevel;;point;mean;mean;mean;0;kg m-2;4;i;1;4;1;m*4;1;s*4;;Surface Snow Amount;;surface_snow_amount;;landIce land;mean where land
-ACSNOM;ACSNOM;snm;;;ModelLevel;;point;mean;mean;mean;0;kg m-2 s-1;4;a;1;4;1;;1;;;Surface Snow Melt;;surface_snow_melt_flux;;landIce land;mean where land
+;;mrfso;;;ModelLevel;;;;;;;kg m-2;4;i;1;4;1;m*4;1;s*4;;Soil Frozen Water Content;;soil_frozen_water_content;;land landIce;
+SFROFF;SFROFF;mrros;;;ModelLevel;;point;mean;mean;mean;0;kg m-2 s-1;4;a;1;;1;;1;;;Surface Runoff;;surface_runoff_flux;;land ;
+;;mrro;;;ModelLevel;;mean;mean;mean;mean;0;kg m-2 s-1;4;a;1;;1;;1;;;Total Runoff;;runoff_flux;;land ;
+SMOIST;SMOIST;mrso;;;ModelLevel;;mean;mean;mean;mean;;kg m-2;4;i;1;4;1;m*4;1;s*4;;Total Soil Moisture Content;;soil_moisture_content;;land ;
+SNOW;SNOW;snw;;;ModelLevel;;point;mean;mean;mean;0;kg m-2;4;i;1;4;1;m*4;1;s*4;;Surface Snow Amount;;surface_snow_amount;;landIce land;
+ACSNOM;ACSNOM;snm;;;ModelLevel;;point;mean;mean;mean;0;kg m-2 s-1;4;a;1;4;1;;1;;;Surface Snow Melt;;surface_snow_melt_flux;;landIce land;
 ;;prhmax;;;ModelLevel;;mean;mean;mean;mean;0;kg m-2 s-1;;;1;;;;;;;Daily Maximum Hourly Precipitation Rate;;precipitation_flux;;atmos;
 RAINC;RAINC;prc;;;ModelLevel;;;maximum;;;0;kg m-2 s-1;8;a;1;;;;;;;Convective Precipitation;;convective_precipitation_flux;;atmos;
 ACLWUPT;ACLWUPT;rlut;;;ModelLevel;;mean;mean;;;0;W m-2;4;a;1;;1;;1;;;TOA Outgoing Longwave Radiation;;toa_outgoing_longwave_flux;up;atmos;
@@ -57,7 +64,7 @@ PBLH;PBLH;zmla;;;ModelLevel;;point;mean;;;0;m;4;i;1;4;;;;;;Height of Boundary La
 ;;clm;;;ModelLevel;;mean;mean;;;0;%;4;a;1;;;;;;;Mid Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
 ;;cll;;;ModelLevel;;mean;mean;;;0;%;4;a;1;;;;;;;Low Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
 SNOWC;SNOWC;snc;;;ModelLevel;;mean;mean;;;;%;4;i;1;4;1;m*4;1;s*4;;Snow Area Fraction;;surface_snow_area_fraction;;landIce land;
-SNOWH;SNOWH;snd;;;ModelLevel;;point;mean;mean;mean;0;m;4;i;1;4;1;m*4;1;s*4;;Snow Depth;;surface_snow_thickness;;landIce land;mean where land
+SNOWH;SNOWH;snd;;;ModelLevel;;point;mean;mean;mean;0;m;4;i;1;4;1;m*4;1;s*4;;Snow Depth;;surface_snow_thickness;;landIce land;
 SEAICE;SEAICE;sic;;;;;point;mean;mean;mean;;%;;;1;;1;m;1;s;;Sea Ice Area Fraction;;sea_ice_area_fraction;;seaIce ocean;
 SNOWNC;SNOWNC;prsn;;;;;;;;;;kg m-2 s-1;;;1;;;;;;;Snowfall Flux;;snowfall_flux;;atmos;
 ;;areacella;;;;;;mean;;;;m2;;;;;;;;;0;Atmosphere Grid-Cell Area;;cell_area;;atmos land;

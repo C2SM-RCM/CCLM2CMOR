@@ -78,7 +78,9 @@ def init(varfile):
     param = {}
     with open(varfile,'rt') as csvfile:
         reader = csv.reader(csvfile,delimiter=';')
-        for row in reader:
+        for i,row in enumerate(reader):
+            if i==0: # skip header
+                continue
             var=row[config.get_config_value('index','INDEX_VAR')]
             if row[config.get_config_value('index','INDEX_RCM_NAME_ORG')] != '' and var != '':
                 #create dictionary entries for variables names of CORDEX as well as of the RCM

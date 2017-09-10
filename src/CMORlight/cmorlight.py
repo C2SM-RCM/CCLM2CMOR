@@ -133,10 +133,10 @@ def main():
                             help = "model parameter file (table)")
     parser.add_argument("-r", "--resolution",
                             action="store", dest = "reslist", default = "",
-                            help = "list of desired output resolutions (supported: 1hr (1-hourly), 3hr (3-hourly),6hr (6-hourly),day (daily),mon (monthly) ,sem (seasonal),fx (for time invariant variables)")
+                            help = "list of desired output resolutions, comma-separated (supported: 1hr (1-hourly), 3hr (3-hourly),6hr (6-hourly),day (daily),mon (monthly) ,sem (seasonal),fx (for time invariant variables)")
     parser.add_argument("-v", "--varlist",
                             action="store", dest = "varlist", default = "pr",
-                            help = "list of variables to be processed")
+                            help = "comma-separated list of variables to be processed")
     parser.add_argument("-a", "--all",
                             action="store_true", dest = "all_vars", default = False,
                             help = "process all variables")
