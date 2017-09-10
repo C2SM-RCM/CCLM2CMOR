@@ -3,8 +3,8 @@
 #SBATCH --nodes=1
 #SBATCH --partition=xfer
 #SBATCH --time=4:00:00
-#SBATCH --output=/scratch/snx1600/mgoebel/CMOR/logs/shell/delete_%j.out
-#SBATCH --error=/scratch/snx1600/mgoebel/CMOR/logs/shell/delete_%j.err
+#SBATCH --output=logs/delete_%j.out
+#SBATCH --error=logs/delete_%j.err
 #SBATCH --job-name="delete"
 
 
@@ -41,8 +41,8 @@ done
 
 while [ ${startyear} -le ${endyear} ]
 do
-  echo "Deleting ${INPDIR}/${startyear}" #/input
-  rm -r  ${INPDIR}/${startyear} #/input
+  echo "Deleting ${INPDIR}/${startyear}" 
+  rm -r  ${INPDIR}/${startyear} 
   (( startyear=startyear+1 ))
 done
 

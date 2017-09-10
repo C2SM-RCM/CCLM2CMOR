@@ -25,7 +25,6 @@ from datetime import datetime
 # uuid support
 import uuid
 
-import numpy as np
 import traceback
 import time as timepkg
 

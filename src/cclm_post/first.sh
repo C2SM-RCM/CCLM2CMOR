@@ -158,7 +158,7 @@ do
 
   # --- build time series for selected variables
   cd ${SRCDIR}
-  source ./jobf.sh
+  source ./timeseries.sh
 
   #stop timing and print information
   DATE2=$(date +%s)

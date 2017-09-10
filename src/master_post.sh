@@ -114,6 +114,19 @@ do
   shift
 done
 
+EXPPATH=${GCM}/${EXP}
+
+#folders
+ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived
+ARCHDIR=${ARCH_BASE}/${ARCH_SUB} # join archive paths
+
+INDIR1=${INDIR_BASE1}/${EXPPATH}
+OUTDIR1=${OUTDIR_BASE1}/${EXPPATH}
+
+INDIR2=${INDIR_BASE2}/${EXPPATH}
+OUTDIR2=${OUTDIR_BASE2}/${EXPPATH}
+
+
 #create logging directory
 if [ ! -d ${LOGDIR} ]
 then
@@ -141,19 +154,6 @@ function echon {
    echo $1
   fi
 }
-
-
-EXPPATH=${GCM}/${EXP}
-
-#folders
-INDIR1=${INDIR_BASE1}/${EXPPATH}
-OUTDIR1=${OUTDIR_BASE1}/${EXPPATH}
-
-INDIR2=${INDIR_BASE2}/${EXPPATH}
-OUTDIR2=${OUTDIR_BASE2}/${EXPPATH}
-
-ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived
-ARCHDIR=${ARCH_BASE}/${ARCH_SUB} # join archive paths
 
 #range for second script
 YYA=$(echo ${START_DATE} | cut -c1-4) 
@@ -259,16 +259,14 @@ then
   echo "Start: " ${YYA}
   echo "Stop: " ${YYE}
   source ${SRCDIR}/second.sh
-  
-  #Delete input data
-  if ${batch}
-  then
-    echo "deleting input data"
-    sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP} -I ${INDIR1}
-  fi
 fi
 
-
+#Delete input data
+if ${batch}
+then
+  echo "deleting input data"
+  sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP} -I ${INDIR1}
+fi
 
 echo "######################################################"
 TIME2=$(date +%s)

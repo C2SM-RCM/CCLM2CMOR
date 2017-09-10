@@ -3,8 +3,8 @@
 #SBATCH --nodes=1
 #SBATCH --partition=xfer
 #SBATCH --time=4:00:00
-#SBATCH --output=/scratch/snx1600/mgoebel/CMOR/logs/shell/xfer_%j.out
-#SBATCH --error=/scratch/snx1600/mgoebel/CMOR/logs/shell/xfer_%j.err
+#SBATCH --output=logs/xfer_%j.out
+#SBATCH --error=logs/xfer_%j.err
 #SBATCH --job-name="xfer_sh"
 
 

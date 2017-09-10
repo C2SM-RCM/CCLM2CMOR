@@ -20,7 +20,7 @@ path="../../misc/"
 varfile=path+"CORDEX_CMOR_CCLM_variables_table.csv"
 infile=open(path+"INPUT_IO.1949","r")
 
-path_cclm="../cclm_post/"
+path_cclm="../cclm_post/"  # the output file is placed here
 
 cordex_only=True #only process variables needed for CORDEX
 
@@ -99,12 +99,12 @@ with open(varfile,'rt') as csvfile:
 cordex_vars.extend(add)
 
 #write into file
-jobf=open(path_cclm+"jobf.sh","w")
+timeseries=open(path_cclm+"timeseries.sh","w")
 
 for o,out in enumerate(outvar):
     for var in out:
         if var in cordex_vars or not cordex_only:
-            jobf.write("timeseries  {:{width}s} out{:02d}\n".format(var,o+1,width=lenmax))
+            timeseries.write("timeseries  {:{width}s} out{:02d}\n".format(var,o+1,width=lenmax))
 
        # else:
         #    print("Variable %s not needed!" % var)
@@ -112,13 +112,13 @@ for o,out in enumerate(outvar):
         if varp in cordex_vars or not cordex_only:
 
             plev=str(PLEVS[varp]).replace("[","(").replace("]",")").replace(",","").replace("0'","0.").replace("'","")
-            jobf.write("PLEVS=%s \n" % plev)
-            jobf.write("timeseriesp {:{width}s} out{:02d} \n \n".format(varp,o+1,width=lenmax))
+            timeseries.write("PLEVS=%s \n" % plev)
+            timeseries.write("timeseriesp {:{width}s} out{:02d} \n \n".format(varp,o+1,width=lenmax))
      #   else:
       #      print("Variable %s not needed!" % varp)
-    jobf.write("#\n")
+    timeseries.write("#\n")
 
-jobf.close()
+timeseries.close()
 
 
 #write proc_list into file (can be used for the seconds processing step if desired)

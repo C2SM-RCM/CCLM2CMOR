@@ -52,7 +52,6 @@ NBOUNDCUT=13 # number of boundary lines to be cut off in the time series data
 IE_TOT=132 # number of gridpoints in longitudinal direction?
 JE_TOT=129 # number of gridpoints in latitudinal direction
 PLEVS=(200. 500. 850. 925.)  # list of pressure levels to output.The list must be the same as or a subset	of the list in the specific GRIBOUT. 
-ZLEVS=(100. 1000. 2000. 5000.) # list of height levels to output (similar to PLEVS
 
 #-------------------------------------------
 #Special settings for second step

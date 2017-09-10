@@ -6,12 +6,6 @@ import os
 import sys
 import shutil
 
-# netcdf4 Library
-from netCDF4 import Dataset
-from netCDF4 import num2date
-from netCDF4 import date2num
-#from netCDF4 import date2index
-
 from datetime import datetime
 #from datetime import timedelta
 
@@ -23,12 +17,6 @@ import argparse
 
 # configuration
 import configuration as config
-
-# temp file functions
-import tempfile
-
-# uuid support
-import uuid
 
 # global settings
 import settings
