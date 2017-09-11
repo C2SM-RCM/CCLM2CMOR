@@ -128,9 +128,9 @@ def main():
     parser.add_argument("-i", "--ini",
                             action="store", dest = "inifile", default = "control_cmor.ini",
                             help = "configuration file (.ini)")
-    parser.add_argument("-p", "--param",
-                            action="store", dest = "paramfile", default = "",
-                            help = "model parameter file (table)")
+    parser.add_argument("-t", "--table",
+                            action="store", dest = "vartable", default = "",
+                            help = "variables table")
     parser.add_argument("-r", "--resolution",
                             action="store", dest = "reslist", default = "",
                             help = "list of desired output resolutions, comma-separated (supported: 1hr (1-hourly), 3hr (3-hourly),6hr (6-hourly),day (daily),mon (monthly) ,sem (seasonal),fx (for time invariant variables)")
@@ -139,29 +139,23 @@ def main():
                             help = "comma-separated list of variables to be processed")
     parser.add_argument("-a", "--all",
                             action="store_true", dest = "all_vars", default = False,
-                            help = "process all variables")
+                            help = "process all available variables")
     parser.add_argument("-c", "--chunk-var",
                             action="store_true", dest="chunk_var", default = False,
-                            help="go call chunking for the variable list")
+                            help="")
     parser.add_argument("-n", "--use-version",
                             action="store", dest = "use_version", default = tools.new_dataset_version(),
-                            help = "version for drs (default: today in format YYYYMMDD)")
+                            help = "version to be added to directory structure")
     parser.add_argument("-d", "--no_derotate",
                             action="store_false", dest = "derotate_uv", default=True,
                             help = "derotate all u and v avariables")
-    parser.add_argument("-y", "--alt-start-year",
-                            action="store", dest="alt_start_year", default = 2100,
-                            help="use alternate start year")
-    parser.add_argument("-u", "--use-alt-units",
-                            action="store_true", dest="use_alt_units", default = False,
-                            help="use alternate units for input data (only day and mon)")
-    parser.add_argument("-m", "--model",
-                           action="store", dest="act_model", default = 'CCLM',
-                          help="set used model (supported: [default: CCLM],WRF)")
-    parser.add_argument("-g", "--gcm_driving_model",
+    parser.add_argument("-m", "--simulation",
+                           action="store", dest="simulation", default = '',
+                          help="which simulation specific settings to choose")
+    parser.add_argument("-g", "--gcm",
                             action="store", dest="driving_model_id", default = "",
                             help="set used driving model")
-    parser.add_argument("-x", "--experiment",
+    parser.add_argument("-x", "--exp",
                             action="store", dest="driving_experiment_name", default = "",
                             help="set used experiment")
     parser.add_argument("-E", "--ensemble",
@@ -203,18 +197,17 @@ def main():
 
     options = parser.parse_args()
     options_dict=vars(options)
-    config.load_configuration(options.inifile)
 
-    if options.act_model not in ['CCLM','WRF']:
-        sys.exit("Model ist not supported: '%s'" % (options.act_model))
-        # end programm
+    config.load_configuration(options.inifile)
+    if options.simulation != "":
+        config.set_config_value('settings','simulation',options.simulation)
 
     #limit range if start and end are given in command line
     if options.proc_start!="" and options.proc_end!="":
         options.limit_range=True
 
    #store parsed arguments in config
-    setval_settings_model=["paramfile","driving_model_id","driving_experiment_name","driving_model_ensemble_member"]
+    setval_settings_model=["vartable","driving_model_id","driving_experiment_name","driving_model_ensemble_member"]
     setval_integer=["proc_start","proc_end"]
     setval=[]
     setval.extend(setval_settings_model)
@@ -227,7 +220,6 @@ def main():
                 config.set_config_value('integer',val,options_dict[val])
 
 
-    config.set_config_value('settings','model',options.act_model)
     config.set_config_value('boolean','overwrite',options.overwrite)
     config.set_config_value('boolean','limit_range',options.limit_range)
     config.set_config_value('boolean','remove_src',options.remove_src)
@@ -235,11 +227,18 @@ def main():
     config.set_config_value('boolean','derotate_uv',options.derotate_uv)
     config.set_config_value('boolean','propagate_log',options.propagate)
 
+    #Extend input path if respective option is set:
+    if config.get_config_value('boolean','extend_DirIn')==True:
+      DirIn=config.get_config_value('settings','DirIn')+'/'+ config.get_sim_value('driving_model_id')+'/'+ config.get_sim_value('driving_experiment_name')
+      config.set_config_value('settings','DirIn',DirIn)
+      DirDerotated=config.get_config_value('settings','DirDerotated')+'/'+ config.get_sim_value('driving_model_id')+'/'+ config.get_sim_value('driving_experiment_name')
+      config.set_config_value('settings','DirDerotated',DirDerotated)
 
-    process_list=[config.get_model_value('driving_model_id'),config.get_model_value('driving_experiment_name'),config.get_model_value('driving_model_ensemble_member')]
-    # now read paramfile for all variables for this RCM
-    varfile = config.get_model_value('paramfile')
-    settings.init(varfile)
+    process_list=[config.get_sim_value('driving_model_id'),config.get_sim_value('driving_experiment_name'),config.get_sim_value('driving_model_ensemble_member')]
+    # now read vartable for all variables for this RCM
+
+    vartable= config.get_sim_value('vartable')
+    settings.init(vartable)
 
     # create logger
     LOG_BASE = settings.DirLog
@@ -266,7 +265,7 @@ def main():
         log.error("To use multiprocessing you have to limit the time range (with -l) and specify this range in the .ini file! Exiting...")
         sys.exit()
 
-    # creating working directory if not exist
+    # creating working directory if not existent
     if not os.path.isdir(settings.DirWork):
         log.debug("Working directory does not exist, creating: %s" % (settings.DirWork))
         if not os.path.isdir(settings.DirWork):
@@ -277,11 +276,8 @@ def main():
         if not os.path.isdir(settings.DirOut):
             os.makedirs(settings.DirOut)
 
-    # assing some new parameter
-    if config.get_config_value('boolean','add_version_to_outpath'):
-        settings.use_version = "v%s" % (options.use_version)
-    settings.use_alt_units = options.use_alt_units
-
+    if config.get_config_value('boolean','add_version_to_outpath') or options.use_version != tools.new_dataset_version():
+        settings.use_version = options.use_version
 
     if options.all_vars == False:
         varlist = options.varlist.split(',')
@@ -298,15 +294,10 @@ def main():
     else:
         reslist = options.reslist.split(',')
 
-    #TODO: allow for whitespace separation -> need to change in optparse
-    #reslist = options.reslist.replace(" ",",") #to allow for space as delimiter
-    #reslist=list(filter(None,reslist.split(','))) #split string and remove empty strings
-
-
     # if nothing is set: exit the program
 
 
-    log.info("Configuration read from: %s" % os.path.abspath(varfile))
+    log.info("Configuration read from: %s" % os.path.abspath(vartable))
     log.info("Variable(s): %s " % varlist)
     log.info("Requested time output resolution(s): %s " % reslist)
     if options.process_table_only:
@@ -380,6 +371,7 @@ if __name__ == "__main__":
 
     log.log(35,'\nTotal processing time: %s hours %s minutes %s seconds' % (int(hours),int(minutes),round(seconds)))
     log.log(35,'\n##################################\n########  End of script.  ########\n##################################')
+
     ######################
     # END of program!!!  #
     ######################

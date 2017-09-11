@@ -161,28 +161,25 @@ optional arguments:
   -h, --help            show this help message and exit
   -i INIFILE, --ini INIFILE
                         configuration file (.ini)
-  -p PARAMFILE, --param PARAMFILE
-                        model parameter file (table)
+  -t VARTABLE, --table VARTABLE
+                        variables table
   -r RESLIST, --resolution RESLIST
-                        list of desired output resolutions, comma-separated (supported: 1hr
-                        (1-hourly), 3hr (3-hourly),6hr (6-hourly),day
-                        (daily),mon (monthly) ,sem (seasonal),fx (for time
-                        invariant variables)
+                        list of desired output resolutions, comma-separated
+                        (supported: 1hr (1-hourly), 3hr (3-hourly),6hr
+                        (6-hourly),day (daily),mon (monthly) ,sem
+                        (seasonal),fx (for time invariant variables)
   -v VARLIST, --varlist VARLIST
-                        list of variables to be processed (comma-separated)
-  -a, --all             process all variables
-  -c, --chunk-var       go call chunking for the variable list
+                        comma-separated list of variables to be processed
+  -a, --all             process all available variables
+  -c, --chunk-var
   -n USE_VERSION, --use-version USE_VERSION
-                        version for directory structure (default: today in format YYYYMMDD)
+                        version to be added to directory structure
   -d, --no_derotate     derotate all u and v avariables
-  -y ALT_START_YEAR, --alt-start-year ALT_START_YEAR
-                        use alternate start year
-  -u, --use-alt-units   use alternate units for input data (only day and mon)
-  -m ACT_MODEL, --model ACT_MODEL
-                        set used model (supported: [default: CCLM],WRF)
-  -g DRIVING_MODEL_ID, --gcm_driving_model DRIVING_MODEL_ID
+  -m SIMULATION, --simulation SIMULATION
+                        which simulation specific settings to choose
+  -g DRIVING_MODEL_ID, --gcm DRIVING_MODEL_ID
                         set used driving model
-  -x DRIVING_EXPERIMENT_NAME, --experiment DRIVING_EXPERIMENT_NAME
+  -x DRIVING_EXPERIMENT_NAME, --exp DRIVING_EXPERIMENT_NAME
                         set used experiment
   -E DRIVING_MODEL_ENSEMBLE_MEMBER, --ensemble DRIVING_MODEL_ENSEMBLE_MEMBER
                         set used ensemble
@@ -205,11 +202,16 @@ optional arguments:
   --remove              Remove source files after chunking
 
 
-
 In a file here called *control_cmor.ini* processing options, paths and
 simulation details are set. You can create several such configuration
 files and choose the one you want to use with the ``--ini`` option when
-running the main script *cmorlight.py*. Detailed instructions which
+running the main script *cmorlight.py*. All lists in this file should
+be comma-separated and not contain spaces. In the last section
+(e.g. named *settings_CCLM*) of this file you can set simulation specific
+options such as global attributes. You can define several such sections
+(always named *settings_[EXT]* and choose one by specifying the
+extension EXT in the configuration file (entry *simulation*) or in the
+command line (option ``--sim``). Detailed instructions which
 variables should be processed with what method at which resolution are
 taken from a modified version of the CORDEX variables requirement table.
 Here a table for the CCLM model and for the WRF model are included.
@@ -225,6 +227,9 @@ the data, the script tries to copy them from a file specified under
 *coordinates_file* in the configuration file. 
 Make sure to provide such a file suitable for your domain and resolution.
 Here, files for the domains EUR-11 and EUR-44 are provided.
+If you want to add vertices to your output files, you have to specify a
+file from which to take them (entry *vertices_file*) and set
+*add_vertices=True*.
 
 If you want to process all variables in the table, use the ``--all`` option.
 Otherwise, specify the variables with ``--varlist``. You can also choose
@@ -245,7 +250,6 @@ The processing will finish much faster when using multiprocessing
 For this, specify the number of available cores in the configuration file 
 and the desired time range over the command line or in the configuration
 file.
-
 
 After the processing you can concatenate the files to chunks by running
 the script again with the ``--chunk-var`` option. Add the option

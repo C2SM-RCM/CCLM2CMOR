@@ -11,7 +11,7 @@ post_step=0 #to limit post processing to step 1 or 2, for all other values both 
 
 #Simulation details used for creating a directory structure 
 
-GCM=HadGEM2-ES #driving GCM
+GCM=MIROC5 #driving GCM
 EXP=RCP85      #driving experiment name
 
 #-------------------------------------------
@@ -56,8 +56,8 @@ PLEVS=(200. 500. 850. 925.)  # list of pressure levels to output.The list must b
 #-------------------------------------------
 #Special settings for second step
 
-proc_list="TOT_SNOW" #which variables to process (set proc_all=false for this to take effect
-proc_all=true  #process all available variables (not only those in proc_list
+proc_list="RELHUM_2M" #which variables to process (set proc_all=false for this to take effect
+proc_all=false #process all available variables (not only those in proc_list
 LFILE=0  # Set LFILE=1 if only primary fields (given out by COSMO should be created and =2 for only secondary fields (additionally calculated for CORDEX; for any other number both types of fields are calculated
 
 

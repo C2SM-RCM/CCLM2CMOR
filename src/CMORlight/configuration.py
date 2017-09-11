@@ -10,6 +10,7 @@
 import logging
 import pkg_resources
 import sys
+import os
 
 if (sys.version_info < (3, 0)):
     import ConfigParser
@@ -67,11 +68,11 @@ def get_config_value(section, option, exitprog = True):
 
 
 # -----------------------------------------------------------------------------
-def get_model_value(option, exitprog = True):
-    """Get value from model section."""
+def get_sim_value(option, exitprog = True):
+    """Get value from simulation section."""
 
-    model = get_config_value('settings','model')
-    return get_config_value("settings_%s" % (model), option, exitprog)
+    simulation = get_config_value('settings','simulation')
+    return get_config_value("settings_%s" % (simulation), option, exitprog)
 
 
 # -----------------------------------------------------------------------------
@@ -80,8 +81,8 @@ def set_config_value(section, option, value):
     if not CONFIG:
         sys.exit("ERROR: Load configuration file before getting/setting config values! Exiting...")
 
-    if section=="settings_":  #add model value to section
-        section=section+get_config_value('init','model')
+    if section=="settings_":  #add simulation value to section
+        section=section+get_config_value('settings','simulation')
     if not CONFIG.has_section(section):
         CONFIG.add_section(section)
     value=str(value)
@@ -104,13 +105,4 @@ def load_configuration(inifile):
     else:
         CONFIG = configparser.ConfigParser()
 
-    CONFIG.add_section('init')
-    CONFIG.set("init","inifile",inifile)
     CONFIG.readfp(open(pkg_resources.resource_filename(__name__,inifile)))
-    #Extend input path if respective option is set:
-    if CONFIG.get('boolean','extend_DirIn')=='True':
-      DirIn=CONFIG.get('settings','DirIn')+'/'+ get_model_value('driving_model_id')+'/'+ get_model_value('driving_experiment_name')
-      CONFIG.set('settings','DirIn',DirIn)
-      DirDerotated=CONFIG.get('settings','DirDerotated')+'/'+ get_model_value('driving_model_id')+'/'+ get_model_value('driving_experiment_name')
-      CONFIG.set('settings','DirDerotated',DirDerotated)
-

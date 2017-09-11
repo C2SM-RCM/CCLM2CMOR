@@ -22,8 +22,7 @@ do
 done
 
 TIME1=$(date +%s)
-#cd ${SCRATCH}/CMOR/src
-cd /home/matze/CMORfull/src
+cd ${SCRATCH}/CMOR/src
 
 source ./settings.sh
 

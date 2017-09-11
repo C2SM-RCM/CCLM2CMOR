@@ -20,7 +20,6 @@ CMORLIGHT:
 
 
     tools.py:
-        - process_file_fix: ensemble member 'r0i0p0' -> is the dir structure for fix variables as requested by CORDEX?
         - writing 0 for fx in table should not be mandatory, write anything
 
 
@@ -34,8 +33,6 @@ CMORLIGHT:
     - negative values for missingValue and FillValue in some files? -> should be positive? -> find and replace?
     -change xfer to not use settings.sh but give command line args or create current_settings file
     
-    
-    - chunking: in extra folder -> do something better!
     - every step in process_file needed to be carried out for every file??? -> raise performance!
     - seasonal mean integrated in process_file but not perfectly economic?
     - wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
@@ -48,7 +45,6 @@ CMORLIGHT:
     -should be possible to use cclm_const file instead of processing FR_LAND and HSURF
     - rlon rlat in coordinates_cordex_eur11.nc nachschauen wenn nicht vorhanden
     - deutlicher dass es sich um programmabbruch handelt
-    - CCLM subversion in attributen angeben -> COSMO_5.0_clm6?
     - which attributes does cordex allow? How should they look like
     - 4.spalte in tabelle als comment hinzufügen
     - wenn mehrere reslist angegeben: erst hohe auflösung dann niedrigere -> kann mit hoher.temp weiterrechnen um rechenzeit zu sparen, muss nicht mehr auf rohdaten zugreifen: teilweise realsiert für day, mon; nicht für 6hr, day

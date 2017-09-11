@@ -4,7 +4,7 @@ import csv
 import configuration as config
 #import sys
 
-def init(varfile):
+def init(vartable):
     '''
         set global variables
     '''
@@ -46,16 +46,16 @@ def init(varfile):
     var_skip_list =  config.get_config_value('settings', 'var_skip_list',exitprog=False).split(',')
 
     global var_list_fixed
-    var_list_fixed =  config.get_model_value('var_list_fixed',exitprog=False).split(',')
+    var_list_fixed =  config.get_sim_value('var_list_fixed',exitprog=False).split(',')
 
     global FMT
     FMT = '%Y-%m-%d %H:%M:%S'
 
     global vertices_file
-    vertices_file = ("%s/%s" % (DirConfig,config.get_model_value('vertices_file', exitprog = False)))
+    vertices_file = ("%s/%s" % (DirConfig,config.get_sim_value('vertices_file', exitprog = False)))
 
     global coordinates_file
-    coordinates_file = ("%s/%s" % (DirConfig,config.get_model_value('coordinates_file')))
+    coordinates_file = ("%s/%s" % (DirConfig,config.get_sim_value('coordinates_file')))
 
     # dictionary for global attributes
     global Global_attributes
@@ -68,12 +68,9 @@ def init(varfile):
     global use_version
     use_version = ''
 
-    global use_alt_units
-    use_alt_units = config.get_config_value('boolean','use_alt_units',exitprog=False)
-
     global param
     param = {}
-    with open(DirConfig+"/"+varfile,'rt') as csvfile:
+    with open(DirConfig+"/"+vartable,'rt') as csvfile:
         reader = csv.reader(csvfile,delimiter=';')
         for i,row in enumerate(reader):
             if i==0: # skip header

@@ -78,10 +78,10 @@ def set_attributes(params,proc_list=None):
     fill dictionary with additional netcdf attributes
 
     '''
-    # get attributes for actual model: CCLM or WRF
+    # get attributes for actual model
     for name in settings.global_attr_list :
-        if config.get_model_value(name.strip()) != '':
-            settings.Global_attributes[name.strip()] = config.get_model_value(name.strip())
+        if config.get_sim_value(name.strip()) != '':
+            settings.Global_attributes[name.strip()] = config.get_sim_value(name.strip())
     if proc_list:
         settings.Global_attributes['driving_model_id'] = proc_list[0]
         settings.Global_attributes['driving_experiment_name'] = proc_list[1]
@@ -95,10 +95,6 @@ def set_attributes(params,proc_list=None):
     #Invariant attributes
     settings.Global_attributes['project_id']="CORDEX"
     settings.Global_attributes['product']="output"
-
-    # set policy for DWD, to add set add_policy to 'True' in control_cmor.ini
-    if config.get_config_value('boolean', 'add_policy'):
-        settings.Global_attributes['data_policy'] = config.get_model_value('policy')
 
     # set addtitional netcdf attributes
     settings.netCDF_attributes['RCM_NAME'] = params[0]
@@ -238,7 +234,7 @@ def compress_output(outpath,index_per_day=8,year=0,logger=log):
             retval=shell(cmd,logger=logger)
             # remove help file
             os.remove(outpath)
-            retval=shell("mv %s %s" % (ftmp_name,outpath))
+            retval=shell("mv %s %s" % (ftmp_name,outpath),logger=logger)
         except:
             logger.error("Error while compressing ouput file: (%s)" % outpath)
     else:
@@ -481,8 +477,8 @@ def add_vertices(f_out,logger=log):
     add vertices to output from vertices file
     """
     # read vertices from file if exist
-    if os.path.isfile(config.get_model_value("vertices_file")):
-        f_vert = Dataset(config.get_model_value("vertices_file"),'r')
+    if os.path.isfile(config.get_sim_value("vertices_file")):
+        f_vert = Dataset(config.get_sim_value("vertices_file"),'r')
         if 'vertices' in f_vert.dimensions.keys() and 'vertices' not in f_out.dimensions.keys():
             # is present I know the content of this file
             if 'vertices' in f_vert.dimensions.keys():
@@ -534,7 +530,7 @@ def add_vertices(f_out,logger=log):
         f_out.sync()
 
     else:
-        logger.error("Vertices file %s does not exist! No vertices added..." % config.get_model_value("vertices_file") )
+        logger.error("Vertices file %s does not exist! No vertices added..." % config.get_sim_value("vertices_file") )
 # -----------------------------------------------------------------------------
 def check_resolution(params,res,process_table_only):
     '''
@@ -1066,7 +1062,7 @@ def proc_seasonal_mean(params,year):
                 set_attributes_create(outpath,res,year)
                 # correct netcdf version
                 if config.get_config_value('boolean','nc_compress') == True:
-                    compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')],year)
+                    compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')],year,logger=logger)
 
                 # exist in some output (e.g. CCLM) in CORDEX, default: False
                 if config.get_config_value('boolean','add_vertices') == True:
@@ -1224,15 +1220,15 @@ def process_file(params,in_file,var,reslist,year):
     if 'calendar' in time_in.ncattrs():
         in_calendar = str(time_in.calendar)
     else:
-        in_calendar = config.get_model_value("calendar",exitprog = False)
+        in_calendar = config.get_sim_value("calendar",exitprog = False)
         if in_calendar=="":
             raise Exception("Calendar attribute not found in file! Specify calendar in .ini file instead!")
 
-   # in_calendar=config.get_model_value("calendar")
+   # in_calendar=config.get_sim_value("calendar")
 
     # mark for use another time unit
-    if settings.use_alt_units: ## and dt_in_year_chk < settings.alt_start_year: # or possible use of: config.use_alt_units:
-        time_in_units = config.get_config_value('settings','alt_units')
+    if config.get_config_value('boolean','use_in_units'):
+        time_in_units = config.get_config_value('settings','in_units')
     else:
         time_in_units = time_in.units
 
@@ -1240,51 +1236,12 @@ def process_file(params,in_file,var,reslist,year):
     dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
     dt_in_year = num2date(time_in[0],time_in_units,calendar=in_calendar).year
 
-
-    switch_infile = False
     for n in range(len(time_in)):
         if num2date(time_in[n],time_in_units,calendar=in_calendar).year == dt_in_year:
             data_max_len = n
-        else:
-            switch_infile = True
+
     # add one count
     data_max_len = data_max_len + 1
-
-#TODO: remove this?
-    if switch_infile == True: ## and dt_in_year_chk < settings.alt_start_year:
-        in_file_new = "%s/%s-%s-%s" % (settings.DirWork,year,str(uuid.uuid1()),os.path.basename(in_file))
-        # that does not work!!
-#        cmd = "cdo -f %s -s selyear,%d %s %s" % (config.get_config_value('settings', 'cdo_nctype'),dt_in_year,in_file,in_file_new)
-        # only December istsupported
-        t1 = num2date(time_in[0],time_in_units,time_in.calendar)
-        t0 = num2date(time_in[0],"days since 1949-12-01 00:00:00",time_in.calendar)
-        shift_days = (t1 - t0).days # one month (January): 31
-        cmd = "cdo -f %s -s selyear,%d  -shifttime,%ddays -setreftime,%s,%s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),dt_in_year,shift_days,config.get_config_value('settings','alt_units_cdo_date'),config.get_config_value('settings','alt_units_cdo_time'),in_file,in_file_new)
-        retval = shell(cmd,logger=logger)
-        in_file = in_file_new
-        # close old obejct before
-        f_in.close()
-        # create object from netcdf file to access all parameters and attributes
-        f_in = Dataset(in_file,"r")
-        logger.info("Input1 (new): %s" % in_file)
-        # get time variable from input
-        time_in = f_in.variables['time']
-        if settings.use_alt_units:
-            time_in_units = config.get_config_value('settings','alt_units')
-        else:
-            time_in_units = time_in.units
-
-        # calculate the date range of the file
-        dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
-        # get new year
-        dt_in_year = num2date(time_in[0],time_in_units,calendar=in_calendar).year
-        for n in range(len(time_in)):
-            if num2date(time_in[n],time_in_units,calendar=in_calendar).year == dt_in_year:
-                data_max_len = n
-        # add one count
-        data_max_len = data_max_len + 1
-
-
 
     ## get start and stop date from in_file
 
@@ -1308,6 +1265,9 @@ def process_file(params,in_file,var,reslist,year):
     input_time_step = tdelta_seconds / 3600. + (tdelta.days * 24.)
     logger.debug("Input data time interval: %shourly" % (str(input_time_step)))
 
+    #stop if year is not correct
+    if str(a)[:4] != year:
+        raise Exception(("File %s seems to be corrupt! The year from the filename is not the same as the year of the first data point!" % in_file))
     # difference one day: seconds of time delta are '0'!
     if tdelta_seconds == 0:
         tdelta_seconds = tdelta.days * 24 * 3600.
@@ -1917,12 +1877,7 @@ def process_file(params,in_file,var,reslist,year):
         except:
             cmd = "Could not remove file: %s" % (in_file)
             logger.warning(cmd)
-    if switch_infile == True and os.path.isfile(in_file):
-        try:
-            os.remove(in_file)
-        except:
-            cmd = "Could not remove file: %s" % (in_file)
-            logger.warning(cmd)
+
 
     # close input file
     f_in.close()
