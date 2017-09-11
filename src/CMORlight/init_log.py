@@ -19,9 +19,14 @@ def setup_custom_logger(name,filename='/dev/null',propagate=False,normal_log=Tru
     log = logging.getLogger(name)
     log.setLevel(level)
     logging.addLevelName(35,"")
-    handler = logging.FileHandler(filename,mode=mode)
-    handler.setFormatter(formatter)
-    log.addHandler(handler)
-    log.propagate = propagate
+    fh = logging.FileHandler(filename,mode=mode)
+    fh.setFormatter(formatter)
+    log.addHandler(fh)
+
+    if propagate:
+        ch = logging.StreamHandler()
+        ch.setFormatter(formatter)
+        log.addHandler(ch)
+
     return log
 

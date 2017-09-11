@@ -111,6 +111,6 @@ def load_configuration(inifile):
     if CONFIG.get('boolean','extend_DirIn')=='True':
       DirIn=CONFIG.get('settings','DirIn')+'/'+ get_model_value('driving_model_id')+'/'+ get_model_value('driving_experiment_name')
       CONFIG.set('settings','DirIn',DirIn)
-      DirOutRotated=CONFIG.get('settings','DirOutRotated')+'/'+ get_model_value('driving_model_id')+'/'+ get_model_value('driving_experiment_name')
-      CONFIG.set('settings','DirOutRotated',DirOutRotated)
+      DirDerotated=CONFIG.get('settings','DirDerotated')+'/'+ get_model_value('driving_model_id')+'/'+ get_model_value('driving_experiment_name')
+      CONFIG.set('settings','DirDerotated',DirDerotated)
 

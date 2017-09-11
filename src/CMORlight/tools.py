@@ -51,7 +51,7 @@ def shell(cmd,logger=log):
 def get_input_path(derotated=False):
     ''' '''
     if derotated:
-        retVal = settings.DirOutRotated
+        retVal = settings.DirDerotated
     else:
 
         retVal = settings.DirIn
@@ -612,7 +612,7 @@ def copy_var(f_in,f_out,var_name,logger=log):
                 if config.get_config_value('boolean','add_vertices') == False and k == 'bounds':
                     continue
                 att_lst[k] = var_in.getncattr(k)
-                
+
         var_out.setncatts(att_lst)
         # copy content to new datatype
         if var_name not in ['rotated_latitude_longitude','rotated_pole']:
@@ -641,7 +641,7 @@ def add_coordinates(f_out,logger=log):
             # commit changes
             f_out.sync()
             f_coor.close()
-        except IndexError as e: 
+        except IndexError as e:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exception(exc_type, exc_value,exc_traceback,limit=10)
             sys.exit("\n Coordinates file does not have the same resolution as the input data! Change it!")
@@ -820,7 +820,7 @@ def process_file_fix(params,in_file):
             var_out[:] = var_in[:]
         else:
             var_out[:] = mulc_factor * var_in[:]
-            
+
 
 
     # commit changes
@@ -842,7 +842,7 @@ def process_file_fix(params,in_file):
 
     # add lon/lat variables
     add_coordinates(f_out)
-    
+
     # commit changes
     f_out.sync()
 
@@ -859,7 +859,7 @@ def process_file_fix(params,in_file):
     #add coordinates attribute to fx-variables
     f_var.coordinates = 'lon lat'
 
-   
+
 
     # set attribute missing_value
     f_var.missing_value = settings.netCDF_attributes['missing_value']
@@ -1456,7 +1456,7 @@ def process_file(params,in_file,var,reslist,year):
                 in_file = in_file_help
 
             ftmp_name = "%s/%s-%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()),var)
-#          
+#
             # get type of function to create the output file: point,mean,maximum,minimum,sum
             # extract cell method from string
             t_delim = 'mean over days'
@@ -1572,7 +1572,7 @@ def process_file(params,in_file,var,reslist,year):
                         var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims,complevel=4)
                     else:
                         var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims)
-      
+
                 logger.debug("Dimensions (of variable %s): %s" % (var_name,str(f_out.dimensions)))
                 # set all character fields as character converted with str() function
                 # create attribute list
@@ -1583,7 +1583,7 @@ def process_file(params,in_file,var,reslist,year):
                     for k in var_in.ncattrs():
                        # if k in ['_FillValue','missing_value','grid_north_pole_latitude','grid_north_pole_longitude']:
                         #    att_lst[k] = np.float32(var_in.getncattr(k))
-                            
+
                             #also set the respective other value
                          #   if k=='_FillValue':
                            #     att_lst['missing_value'] = np.float32(var_in.getncattr(k))
@@ -1860,7 +1860,7 @@ def process_file(params,in_file,var,reslist,year):
             f_var.long_name = settings.netCDF_attributes['long_name']
             f_var.units = settings.netCDF_attributes['units']
             f_var.cell_methods = "time: %s" % (cm_type)
-            
+
             # check wether lon/lat exist
             if not 'lon' in f_out.variables or not 'lat' in f_out.variables:
                 # add lon/lat
@@ -1879,19 +1879,19 @@ def process_file(params,in_file,var,reslist,year):
 
            # commit changes
             f_out.sync()
-  
+
             #delete bounds dimension if not used:
             if ("bnds" in f_out.dimensions) and (cm_type=="point"):
                 log.info("Deleting unused bounds dimension")
                 f_out.createVariable("help",datatype="d",dimensions=("bnds",))
                 f_out.sync()
                 f_out.close()
-                cmd="ncks -x -v help -O %s %s" % (outpath,outpath) 
+                cmd="ncks -x -v help -O %s %s" % (outpath,outpath)
                 shell(cmd)
-            else:           
+            else:
                 # close output file
                 f_out.close()
-  
+
             # remove help file
             os.remove(ftmp_name)
 
@@ -1904,7 +1904,7 @@ def process_file(params,in_file,var,reslist,year):
             logger.info("Variable attributes set!")
 
 
-           
+
         else:
             cmd = "No cell method set for this variable (%s) and time resolution (%s)." % (var,res)
             logger.warning(cmd)

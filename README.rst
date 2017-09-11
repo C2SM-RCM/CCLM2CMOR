@@ -242,7 +242,10 @@ all available years are processed.
 
 The processing will finish much faster when using multiprocessing
 (``--multi``). In this way several years are processed simultaneously.
-Specify the number of available cores in the configuration file.
+For this, specify the number of available cores in the configuration file 
+and the desired time range over the command line or in the configuration
+file.
+
 
 After the processing you can concatenate the files to chunks by running
 the script again with the ``--chunk-var`` option. Add the option

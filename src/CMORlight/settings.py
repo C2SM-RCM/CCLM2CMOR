@@ -10,7 +10,7 @@ def init(varfile):
     '''
     # base path for all other path
     global BasePath
-    BasePath = config.get_config_value('settings', 'BasePath')
+    BasePath = config.get_config_value('settings', 'BasePath',exitprog=False)
 
     #
     # Basic path to the archive (system dependent)
@@ -21,11 +21,8 @@ def init(varfile):
     global DirOut
     DirOut = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirOut')))
 
-    global DirProg
-    DirProg = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirProg')))
-
     global DirConfig
-    DirConfig = ("%s/%s" % (DirProg,config.get_config_value('settings', 'DirConfig')))
+    DirConfig = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirConfig')))
 
     global DirWork
     DirWork = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirWork')))
@@ -33,8 +30,8 @@ def init(varfile):
     global DirLog
     DirLog = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirLog')))
 
-    global DirOutRotated
-    DirOutRotated = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirOutRotated')))
+    global DirDerotated
+    DirDerotated = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirDerotated')))
 
     global global_attr_list
     global_attr_list = config.get_config_value('settings','global_attr_list').split(',')
@@ -55,10 +52,10 @@ def init(varfile):
     FMT = '%Y-%m-%d %H:%M:%S'
 
     global vertices_file
-    vertices_file = ("%s/%s" % (DirProg,config.get_model_value('vertices_file', exitprog = False)))
+    vertices_file = ("%s/%s" % (DirConfig,config.get_model_value('vertices_file', exitprog = False)))
 
     global coordinates_file
-    coordinates_file = ("%s/%s" % (DirProg,config.get_model_value('coordinates_file')))
+    coordinates_file = ("%s/%s" % (DirConfig,config.get_model_value('coordinates_file')))
 
     # dictionary for global attributes
     global Global_attributes
@@ -76,7 +73,7 @@ def init(varfile):
 
     global param
     param = {}
-    with open(varfile,'rt') as csvfile:
+    with open(DirConfig+"/"+varfile,'rt') as csvfile:
         reader = csv.reader(csvfile,delimiter=';')
         for i,row in enumerate(reader):
             if i==0: # skip header
@@ -87,8 +84,7 @@ def init(varfile):
                 param[var] = row
                 if var!="prhmax": #as RCM name in table is equal to pr
                     param[row[config.get_config_value('index','INDEX_RCM_NAME')]] = row
-            #if row[config.INDEX_VAR] == variable:
-                #return row
+
 
     global dpm
     dpm = {'noleap':          [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],

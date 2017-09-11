@@ -238,7 +238,7 @@ def main():
 
     process_list=[config.get_model_value('driving_model_id'),config.get_model_value('driving_experiment_name'),config.get_model_value('driving_model_ensemble_member')]
     # now read paramfile for all variables for this RCM
-    varfile = ("%s/%s" % (config.get_config_value('settings','DirConfig'),config.get_model_value('paramfile')))
+    varfile = config.get_model_value('paramfile')
     settings.init(varfile)
 
     # create logger
@@ -262,7 +262,7 @@ def main():
     log = init_log.setup_custom_logger("cmorlight",LOG_FILENAME+logext,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
 
     if not options.limit_range and options.multi:
-        print("To use multiprocessing you have to limit the time range (with -l) and specify this range in the .ini file! Exiting...")
+        print("To use multiprocessing you have to limit the time range (with -l) and specify this range in the .ini file or over the command line! Exiting...")
         log.error("To use multiprocessing you have to limit the time range (with -l) and specify this range in the .ini file! Exiting...")
         sys.exit()
 
@@ -372,12 +372,12 @@ if __name__ == "__main__":
 
     time2=datetime.now()
     log = logging.getLogger('cmorlight')
-    log.propagate = True
+
     #calculate processing time
     time_diff=time2-time1
     hours, remainder = divmod(time_diff.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
-    
+
     log.log(35,'\nTotal processing time: %s hours %s minutes %s seconds' % (int(hours),int(minutes),round(seconds)))
     log.log(35,'\n##################################\n########  End of script.  ########\n##################################')
     ######################
