@@ -25,7 +25,7 @@ import settings
 import tools
 
 # basic setting for logging
-import __init__ as base
+import init_log
 
 import logging
 log = logging.getLogger("cmorlight")
@@ -255,11 +255,11 @@ def main():
         #create logger for each processing year
         for y in range(config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end")+1):
             logfile=LOG_FILENAME+str(y)+'.'+logext
-            log = base.setup_custom_logger("cmorlight_"+str(y),logfile,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
+            log = init_log.setup_custom_logger("cmorlight_"+str(y),logfile,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
         #change general logger name
         LOG_FILENAME+="%s_%s." % (config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end"))
 
-    log = base.setup_custom_logger("cmorlight",LOG_FILENAME+logext,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
+    log = init_log.setup_custom_logger("cmorlight",LOG_FILENAME+logext,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
 
     if not options.limit_range and options.multi:
         print("To use multiprocessing you have to limit the time range (with -l) and specify this range in the .ini file! Exiting...")

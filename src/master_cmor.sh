@@ -9,7 +9,7 @@
 #SBATCH --job-name="CMOR_py"
 
 cores=3
-script_folder="${SCRATCH}/CMOR/src/CMORlight"
+script_folder="CMORlight"
 python_script="${script_folder}/cmorlight.py"
 
 #necessary for derotation
@@ -29,8 +29,8 @@ do
       STOP=$2
       shift
       ;;
-      -m|--multi)
-      multi=true
+      -b|--batch)
+      batch=true
       ;;
       *)
       args="$args $1"
@@ -56,9 +56,9 @@ then
   exit
 fi
 
-if [ ${START_NEW} -le ${STOP} ] && $multi
+if [ ${START_NEW} -le ${STOP} ] && ${batch}
 then
-  sbatch master_cmor.sh ${args} -m -s ${START_NEW} -e ${STOP}
+  sbatch master_cmor.sh ${args} -b -s ${START_NEW} -e ${STOP}
   (( STOP=START+cores-1 )) #STOP year for this batch
 fi
 

@@ -73,6 +73,4 @@ CMORLIGHT:
     - can set global attributes in .ini file or take from input files (if present) by adding to global_attr_file list
     - file name conventions for input: var_*.nc or for constant variables var.nc (var can be variable name from CMOR or RCM)
     if not met -> file not processed!
-    - use --all
-    - set export IGNORE_ATT_COORDINATES=1
      
