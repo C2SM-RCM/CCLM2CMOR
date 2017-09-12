@@ -7,10 +7,7 @@
 #SBATCH --error=logs/xfer_%j.err
 #SBATCH --job-name="xfer_sh"
 
-
-BASEDIR=${SCRATCH}/CMOR
-
-source ${BASEDIR}/src/settings.sh
+source ./settings.sh
 args=""
 while [[ $# -gt 0 ]]
 do

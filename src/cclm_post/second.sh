@@ -28,6 +28,9 @@ inst_list="AER_BC AER_DUST AER_ORG AER_SO4 AER_SS ALB_DIF ALB_DRY ALB_RAD ALB_SA
 # constant variables
 const_list="FR_LAND HSURF"
 
+#additional variables
+add_list="SP_10M ASWD_S ASOU_T RUNOFF_T PREC_CON TOT_SNOW TQW"
+
 #-----------------------------------------------------------------------
 
 # create subdirectory for full time series
@@ -134,33 +137,21 @@ do
       
 
 
-      # determine if current variable is an accumulated quantity
-      LACCU=0
-      for NAME in ${accu_list}
-      do
-        if [ ${NAME} == ${varname} ]
-        then
-          LACCU=1
-          echon "${varname} is accumulated variable"
-        fi
-      done
-      
-      if [ LACCU -eq 0 ]
+      # determine if current variable is an accumulated or instantaneous quantity
+      if [[ ${accu_list} =~ (^|[[:space:]])${varname}($|[[:space:]]) ]]
       then
         LACCU=1
-        for NAME in ${inst_list}
-        do
-          if [ ${NAME} == ${varname} ]
-          then
-            LACCU=0
-            echon "${varname} is an instantaneous variable"
-          fi
-        done
-        if [ LACCU -eq 1 ]
-        then
-          echo "Error for ${varname}: neither contained in accu_list nor in inst_list! Skipping..."
-          continue
-        fi
+        echon "${varname} is accumulated variable"
+      elif [[ ${inst_list} =~ (^|[[:space:]])${varname}($|[[:space:]]) ]]
+      then
+        LACCU=0
+        echon "${varname} is an instantaneous variable"
+      elif [[ ${add_list} =~ (^|[[:space:]])${varname}($|[[:space:]]) ]]
+      then
+        continue
+      else
+        echo "Error for ${varname}: neither contained in accu_list nor in inst_list! Skipping..."
+        continue
       fi
       
       
@@ -247,8 +238,8 @@ do
             ncks -O -h -d time,0 ${FILENEXT} ${FILEOUT}_tmp2_${YY}.nc
             ncrcat -O -h  ${FILEOUT}_tmp1_${YY}.nc ${FILEOUT}_tmp2_${YY}.nc ${FILEOUT}_tmp3_${YY}.nc
           else
-            echo "Try to append first date from next month's file but"
-            echo ${FILENEXT} does not exist
+            echo "ERROR: Tried to append first date from next month's file but"
+            echo "${FILENEXT} does not exist. Skip year for this variable..."
             continue
           fi
         elif [[ ${TDE} -eq 01 &&  ${THE} -eq 00 ]]
@@ -258,9 +249,9 @@ do
           echov "Last timestep in tmp3-File is OK"
           mv ${FILEOUT}_tmp1_${YY}.nc ${FILEOUT}_tmp3_${YY}.nc
         else
-          echo "END date  ${TDE} ${THE}"
+          echo "ERROR: END date  ${TDE} ${THE}"
           echo in "${FILEIN} "
-          echo "is not correct"
+          echo "is not correct. Skip year for this variable..."
           continue
         fi
         ENDFILE=${OUTDIR2}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YP}${MP}0100.nc
@@ -275,9 +266,9 @@ do
           echov "First date of instantaneous file is OK"
           cp ${FILEIN} ${FILEOUT}_tmp1_${YY}.nc          
         else
-          echo "Start date " ${TDA} ${THA}
+          echo "ERROR: Start date " ${TDA} ${THA}
           echo in "${FILEIN} "
-          echo "is not correct"
+          echo "is not correct.  Skip year for this variable..."
           continue       
         fi
         if [[ ${TDE} -ge 28  && ${THE} -eq ${EHH} ]]
@@ -293,9 +284,9 @@ do
           VT=($(cdo -s showtimestamp ${FILEOUT}_tmp3_${YY}.nc))
           TDE=$(echo ${VT} | cut -c9-10)
         else
-          echo "END date " ${TDE} ${THE}
+          echo "ERROR: END date " ${TDE} ${THE}
           echo in "${FILEIN} "
-          echo "is not correct"
+          echo "is not correct.  Skip year for this variable..."
           echo ${EHH}
           continue       
         fi
@@ -324,223 +315,91 @@ do
   #
   # create additional fields required by ESGF
   #
-  
+  function create_add_vars {
+    name1=$1 #first input variable
+    name2=$2 #second input variable
+    name3=$3 #output variable
+    formula=$4 #formula how to create output variable
+    standard_name=$5
+    if [[ ${formula} == "add" ]]
+    then
+      formula="${name3}=${name1}+${name2}"
+    elif [[ ${formula} == "subs" ]]
+    then
+      formula="${name3}=${name1}-${name2}"
+    elif [[ ${formula} == "add_sqr" ]]
+    then
+      formula="${name3}=sqrt(${name1}^2+${name2}^2)"
+    else
+      echo "Formula ${formula} not known! Skipping"
+      return
+    fi
+        
+    if [[ ${proc_list} =~ (^|[[:space:]])${name3}($|[[:space:]]) ]] || ${proc_all}
+    then
+      file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
+      file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+      echov "Input files and formula:"
+      echov "$file1"
+      echov "$file2"
+      echov "$formula"
+
+      if [ -f ${file1} -a -f ${file2} ]
+      then
+        ((c1 = ${#file1}-23 )) 
+        ((c2 = ${#file1}-3 ))
+        DATE=`ls ${file1} |cut -c${c1}-${c2}`
+        file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
+        if [ ! -f ${file3} ] ||  ${overwrite}
+        then
+          echon "Create ${name3}"
+          [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
+          cp ${file1} temp1_${YY}.nc
+          ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
+          ncap2 -h -O -s ${formula} temp1_${YY}.nc temp1_${YY}.nc 
+          ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
+          ncatted -h -a long_name,${name3},d,, ${file3}
+          ncatted -h -a standard_name,${name3},m,c,${standard_name} ${file3}
+          chmod ${PERM} ${file3}
+          rm temp1_${YY}.nc
+        else
+          echov "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..."
+        fi
+      else
+        echo "Input Files for generating ${name3} are not available"
+      fi
+    fi
+  }
+
   if [ ${LFILE} -ne 1 ]
   then
-
+    
     echon ""
     echon " Create additional fields for CORDEX"
-  # Mean wind spdeed at 10m height: SP_10M
-    name1=U_10M
-    name2=V_10M
-    name3=SP_10M
-    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
-    if [ -f ${file1} -a -f ${file2} ]
-    then
-      ((c1 = ${#file1}-23 )) 
-      ((c2 = ${#file1}-3 ))
-      DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
-      if [ ! -f ${file3} ] ||  ${overwrite}
-      then
-        echon "Create SP_10M"
-        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1_${YY}.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
-        ncap2 -h -O -s "${name3}=sqrt(${name1}^2+${name2}^2)" temp1_${YY}.nc temp1_${YY}.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
-        ncatted -h -a long_name,${name3},m,c,"wind speed of 10m wind" -a standard_name,${name3},m,c,"wind_speed" ${file3}
-        chmod ${PERM} ${file3}
-        rm temp1_${YY}.nc
-      else
-        echov "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..."
-      fi
-    else
-      echo "Input Files for generating SP_10M are not available"
-    fi
-  #
-  # Total downward global radiation at the surface: ASWD_S
-    name1=ASWDIR_S
-    name2=ASWDIFD_S
-    name3=ASWD_S
-    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
-    if [ -f ${file1} -a -f ${file2} ]
-    then
-      ((c1 = ${#file1}-23 )) 
-      ((c2 = ${#file1}-3 ))
-      DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
-      if [ ! -f ${file3} ] ||  ${overwrite}
-      then
-        echon "Create ASWD_S"
-        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1_${YY}.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
-        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1_${YY}.nc temp1_${YY}.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
-        ncatted -h -a long_name,${name3},m,c,"averaged total downward sw radiation at the surface" ${file3}
-        chmod ${PERM} ${file3}
-        rm temp1_${YY}.nc 
-      else
-        echov "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..." 
-      fi
-    else
-      echo "Input Files for generating ASWD_S are not available"
-    fi
-  #
-  # upward solar radiation at TOA: ASOU_T
-    name1=ASOD_T
-    name2=ASOB_T
-    name3=ASOU_T
-    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
-    if [ -f ${file1} -a -f ${file2} ]
-    then
-      ((c1 = ${#file1}-23 )) 
-      ((c2 = ${#file1}-3 ))
-      DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
-      if [ ! -f ${file3} ] ||  ${overwrite}
-      then
-        echon "Create ASOU_T"
-        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1_${YY}.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
-        ncap2 -h -O -s "${name3}=${name1}-${name2}" temp1_${YY}.nc temp1_${YY}.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
-        ncatted -h -a long_name,${name3},m,c,"averaged solar upward radiataion at top" ${file3}
-        chmod ${PERM} ${file3}
-        rm temp1_${YY}.nc 
-      else
-        echov "$(basename ${file3})  already exists. Use option -o to overwrite. Skipping..." 
-      fi
-    else
-      echo "Input Files for generating ASOU_T are not available"
-    fi
-  #
-  # Total runoff: RUNOFF_T
-    name1=RUNOFF_S
-    name2=RUNOFF_G
-    name3=RUNOFF_T
-    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
-    if [ -f ${file1} -a -f ${file2} ]
-    then
-      ((c1 = ${#file1}-23 )) 
-      ((c2 = ${#file1}-3 ))
-      DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
-      if [ ! -f ${file3} ] ||  ${overwrite}
-      then
-        echon "Create RUNOFF_T"
-        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1_${YY}.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
-        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1_${YY}.nc temp1_${YY}.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
-        ncatted -h -a long_name,${name3},m,c,"total runoff" -a standard_name,${name3},m,c,"total_runoff_amount" ${file3}
-        chmod ${PERM} ${file3}
-        rm temp1_${YY}.nc 
-      else
-        echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
-      fi
-    else
-      echo "Input Files for generating RUNOFF_T are not available"
-    fi
-  #
-  # Total convective precipitation: PREC_CON
-    name1=RAIN_CON
-    name2=SNOW_CON
-    name3=PREC_CON
-    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
-    if [ -f ${file1} -a -f ${file2} ]
-    then
-      ((c1 = ${#file1}-23 )) 
-      ((c2 = ${#file1}-3 ))
-      DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
-      if [ ! -f ${file3} ] ||  ${overwrite}
-      then
-        echon "Create PREC_CON"
-        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1_${YY}.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
-        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1_${YY}.nc temp1_${YY}.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
-        ncatted -h -a long_name,${name3},m,c,"convective precipitation" -a standard_name,${name3},m,c,"convective_precipitation_amount" ${file3}
-        chmod ${PERM} ${file3}
-        rm temp1_${YY}.nc 
-      else
-        echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
-      fi
-    else
-      echo "Input Files for generating PREC_CON are not available"
-    fi
-  #
-  # Total snow: TOT_SNOW
-    name1=SNOW_GSP
-    name2=SNOW_CON
-    name3=TOT_SNOW
-    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
-    if [ -f ${file1} -a -f ${file2} ]
-    then
-     ((c1 = ${#file1}-23 )) 
-     ((c2 = ${#file1}-3 ))
-      DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
-      if [ ! -f ${file3} ] ||  ${overwrite}
-      then
-        echon "Create TOT_SNOW"
-        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1_${YY}.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
-        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1_${YY}.nc temp1_${YY}.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
-        ncatted -h -a long_name,${name3},m,c,"total snowfall" -a standard_name,${name3},m,c,"total_snowfall_amount" ${file3}
-        chmod ${PERM} ${file3}
-        rm temp1_${YY}.nc 
-      else
-        echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..." 
-      fi
-    else
-      echo "Input Files for generating TOT_SNOW are not available"
-    fi
-  #
-  # cloud condensed water content TQW
-    name1=TQC
-    name2=TQI
-    name3=TQW
-    file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-    file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
-    if [ -f ${file1} -a -f ${file2} ]
-    then
-      ((c1 = ${#file1}-23 )) 
-      ((c2 = ${#file1}-3 ))
-      DATE=`ls ${file1} |cut -c${c1}-${c2}`
-      file3=${OUTDIR2}/${name3}/${name3}_${DATE}.nc
-      if [ ! -f ${file3} ] ||  ${overwrite}
-      then
-        echon "Create TQW"
-        [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
-        cp ${file1} temp1_${YY}.nc
-        ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
-        ncap2 -h -O -s "${name3}=${name1}+${name2}" temp1_${YY}.nc temp1_${YY}.nc 
-        ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
-        ncatted -h -a long_name,${name3},m,c,"vertiacl integrated cloud condensed water" -a standard_name,${name3},m,c,"atmosphere_cloud_condensed_water_content" ${file3}
-        chmod ${PERM} ${file3}
-        rm temp1_${YY}.nc 
-      else
-        echov "$(basename ${file3}) already exists. Use option -o to overwrite. Skipping..."
-      fi
-    else
-      echo "Input Files for generating TQW are not available"
-    fi
+
+    # Mean wind spdeed at 10m height: SP_10M
+    create_add_vars "U_10M" "V_10M" "SP_10M" "add_sqr" "wind_speed"
+    
+    # Total downward global radiation at the surface: ASWD_S
+    create_add_vars "ASWDIR_S" "ASWDIFD_S" "ASWD_S" "add" "averaged_downward_sw_radiation_sfc" 
+    
+    # upward solar radiation at TOA: ASOU_T
+    create_add_vars "ASOD_T" "ASOB_T" "ASOU_T" "subs" "averaged_solar_upward_radiation_top" 
+    
+    # Total runoff: RUNOFF_T
+    create_add_vars "RUNOFF_S" "RUNOFF_G" "RUNOFF_T" "add" "total_runoff_amount"
+    
+    # Total convective precipitation: PREC_CON
+    create_add_vars "RAIN_CON" "SNOW_CON" "PREC_CON" "add" "convective_precipitation_amount"
+    
+    # Total snow: TOT_SNOW
+    create_add_vars "SNOW_GSP" "SNOW_CON" "TOT_SNOW" "add" "total_snowfall_amount"
+    
+    # cloud condensed water content TQW
+    create_add_vars "TQC" "TQI" "TQW" "add" "atmosphere_cloud_condensed_water_content"  
   #
   fi
+  
   (( YY=YY+1 ))
   DATE2=$(date +%s)
 	SEC_TOTAL=$(python -c "print(${DATE2}-${DATE1})")

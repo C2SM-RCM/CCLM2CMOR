@@ -1,12 +1,17 @@
-# settings.py
+"""
+
+Processes some of the entries in the configuration file: builds directory paths and lists
+reads in the variables table
+
+"""
+
 
 import csv
 import configuration as config
-#import sys
 
 def init(vartable):
     '''
-        set global variables
+    Set global variables and read the variables table vartable
     '''
     # base path for all other path
     global BasePath
@@ -14,9 +19,7 @@ def init(vartable):
     global DataPath
     DataPath = config.get_config_value('settings', 'DataPath',exitprog=False)
 
-    #
-    # Basic path to the archive (system dependent)
-    #
+
     global DirIn
     DirIn = ("%s/%s" % (DataPath,config.get_config_value('settings', 'DirIn')))
 
@@ -95,4 +98,3 @@ def init(vartable):
        '366_day':             [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
        '360_day':             [0, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30]}
 
-#    print __name__

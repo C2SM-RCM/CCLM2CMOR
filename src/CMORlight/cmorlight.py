@@ -1,13 +1,14 @@
-#!/bin/env python
-#
-# creates CORDEX standard CMOR compliant output from preprocessed input
-#
+"""
+
+Main script of the second CMOR step. Calls all other Python functions.
+
+"""
+
 import os
 import sys
 import shutil
 
 from datetime import datetime
-#from datetime import timedelta
 
 #for multiprocessing
 from multiprocessing import Pool
@@ -33,10 +34,21 @@ log = logging.getLogger("cmorlight")
 # -----------------------------------------------------------------------------
 def process_file_unpack(args):
     '''Helper function for multiprocessing to unpack arguments before using pool.map'''
+
     return tools.process_file(*args)
 
 def process_resolution(params,reslist):
-    ''' '''
+    '''
+    Processes files for variable defined by params for all resolutions in reslist
+
+    Parameters
+    ----------
+    params : list
+        Row in variables table corresponding to variable processed in the call of this function
+    reslist : list
+        List of resolutions the variable should be processed at
+    '''
+
     log = logging.getLogger("cmorlight")
 
     # get cdf variable name
@@ -46,11 +58,6 @@ def process_resolution(params,reslist):
     in_dir = "%s/%s" % (tools.get_input_path(),params[config.get_config_value('index','INDEX_RCM_NAME')])
     log.debug("Looking for input dir(1): %s" % (in_dir))
 
-#    #if no input exists for prhmax use input of pr instead
-#    if os.path.isdir(in_dir) == False and var=="prhmax":
-#        varRCM=settings.param["pr"][config.get_config_value('index','INDEX_RCM_NAME')]
-#        log.info("Input directory does not exist. Use variable %s as input " % varRCM)
-#        in_dir = "%s/%s" % (tools.get_input_path(var),varRCM)
     if os.path.isdir(in_dir) == False:
         log.error("Input directory does not exist(0): %s \n \t Change base path in .ini file or create directory! " % in_dir)
         return
@@ -115,8 +122,6 @@ def process_resolution(params,reslist):
         pool.terminate()
 
     log.info("Variable '%s' finished!" % (var))
-
-    return True
 
 
 # -----------------------------------------------------------------------------

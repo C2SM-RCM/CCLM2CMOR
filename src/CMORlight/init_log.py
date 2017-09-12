@@ -1,7 +1,37 @@
+"""
+
+Sets up custom logger
+
+"""
+
 import logging
 
 def setup_custom_logger(name,filename='/dev/null',propagate=False,normal_log=True,verbose_log=False,append_log=False):
-    #formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
+    """
+    Sets up custom logger and returns it
+
+    Parameters
+    ----------
+
+    name : str
+        Name of the logger with which it can be called
+    filename : str
+        absolute path of the logger
+    propagate : bool
+        if logged information should also be propagated to the standard output
+    normal_log : bool
+        if True, logger gets logging level INFO; if false, the level is WARNING (unless verbose_log == True)
+    verbose_log : bool
+        if True, logger gets logging level DEBUG
+    append_log : bool
+        if True, logged information is appended to the file, if false, the file is overwritten
+
+    Returns
+    -------
+
+    log : logging.Logger
+        Custom logger
+    """
     if verbose_log:
         level=logging.DEBUG
     elif normal_log:

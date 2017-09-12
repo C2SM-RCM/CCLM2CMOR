@@ -34,6 +34,8 @@ CMORLIGHT:
     - negative values for missingValue and FillValue in some files? -> should be positive? -> find and replace?
     -change xfer to not use settings.sh but give command line args or create current_settings file
     - progress bar
+
+    - in set_coord_attributes: should it write rlon or lon?
     
     - every step in process_file needed to be carried out for every file??? -> raise performance!
     - seasonal mean integrated in process_file but not perfectly economic?

@@ -22,7 +22,6 @@ do
 done
 
 TIME1=$(date +%s)
-cd ${SCRATCH}/CMOR/src
 
 source ./settings.sh
 
@@ -171,8 +170,8 @@ then
   (( STOP_DATE=STOP_DATE+1 ))
   STOP_DATE="${STOP_DATE}01"
 else
-  START_DATE= $(echo ${START_DATE} | cut -c1-6) 
-  STOP_DATE=$(echo ${STOP_DATE} | cut -c1-6) 
+  START_DATE=$(echo ${START_DATE} | cut -c1-6)
+  STOP_DATE=$(echo ${STOP_DATE} | cut -c1-6)
 fi
 
 #if no archives have been extracted in the beginning:
@@ -261,7 +260,7 @@ then
 fi
 
 #Delete input data
-if ${batch}
+if ${batch} && [ ${post_step} -ne 2 ]
 then
   echo "deleting input data"
   sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP} -I ${INDIR1}

@@ -1,6 +1,8 @@
-# tools.py
+"""
 
-# system tools
+Contains all the functions for processing the files
+
+"""
 import os
 import sys
 
@@ -20,7 +22,6 @@ import configuration as config
 import settings
 
 from datetime import datetime
-#from datetime import timedelta
 
 # uuid support
 import uuid
@@ -31,10 +32,21 @@ import time as timepkg
 # support logging
 import logging
 log = logging.getLogger("cmorlight")
+
+
+
 # -----------------------------------------------------------------------------
 def shell(cmd,logger=log):
     '''
     Call a shell command
+
+    Parameters
+    ----------
+
+    cmd : str
+        Shell command to execute
+    logger : logging.Logger
+        Which logger to use
     '''
     prc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     prc.wait()
@@ -47,9 +59,8 @@ def shell(cmd,logger=log):
 
 
 # -----------------------------------------------------------------------------
-# get list of variables to rotate
 def get_input_path(derotated=False):
-    ''' '''
+    ''' Read input path from settings, take derotated one if needed'''
     if derotated:
         retVal = settings.DirDerotated
     else:
@@ -60,7 +71,7 @@ def get_input_path(derotated=False):
 # -----------------------------------------------------------------------------
 def get_var_lists():
     '''
-    Extract all variables to process from parameter table
+    Extract all required variables from parameter table
     '''
     lst = []
     for row in sorted(settings.param):
@@ -71,12 +82,9 @@ def get_var_lists():
 
 
 # -----------------------------------------------------------------------------
-# set global attributes
 def set_attributes(params,proc_list=None):
     '''
-    fill dictionary with global attributes
-    fill dictionary with additional netcdf attributes
-
+    fill dictionaries in settings with global attributes and additional netcdf attributes
     '''
     # get attributes for actual model
     for name in settings.global_attr_list :
@@ -110,8 +118,7 @@ def set_attributes(params,proc_list=None):
 # -----------------------------------------------------------------------------
 def create_outpath(res,var):
     '''
-    Create the output path from all Global attributes
-    needed to confirm the CORDEX DSR
+    Create and return the output path string from global attributes and dependent on resolution res and variable var
     '''
     result = ""
 
@@ -150,16 +157,9 @@ def create_outpath(res,var):
 
 # -----------------------------------------------------------------------------
 def create_filename(var,res,dt_start,dt_stop,logger=log):
-    ''' '''
-    # 3hr file: pr_EUR-11_ECMWF-ERAINT_evaluation_r1i1p1_CLMcom-CCLM4-8-17_v1_3hr_198901010130-199012312230.nc
-    # 6hr file: vas_EUR-11_ECMWF-ERAINT_evaluation_r1i1p1_SMHI-RCA4_v1_6hr_       2003010100-2003123118.nc
-    # 6hr file: pr_EUR-11_ECMWF-ERAINT_evaluation_r1i1p1_CLMcom-CCLM4-8-17_v1_6hr_1989010100-1990123118.nc
-    # day file: pr_EUR-11_ECMWF-ERAINT_evaluation_r1i1p1_CLMcom-CCLM4-8-17_v1_day_19890101-19901231.nc
-    # mon file: pr_EUR-11_ECMWF-ERAINT_evaluation_r1i1p1_CLMcom-CCLM4-8-17_v1_mon_198901-199012.nc
-    # sem file: pr_EUR-11_ECMWF-ERAINT_evaluation_r1i1p1_CLMcom-CCLM4-8-17_v1_sem_198904-199010.nc
-
-    # cut off the day in time range
-    # TODO workaround: add times in case of 3hr and 6hr (better_ get from real time value)
+    '''
+    Create and return the filename string from global attributes and dependent on resolution res, variable var and time range dt_start to dt_stop
+    '''
 
     #File naming different for instantaneous and interval representing (average,min,max) variables
     agg=settings.param[var][config.get_config_value('index','INDEX_FRE_AGG')] #subdaily aggregation method: average or instantaneous
@@ -204,7 +204,6 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
     logger.debug("Filename start/stop: %s, %s" % (dt_start,dt_stop))
 
     result = ""
-    # zg500_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-CCLM4-8-17_v1_day_19510101-19551231.nc
     result = "%s_%s_%s_%s_%s_%s_%s_%s_%s-%s.nc" % (var,
                     settings.Global_attributes["CORDEX_domain"],
                     settings.Global_attributes["driving_model_id"],
@@ -220,17 +219,13 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
 
 
 # -----------------------------------------------------------------------------
-def compress_output(outpath,index_per_day=8,year=0,logger=log):
-    ''' '''
-    # create object for output file
+def compress_output(outpath,year=0,logger=log):
+    ''' Compress files with nccopy'''
+
     if os.path.exists(outpath):
         try:
             ftmp_name = "%s/%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()))
-            # 3hr data
-            if index_per_day == 8:
-                cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
-            else:
-                cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
+            cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
             retval=shell(cmd,logger=logger)
             # remove help file
             os.remove(outpath)
@@ -243,19 +238,21 @@ def compress_output(outpath,index_per_day=8,year=0,logger=log):
 
 # -----------------------------------------------------------------------------
 def set_attributes_create(outpath,res=None,year=0,logger=log):
-    ''' '''
-    # create object for output file
+    ''' Set and delete some (global) attributes'''
+
     if os.path.exists(outpath):
         f_out = Dataset(outpath,'r+')
         # set resolution if passed
         if res:
             f_out.setncattr("frequency",res)
-        try:
+
+        try: #delete unnecessary attribute
             f_out.variables["lon"].delncattr("_CoordinateAxisType")
             f_out.variables["lat"].delncattr("_CoordinateAxisType")
         except:
             pass
-        # set (new) tracking_id
+
+        # set new tracking_id
         f_out.setncattr("tracking_id",str(year)+str(uuid.uuid1()))
         # set new creation_date
         f_out.setncattr("creation_date",datetime.now().strftime(settings.FMT))
@@ -274,14 +271,21 @@ def set_attributes_create(outpath,res=None,year=0,logger=log):
 # -----------------------------------------------------------------------------
 def set_coord_attributes(f_var,f_out):
     """
-    set the attribute depending on settings in input control file
+    Set the attributes of the pressure or height variable and the coordinates attribute of the variable f_var
+
+    Parameters
+    ----------
+
+    f_var : netCDF4._netCDF4.Variable
+        Variable of netCDF Dataset being processed
+    f_out : netCDF4._netCDF4.Dataset
+        Input file opened as a netCDF Dataset
     """
+
     if not f_out:
         log.warning("No output object for setting coordinates value available!")
         return
-    # skip variables
-    #if 'mrfso' in f_out.variables or 'mrro' in f_out.variables:
-        #return
+
     if 'plev' in f_out.variables:
         var_out = f_out.variables ['plev']
         var_out.units = "Pa"
@@ -329,8 +333,9 @@ def set_coord_attributes(f_var,f_out):
 # -----------------------------------------------------------------------------
 def new_dataset_version():
     '''
-    Create new dataset version from actual date
-    this will be inserted in the CORDEX output DRS directory structure
+    Create and return new dataset version from current date
+    this will be inserted in the output directory structure
+    if add_version_to_outpath=True in configuration file
     '''
     return datetime.now().strftime("%Y%m%d")
 
@@ -338,7 +343,9 @@ def new_dataset_version():
 # -----------------------------------------------------------------------------
 def get_out_dir(var,res,cm_type):
     '''
-    creates an output path from variable,resolution,cell methods
+    Create and return the complete output path string using the resolution res and the variable var
+    and make the corresponding directory
+
     '''
     if cm_type != '':
         outpath = create_outpath(res,var)
@@ -356,7 +363,7 @@ def get_out_dir(var,res,cm_type):
 def proc_chunking(params,reslist):
     """
     create AGG_DAY (day) or AGG_MON (mon) years chunks of yearly input files
-    (as defined in .ini file; default: 5 and 10, respectively)
+    (as defined in configuration file; default: 5 and 10, respectively)
     """
 
     # get cdf variable name
@@ -423,6 +430,8 @@ def proc_chunking(params,reslist):
 
 # -----------------------------------------------------------------------------
 def do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir):
+    """ Execute actual chunking"""
+
     if len(f_list) > 1:
 
         # generate complete output path with output filename
@@ -877,7 +886,7 @@ def process_file_fix(params,in_file):
 
     # ncopy file to correct output format
     if config.get_config_value('boolean','nc_compress') == True:
-        compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')])
+        compress_output(outpath)
     log.info("Variable attributes set!")
 
     # close input file
@@ -1062,7 +1071,7 @@ def proc_seasonal_mean(params,year):
                 set_attributes_create(outpath,res,year)
                 # correct netcdf version
                 if config.get_config_value('boolean','nc_compress') == True:
-                    compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')],year,logger=logger)
+                    compress_output(outpath,year,logger=logger)
 
                 # exist in some output (e.g. CCLM) in CORDEX, default: False
                 if config.get_config_value('boolean','add_vertices') == True:
@@ -1865,7 +1874,7 @@ def process_file(params,in_file,var,reslist,year):
 
             # ncopy file to correct output format
             if config.get_config_value('boolean','nc_compress') == True:
-                compress_output(outpath,params[config.get_config_value('index','INDEX_FRE_DAY')],year,logger=logger)
+                compress_output(outpath,year,logger=logger)
             logger.info("Variable attributes set!")
 
 

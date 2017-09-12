@@ -1,16 +1,12 @@
-#!/usr/bin/python
-#
-# configure programm
-#
-# Hans Ramthun
-# DKRZ 2016, 2017
-#
-#
-######################################################################################################
+"""
+
+Reads in configuration from control_cmor.ini and provides functions to read or change the entries
+
+"""
+
 import logging
 import pkg_resources
 import sys
-import os
 
 if (sys.version_info < (3, 0)):
     import ConfigParser
@@ -26,12 +22,23 @@ LOGGER = logging.getLogger("cmorlight")
 
 
 def get_config_value(section, option, exitprog = True):
-    """Get desired value from  configuration files
-    :param section: section in configuration files
-    :type section: string
-    :param option: option in the section
-    :type option: string
-    :returns: value found in the configuration file
+    """
+    Get desired value from  configuration file
+
+    Parameters
+    ----------
+
+    section : str
+        section in configuration file
+    option : str
+        option in the section
+    exitprog : bool
+        whether to exit the program with an error message if value was not found
+
+    Returns
+    -------
+
+    value found in the configuration file
     """
 
     if not CONFIG:
@@ -69,7 +76,24 @@ def get_config_value(section, option, exitprog = True):
 
 # -----------------------------------------------------------------------------
 def get_sim_value(option, exitprog = True):
-    """Get value from simulation section."""
+    """
+    Get value from simulation section.
+
+    Parameters
+    ----------
+
+    option : str
+        option in the simulation section
+
+    exitprog : bool
+        whether to exit the program with an error message if value was not found
+
+    Returns
+    -------
+
+    value found in the configuration file
+
+    """
 
     simulation = get_config_value('settings','simulation')
     return get_config_value("settings_%s" % (simulation), option, exitprog)
@@ -77,7 +101,20 @@ def get_sim_value(option, exitprog = True):
 
 # -----------------------------------------------------------------------------
 def set_config_value(section, option, value):
-    ''' '''
+    """
+    Set configuration value.
+
+    Parameters
+    ----------
+
+    section : str
+        section in configuration file
+    option : str
+        option in the section
+    value : convertible to str
+        value to be set
+
+    """
     if not CONFIG:
         sys.exit("ERROR: Load configuration file before getting/setting config values! Exiting...")
 
@@ -92,10 +129,15 @@ def set_config_value(section, option, value):
 
 # -----------------------------------------------------------------------------
 def load_configuration(inifile):
-    """Load PyWPS configuration from configuration files.
+    """
+    Load PyWPS configuration from configuration files.
     The later configuration file in the array overwrites configuration
     from the first.
-    :param cfgfiles: list of configuration files
+
+    Parameters
+    ----------
+    inifile : str or list of str
+        absolute path(s) to configuration file(s)
     """
     global CONFIG
 

@@ -21,7 +21,7 @@ SIM_START=1949120100 # start date of simulation YYYYMMDDHH[mmss]: needed for con
 
 #processing range for step 1:
 START_DATE=200601      #Start year and month for processing (if not given in command line YYYYMM
-STOP_DATE=210012    #End year and month for processing (if not given in command line  YYYYMM
+STOP_DATE=209812    #End year and month for processing (if not given in command line  YYYYMM
 
 #for step 2 (if different from step 1:
 YYA=  #Start year for processing YYYY
@@ -58,8 +58,8 @@ PLEVS=(200. 500. 850. 925.)  # list of pressure levels to output.The list must b
 #-------------------------------------------
 #Special settings for second step
 
-proc_list="RELHUM_2M" #which variables to process (set proc_all=false for this to take effect
-proc_all=false #process all available variables (not only those in proc_list
+proc_list="TOT_SNOW" #which variables to process (set proc_all=false for this to take effect); separated by spaces
+proc_all=true #process all available variables (not only those in proc_list)
 LFILE=0  # Set LFILE=1 if only primary fields (given out by COSMO should be created and =2 for only secondary fields (additionally calculated for CORDEX; for any other number both types of fields are calculated
 
 
