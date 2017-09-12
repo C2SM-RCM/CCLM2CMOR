@@ -29,9 +29,11 @@ CMORLIGHT:
     -NBOUNDCUT -> 13 from Archive specs (table domain)?
      IE_TOT-> calculate from file?    
      - CCLM subversion and institute ID (CLMcom?)
+        -second.sh always assumes 3 digits for pressure level: line 4!
     - performance gain of shell scripts: don't concatenate monthly but yearly directly -> skip one step
     - negative values for missingValue and FillValue in some files? -> should be positive? -> find and replace?
     -change xfer to not use settings.sh but give command line args or create current_settings file
+    - progress bar
     
     - every step in process_file needed to be carried out for every file??? -> raise performance!
     - seasonal mean integrated in process_file but not perfectly economic?

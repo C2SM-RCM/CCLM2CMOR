@@ -11,27 +11,29 @@ def init(vartable):
     # base path for all other path
     global BasePath
     BasePath = config.get_config_value('settings', 'BasePath',exitprog=False)
+    global DataPath
+    DataPath = config.get_config_value('settings', 'DataPath',exitprog=False)
 
     #
     # Basic path to the archive (system dependent)
     #
     global DirIn
-    DirIn = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirIn')))
+    DirIn = ("%s/%s" % (DataPath,config.get_config_value('settings', 'DirIn')))
 
     global DirOut
-    DirOut = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirOut')))
+    DirOut = ("%s/%s" % (DataPath,config.get_config_value('settings', 'DirOut')))
 
     global DirConfig
     DirConfig = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirConfig')))
 
     global DirWork
-    DirWork = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirWork')))
+    DirWork = ("%s/%s" % (DataPath,config.get_config_value('settings', 'DirWork')))
 
     global DirLog
     DirLog = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirLog')))
 
     global DirDerotated
-    DirDerotated = ("%s/%s" % (BasePath,config.get_config_value('settings', 'DirDerotated')))
+    DirDerotated = ("%s/%s" % (DataPath,config.get_config_value('settings', 'DirDerotated')))
 
     global global_attr_list
     global_attr_list = config.get_config_value('settings','global_attr_list').split(',')

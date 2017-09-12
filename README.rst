@@ -255,7 +255,7 @@ For this, specify the number of available cores in the configuration file
 and the desired time range over the command line or in the configuration
 file. When multiprocessing, a log file for each year is created. Search
 for logged errors or warnings in all these files (on Linux e.g. with
-grep warning -r and grep error -r in the log directory) to make sure
+grep WARNING -r and grep ERROR -r in the log directory) to make sure
 everything went ok.
 
 After the processing you can concatenate the files to chunks by running

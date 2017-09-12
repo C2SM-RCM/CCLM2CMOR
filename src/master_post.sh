@@ -4,8 +4,8 @@
 ##SBATCH --partition=prepost
 #SBATCH --time=02:00:00
 #SBATCH --constraint=gpu
-#SBATCH --output=/scratch/snx1600/mgoebel/CMOR/logs/shell/CMOR_sh_%j.out
-#SBATCH --error=/scratch/snx1600/mgoebel/CMOR/logs/shell/CMOR_sh_%j.err
+#SBATCH --output=/users/mgoebel/CMOR/logs/shell/CMOR_sh_%j.out
+#SBATCH --error=/users/mgoebel/CMOR/logs/shell/CMOR_sh_%j.err
 #SBATCH --job-name="CMOR_sh"
 
 

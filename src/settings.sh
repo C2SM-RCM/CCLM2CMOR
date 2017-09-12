@@ -30,19 +30,21 @@ YYE= #End year for processing YYYY
 #-------------------------------------------
 # Directory path settings
 
-BASEDIR=${SCRATCH}/CMOR  #Base directory 
+BASEDIR=/users/${USER}/CMOR #Directory where the scripts are placed 
+DATADIR=${SCRATCH}/CMOR  #Directory where all the data will be placed (typically at /scratch/)
+
 ARCH_BASE=/store/c2sm/ch4/ssilje/Archive_cosmo_runs # directory where the raw data of the simulations are archived
-SRCDIR=${BASEDIR}/src/cclm_post           # directory where the post processing scripts are stored
-WORKDIR=${BASEDIR}/work/post # work directory, CAUTION: WITH OPTION "--clean" ALL FILES IN THIS FOLDER WILL BE DELETED AFTER PROCESSING!
-LOGDIR=${BASEDIR}/logs/shell
+SRCDIR=${BASEDIR}/src/cclm_post       # directory where the post processing scripts are stored
+WORKDIR=${DATADIR}/work/post # work directory, CAUTION: WITH OPTION "--clean" ALL FILES IN THIS FOLDER WILL BE DELETED AFTER PROCESSING!
+LOGDIR=${BASEDIR}/logs/shell #logging directory
 
 #input/output directory for first step
-INDIR_BASE1=${BASEDIR}/input     # directory to where the raw data archives are extracted
-OUTDIR_BASE1=${BASEDIR}/work/outputpost # output directory of the first step
+INDIR_BASE1=${DATADIR}/input     # directory to where the raw data archives are extracted
+OUTDIR_BASE1=${DATADIR}/work/outputpost # output directory of the first step
 
 #for second step
 INDIR_BASE2=${OUTDIR_BASE1}
-OUTDIR_BASE2=${BASEDIR}/work/input_CMORlight
+OUTDIR_BASE2=${DATADIR}/work/input_CMORlight
 
 
 #-------------------------------------------
