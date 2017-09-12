@@ -28,44 +28,28 @@ CMORLIGHT:
     GENERAL
     -NBOUNDCUT -> 13 from Archive specs (table domain)?
      IE_TOT-> calculate from file?    
-     - CCLM subversion and institute ID (CLMcom?)
-        -second.sh always assumes 3 digits for pressure level: line 4!
-    - performance gain of shell scripts: don't concatenate monthly but yearly directly -> skip one step
+    -second.sh always assumes 3 digits for pressure level: line 4!
     - negative values for missingValue and FillValue in some files? -> should be positive? -> find and replace?
     -change xfer to not use settings.sh but give command line args or create current_settings file
     - progress bar
-
     - in set_coord_attributes: should it write rlon or lon?
-    
     - every step in process_file needed to be carried out for every file??? -> raise performance!
     - seasonal mean integrated in process_file but not perfectly economic?
-    - wenn nicht exisitierende variablen verlangt werden (e.g. durch --all): er sagt resolution nicht verfügbar, aber soll sagen variable nicht da
-    - check sanity of parameter table before processing each variable: for subdaily: check if agg. method given, otherwise skip subdaily!
-    - zwei wege welche var prozessiert werden sollen:
-      1. schau in tabelle und mach alle die tatsächlich vorhanden sind, warning für fehlende
-      2. schau in order und prozessiere alle die in tabelle sind, warning für fehlende in tabelle bzw fehlende in ordner
-    - W_SNOW berechnen
-
-    -should be possible to use cclm_const file instead of processing FR_LAND and HSURF
     - rlon rlat in coordinates_cordex_eur11.nc nachschauen wenn nicht vorhanden
-    - deutlicher dass es sich um programmabbruch handelt
-    - which attributes does cordex allow? How should they look like
-    - 4.spalte in tabelle als comment hinzufügen
+
+
+    - performance gain of shell scripts: don't concatenate monthly but yearly directly -> skip one step
+    - check sanity of parameter table before processing each variable: for subdaily: check if agg. method given, otherwise skip subdaily!
+    - W_SNOW berechnen
     - wenn mehrere reslist angegeben: erst hohe auflösung dann niedrigere -> kann mit hoher.temp weiterrechnen um rechenzeit zu sparen, muss nicht mehr auf rohdaten zugreifen: teilweise realsiert für day, mon; nicht für 6hr, day
+
 
     TESTS:
     - check what happens if necessary attribute is not in .ini list and not taken from file
     - check timebounds in filename and in attributes
-    - check ob lon lat verfügbar fehlt
-    - check what happens if inifile not existent
     - check if error message works if conversion factor not set or set to 0
 
     INFO
-
-    rote variablen: wolkendichte nicht ausgegeben da CORDEX nicht definiert hat was höhen bedeuten
-
-
-
 
     DOC:
 

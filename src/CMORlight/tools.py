@@ -731,6 +731,11 @@ def process_file_fix(params,in_file):
     if mulc_factor == 0:
         log.warning("Conversion factor for %s is set to 0 in parameter table. Setting it to 1..." % params[config.get_config_value('index','INDEX_RCM_NAME')])
         mulc_factor = 1.0
+
+    if config.get_config_value('boolean','nc_compress') == True:
+        log.info("COMPRESS all variables")
+    else:
+            log.info("NO COMPRESS")
     for var_name, variable in f_in.variables.items():
         # don't copy time_bnds if cm == point or variable time_bnds
         log.debug("VAR: %s" % (var_name))
@@ -750,10 +755,7 @@ def process_file_fix(params,in_file):
             data_type = var_in.datatype
         # at variable creation set fill_vlue, later is impossible
         # also set the compression
-        if config.get_config_value('boolean','nc_compress') == True:
-            log.info("COMPRESS all variables")
-        else:
-            log.info("NO COMPRESS")
+
         # skip 'pressure'!!
         my_lst = []
         for dim in var_in.dimensions:
@@ -763,7 +765,7 @@ def process_file_fix(params,in_file):
             if str(dim) not in settings.varlist_reject:
                 my_lst.append(dim)
         var_dims = tuple(my_lst)
-        log.info("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
+        log.debug("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
 
 
   #      if var_name not in f_out.variables:
@@ -811,7 +813,7 @@ def process_file_fix(params,in_file):
 
 
         # copy content to new datatype
-        log.info("Copy from input: %s" % (var_out.name))
+        log.debug("Copy from input: %s" % (var_out.name))
 
         if var_name in ['rlon','rlat','rotated_pole','rotated_latitude_longitude']:
             var_out[:] = var_in[:]
@@ -883,9 +885,6 @@ def process_file_fix(params,in_file):
 
     # close input file
     f_in.close()
-
-    # ready message
-    log.info("Variable '%s' finished!" % (var))
 
 
 # -----------------------------------------------------------------------------
