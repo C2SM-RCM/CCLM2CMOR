@@ -67,7 +67,7 @@ def process_resolution(params,reslist):
         for f in sorted(filenames):
             year=f.split("_")[-1][:4]
             #use other logger
-            if config.get_config_value("boolean","multi"):
+            if config.get_config_value("boolean","multi") and var not in settings.var_list_fixed :
                 log = logging.getLogger("cmorlight_"+year)
                 log.info("\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (var, varRCM))
                 log.info("Start processing at: "+str(datetime.now()))

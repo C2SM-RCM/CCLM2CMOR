@@ -18,9 +18,11 @@ to use the tool with other models than the CCLM model.
 
 Requirements
 ============
-For this tool to work a number of command line tools and Python packages
+For this tool to work, a number of command line tools and Python packages
 needed.
-The command line programs you need are: ncrcat,ncks,ncap2,ncatted,nccopy,cdo
+The command line programs you need are:
+*ncrcat, ncks, ncap2, ncatted, nccopy and cdo*
+
 For the Python packages please look into the .py source code files or
 just try to run the code to see which packages are 
 missing.
@@ -249,7 +251,10 @@ The processing will finish much faster when using multiprocessing
 (``--multi``). In this way several years are processed simultaneously.
 For this, specify the number of available cores in the configuration file 
 and the desired time range over the command line or in the configuration
-file.
+file. When multiprocessing, a log file for each year is created. Search
+for logged errors or warnings in all these files (on Linux e.g. with
+grep warning -r and grep error -r in the log directory) to make sure
+everything went ok.
 
 After the processing you can concatenate the files to chunks by running
 the script again with the ``--chunk-var`` option. Add the option

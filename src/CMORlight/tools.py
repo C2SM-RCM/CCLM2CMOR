@@ -1267,7 +1267,12 @@ def process_file(params,in_file,var,reslist,year):
 
     #stop if year is not correct
     if str(a)[:4] != year:
-        raise Exception(("File %s seems to be corrupt! The year from the filename is not the same as the year of the first data point!" % in_file))
+        cmd= "File %s seems to be corrupt! The year from the filename is not the same as the year of the first data point %s! Skipping year..." % (in_file,str(a))
+        logger.error(cmd)
+        print(cmd)
+        f_in.close()
+        return reslist
+
     # difference one day: seconds of time delta are '0'!
     if tdelta_seconds == 0:
         tdelta_seconds = tdelta.days * 24 * 3600.
@@ -1842,7 +1847,7 @@ def process_file(params,in_file,var,reslist,year):
 
             #delete bounds dimension if not used:
             if ("bnds" in f_out.dimensions) and (cm_type=="point"):
-                log.info("Deleting unused bounds dimension")
+                logger.info("Deleting unused bounds dimension")
                 f_out.createVariable("help",datatype="d",dimensions=("bnds",))
                 f_out.sync()
                 f_out.close()
