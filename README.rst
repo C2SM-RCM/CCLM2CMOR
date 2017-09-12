@@ -18,17 +18,19 @@ to use the tool with other models than the CCLM model.
 
 Requirements
 ============
-For this tool to work, a number of command line tools and Python packages
+
+For this tool to work, a number of command line tools and Python packages are
 needed.
 The command line programs you need are:
-*ncrcat, ncks, ncap2, ncatted, nccopy and cdo*
+*ncrcat, ncks, ncap2, ncatted, nccopy* and *cdo*
 
 For the Python packages please look into the .py source code files or
 just try to run the code to see which packages are 
 missing.
-The code works with Python 2.7 and 3.6 (and maybe also older versions)
+The code works with Python 2.7 and 3.6 (and maybe also older versions).
 If you have the relevant tools installed on your machine, there is no 
 further installation needed.
+
 
 Sources
 =======
