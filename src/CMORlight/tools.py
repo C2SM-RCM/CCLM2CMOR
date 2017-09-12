@@ -341,23 +341,19 @@ def new_dataset_version():
 
 
 # -----------------------------------------------------------------------------
-def get_out_dir(var,res,cm_type):
+def get_out_dir(var,res):
     '''
     Create and return the complete output path string using the resolution res and the variable var
     and make the corresponding directory
 
     '''
-    if cm_type != '':
-        outpath = create_outpath(res,var)
-        outpath = "%s/%s" % (settings.DirOut,outpath)
-        try:
-            os.makedirs(outpath)
-        except:
-            pass
-        return outpath
-    else:
-        return ""
-
+    outpath = create_outpath(res,var)
+    outpath = "%s/%s" % (settings.DirOut,outpath)
+    try:
+        os.makedirs(outpath)
+    except:
+        pass
+    return outpath
 
 # -----------------------------------------------------------------------------
 def proc_chunking(params,reslist):
@@ -372,61 +368,57 @@ def proc_chunking(params,reslist):
     for res in reslist:
         if res == 'day':
             max_agg = config.get_config_value('index','AGG_DAY')
-            cm_type = params[config.get_config_value('index','INDEX_VAR_CM_DAY')]
         elif res == 'mon':
             max_agg = config.get_config_value('index','AGG_MON')
-            cm_type = params[config.get_config_value('index','INDEX_VAR_CM_MON')]
         elif res == 'sem':
             max_agg = config.get_config_value('index','AGG_MON')
-            cm_type = params[config.get_config_value('index','INDEX_VAR_CM_MON')]
         else:
             cmd = "Resolution (%s) is not supported in chunking, keep it as it is." % res
             log.debug(cmd)
             continue
         log.log(35,"resolution: %s " % (res))
-        if cm_type != '':
-            outdir = get_out_dir(var,res,cm_type)
-            for dirpath,dirnames,filenames in os.walk(outdir):
-                f_list = []
-                start_yr = 0
-                stop_yr = 0
-                flist = ''
-                for f in sorted(filenames):
-                    if f[-3:] != ".nc": #skip unsuitable files
-                        continue
-                    idx = f.index("%s_" % res)
+        outdir = get_out_dir(var,res)
+        for dirpath,dirnames,filenames in os.walk(outdir):
+            f_list = []
+            start_yr = 0
+            stop_yr = 0
+            flist = ''
+            for f in sorted(filenames):
+                if f[-3:] != ".nc": #skip unsuitable files
+                    continue
+                idx = f.index("%s_" % res)
 #                    act_yr = int(f[idx+len("%s_" % res):f.index(".nc")][:4])
-                    if start_yr == 0:
-                        if res == 'day':
-                            start_yr = int(f[idx+len("%s_" % res):f.index(".nc")][:8])
-                        elif res == 'mon' or res == 'sem':
-                            start_yr = int(f[idx+len("%s_" % res):f.index(".nc")][:6])
-
-                    start_yr_curr=int(f[idx+len("%s_" % res):f.index(".nc")][:4])
-                    idx = f.rindex("-")
+                if start_yr == 0:
                     if res == 'day':
-                        stop_yr = int(f[idx+1:f.index(".nc")][:8])
+                        start_yr = int(f[idx+len("%s_" % res):f.index(".nc")][:8])
                     elif res == 'mon' or res == 'sem':
-                        stop_yr = int(f[idx+1:f.index(".nc")][:6])
+                        start_yr = int(f[idx+len("%s_" % res):f.index(".nc")][:6])
 
-                    # use year of stop date for chunk border
-                    act_yr = int(f[idx+1:f.index(".nc")][:4])
-                    if act_yr > start_yr_curr + 1:
-                        log.debug("%s is not a yearly file. Skipping..." % f)
-                        continue
+                start_yr_curr=int(f[idx+len("%s_" % res):f.index(".nc")][:4])
+                idx = f.rindex("-")
+                if res == 'day':
+                    stop_yr = int(f[idx+1:f.index(".nc")][:8])
+                elif res == 'mon' or res == 'sem':
+                    stop_yr = int(f[idx+1:f.index(".nc")][:6])
 
-                    f_list.append("%s/%s" % (outdir,f))
-                    if act_yr % max_agg == 0:
+                # use year of stop date for chunk border
+                act_yr = int(f[idx+1:f.index(".nc")][:4])
+                if act_yr > start_yr_curr + 1:
+                    log.debug("%s is not a yearly file. Skipping..." % f)
+                    continue
 
-                        do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir)
-                        # reset parameter
-                        f_list = []
-                        start_yr = 0
-                        stop_yr = 0
-                        flist = ''
-                # do the same for whats left in list
-                if len(f_list) > 1:
+                f_list.append("%s/%s" % (outdir,f))
+                if act_yr % max_agg == 0:
+
                     do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir)
+                    # reset parameter
+                    f_list = []
+                    start_yr = 0
+                    stop_yr = 0
+                    flist = ''
+            # do the same for whats left in list
+            if len(f_list) > 1:
+                do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir)
 
 # -----------------------------------------------------------------------------
 def do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir):
@@ -697,7 +689,7 @@ def process_file_fix(params,in_file):
     settings.Global_attributes[name] = 'r0i0p0'
 
     # out directory
-    outdir = get_out_dir(var,'fx','fx')
+    outdir = get_out_dir(var,'fx')
     # get file name
     outfile = create_filename(var,'fx','','')
     # create complete outpath: outdir + outfile
@@ -911,7 +903,7 @@ def proc_seasonal_mean(params,year):
     res = "day"
     cm_type = params[config.get_config_value('index','INDEX_VAR_CM_DAY')]
     # get output directory of daily data: input for seasonal
-    indir = get_out_dir(var,res,cm_type)
+    indir = get_out_dir(var,res)
     logger.info("Inputdir: %s" % (indir))
 
     # seasonal mean
@@ -920,7 +912,7 @@ def proc_seasonal_mean(params,year):
     cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SEM')]
 
     #create possible filenames and check their existence -> skip or overwrite file
-    outdir = get_out_dir(var,res,cm_type)
+    outdir = get_out_dir(var,res)
     outfile1 = create_filename(var,res,year+"03",year+"11",logger=logger)
     outpath1 = "%s/%s" % (outdir,outfile1)
     outfile2 = create_filename(var,res,str(int(year)-1)+"12",year+"11",logger=logger)
@@ -953,7 +945,7 @@ def proc_seasonal_mean(params,year):
                 cm = cm_type
             logger.info("Cell method used for cdo command: %s" % (cm))
 
-            outdir = get_out_dir(var,res,cm_type)
+            outdir = get_out_dir(var,res)
             f_lst = sorted(filenames)
             i = 0
             for f in f_lst:
@@ -1329,7 +1321,7 @@ def process_file(params,in_file,var,reslist,year):
 
             # out directory
 
-            outdir = get_out_dir(var,res,cm_type)
+            outdir = get_out_dir(var,res)
 
             # get file name
             outfile = create_filename(var,res,dt_start_in,dt_stop_in,logger=logger)
@@ -1468,7 +1460,7 @@ def process_file(params,in_file,var,reslist,year):
             elif res == 'mon':
                 # get file with daily data from the same input (if exist)
                 DayFile = create_filename(var,'day',dt_start_in,dt_stop_in,logger=logger)
-                DayPath = "%s/%s" % (get_out_dir(var,'day',cm_type),DayFile)
+                DayPath = "%s/%s" % (get_out_dir(var,'day'),DayFile)
                 # use day files or prcess this step before
                 if os.path.isfile(DayPath):
                     cmd = "cdo -f %s -s mon%s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,DayPath,ftmp_name)
