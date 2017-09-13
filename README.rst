@@ -18,8 +18,8 @@ to use the tool with other models than the CCLM model.
 
 Requirements
 ============
-
-For this tool to work, a number of command line tools and Python packages are
+The tool is written for a Unix operating system.
+For it to work, a number of command line tools and Python packages are
 needed.
 The command line programs you need are:
 *ncrcat, ncks, ncap2, ncatted, nccopy* and *cdo*
@@ -155,7 +155,8 @@ files to chunks depending on resolution and creates the correct directory
 structure and filenames.
 
 Before running the program type ``export IGNORE_ATT_COORDINATES=1``
-into your terminal to make the derotation possible.
+into your terminal to make the derotation possible or include it into your
+terminal configuration file (e.g. .bashrc).
 
 The script is run with ``python cmorlight.py [OPTIONS]``. All available
 command line options are displayed when using the ``--help`` option and

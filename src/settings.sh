@@ -1,3 +1,4 @@
+#!/bin/bash
 
 #-------------------------------------------------------------------------
 # Settings for the first step of the CMOR process
@@ -11,7 +12,7 @@ post_step=0 #to limit post processing to step 1 or 2, for all other values both 
 
 #Simulation details used for creating a directory structure 
 
-GCM=MIROC5 #driving GCM
+GCM=EC-EARTH #driving GCM
 EXP=RCP85      #driving experiment name
 
 #-------------------------------------------
@@ -21,7 +22,7 @@ SIM_START=1949120100 # start date of simulation YYYYMMDDHH[mmss]: needed for con
 
 #processing range for step 1:
 START_DATE=200601      #Start year and month for processing (if not given in command line YYYYMM
-STOP_DATE=209812    #End year and month for processing (if not given in command line  YYYYMM
+STOP_DATE=209912    #End year and month for processing (if not given in command line  YYYYMM
 
 #for step 2 (if different from step 1:
 YYA=  #Start year for processing YYYY
@@ -34,7 +35,7 @@ BASEDIR=/users/${USER}/CMOR #Directory where the scripts are placed
 DATADIR=${SCRATCH}/CMOR  #Directory where all the data will be placed (typically at /scratch/)
 
 ARCH_BASE=/store/c2sm/ch4/ssilje/Archive_cosmo_runs # directory where the raw data of the simulations are archived
-SRCDIR=${BASEDIR}/src/cclm_post       # directory where the post processing scripts are stored
+SRCDIR=${BASEDIR}/src       # directory where the post processing scripts are stored
 WORKDIR=${DATADIR}/work/post # work directory, CAUTION: WITH OPTION "--clean" ALL FILES IN THIS FOLDER WILL BE DELETED AFTER PROCESSING!
 LOGDIR=${BASEDIR}/logs/shell #logging directory
 

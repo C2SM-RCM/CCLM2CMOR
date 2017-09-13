@@ -358,8 +358,8 @@ def get_out_dir(var,res):
 # -----------------------------------------------------------------------------
 def proc_chunking(params,reslist):
     """
-    create AGG_DAY (day) or AGG_MON (mon) years chunks of yearly input files
-    (as defined in configuration file; default: 5 and 10, respectively)
+    create AGG_DAY (daily), AGG_MON (monthly) and/or AGG_SEM (seasonal) years chunks of yearly input files
+    (as defined in configuration file; default: 5,10 and 10, respectively) depending on resolutions in reslist
     """
 
     # get cdf variable name
@@ -371,7 +371,7 @@ def proc_chunking(params,reslist):
         elif res == 'mon':
             max_agg = config.get_config_value('index','AGG_MON')
         elif res == 'sem':
-            max_agg = config.get_config_value('index','AGG_MON')
+            max_agg = config.get_config_value('index','AGG_SEM')
         else:
             cmd = "Resolution (%s) is not supported in chunking, keep it as it is." % res
             log.debug(cmd)

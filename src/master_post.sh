@@ -23,6 +23,10 @@ done
 
 TIME1=$(date +%s)
 
+# go to source directory
+DIR="${0%/*}"
+cd ${DIR}
+
 source ./settings.sh
 
 #default values
@@ -44,7 +48,7 @@ do
   key="$1"
   case $key in
       -h|--help)
-      source ${SRCDIR}/help 
+      source ${SRCDIR}/cclm_post/help 
       exit
       ;;    
       -g|--gcm)
@@ -184,7 +188,7 @@ then
       endex=${YYE}
     fi
     echon "Extracting years ${YYA} to ${endex} \n\n"
-    sbatch --job-name=CMOR_sh --error=${xfer}.${YYA}.err --output=${xfer}.${YYA}.out ${SRCDIR}/xfer.sh -s ${YYA} -e ${endex} -g ${GCM} -x ${EXP}
+    sbatch --job-name=CMOR_sh --error=${xfer}.${YYA}.err --output=${xfer}.${YYA}.out ${SRCDIR}/cclm_post/xfer.sh -s ${YYA} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR}/cclm_post -x ${xfer}
     #abort running job and restart it after extraction is done
     sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${YYA} -F ${FIRST} 
     exit
@@ -210,7 +214,7 @@ then
     if [ ${startex} -le ${YYE} ]
     then
       echon "Extracting years from ${startex} to  ${endex} \n\n"
-      sbatch  --job-name=CMOR_sh --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR}/xfer.sh -s ${startex} -e ${endex} -g ${GCM} -x ${EXP}
+      sbatch  --job-name=CMOR_sh --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR}/cclm_post/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR}/cclm_post -x ${xfer}
        #Submit job for the following year when all other jobs (to wait for extraction) are finished
       sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
     else
@@ -243,7 +247,7 @@ then
   echo "######################################################"  
   echo "Start: " ${START_DATE}
   echo "Stop: " ${STOP_DATE}
-  source ${SRCDIR}/first.sh
+  source ${SRCDIR}/cclm_post/first.sh
 
 fi
 
@@ -256,7 +260,7 @@ then
   echo "######################################################"
   echo "Start: " ${YYA}
   echo "Stop: " ${YYE}
-  source ${SRCDIR}/second.sh
+  source ${SRCDIR}/cclm_post/second.sh
 fi
 
 #Delete input data
@@ -276,7 +280,7 @@ echo "total time for postprocessing: ${SEC_TOTAL} s"
 if ${concat}
 then
   year=${FIRST}
-  while [ year -le ${YYE} ]
+  while [ ${year} -le ${YYE} ]
   do
     echo "CMOR STEP 1 \n GCM: ${GCM} \n Experiment: ${GCM} \n Years: ${FIRST} - ${YYE} ######################################################" >> ${CMOR}.log
     cat ${xfer}.${year}.out >> ${CMOR}.log
