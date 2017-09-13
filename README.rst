@@ -168,8 +168,6 @@ optional arguments:
   -h, --help            show this help message and exit
   -i INIFILE, --ini INIFILE
                         configuration file (.ini)
-  -t VARTABLE, --table VARTABLE
-                        variables table
   -r RESLIST, --resolution RESLIST
                         list of desired output resolutions, comma-separated
                         (supported: 1hr (1-hourly), 3hr (3-hourly),6hr
@@ -178,21 +176,14 @@ optional arguments:
   -v VARLIST, --varlist VARLIST
                         comma-separated list of variables to be processed
   -a, --all             process all available variables
-  -c, --chunk-var
-  -n USE_VERSION, --use-version USE_VERSION
-                        version to be added to directory structure
   -d, --no_derotate     derotate all u and v avariables
   -m SIMULATION, --simulation SIMULATION
                         which simulation specific settings to choose
-  -g DRIVING_MODEL_ID, --gcm DRIVING_MODEL_ID
-                        set used driving model
-  -x DRIVING_EXPERIMENT_NAME, --exp DRIVING_EXPERIMENT_NAME
-                        set used experiment
-  -E DRIVING_MODEL_ENSEMBLE_MEMBER, --ensemble DRIVING_MODEL_ENSEMBLE_MEMBER
-                        set used ensemble
   -O, --overwrite       Overwrite existent output files
+  -M, --multi           Use multiprocessing with number of cores specified in
+                        .ini file.
   -f, --force_proc      Try to process variable at specific resolution
-                        regardless of what is written in the parameter table
+                        regardless of what is written in the variables table
   -S, --silent          Write only minimal information to log (variables and
                         resolutions in progress, warnings and errors)
   -V, --verbose         Verbose logging for debugging
@@ -203,11 +194,11 @@ optional arguments:
                         Start year for processing if --limit is set.
   -e PROC_END, --end PROC_END
                         End year for processing if --limit is set.
-  -M, --multi           Use multiprocessing with number of cores specified in
-                        .ini file.
   -P, --propagate       Propagate log to standard output.
+  -n USE_VERSION, --use-version USE_VERSION
+                        version to be added to directory structure
+  -c, --chunk-var       Concatenate files to chunks
   --remove              Remove source files after chunking
-
 
 In a file here called *control_cmor.ini* processing options, paths and
 simulation details are set. You can create several such configuration
@@ -222,8 +213,8 @@ command line (option ``--sim``). Detailed instructions which
 variables should be processed with what method at which resolution are
 taken from a modified version of the CORDEX variables requirement table.
 Here a table for the CCLM model and for the WRF model are included.
-Specify which table to use in the configuration file (*paramfile*) or
-on the command line (``--param`` option). For other models you have
+Specify which table to use in the configuration file (*vartable*) or
+on the command line (``--table`` option). For other models you have
 to create your own table starting with the CORDEX variables requirement
 table (pdf version here: https://is-enes-data.github.io/CORDEX_variables_requirement_table.pdf).
 Make sure to use the semicolon ";" as delimiter and include a header line.
