@@ -36,6 +36,8 @@ DATADIR=${SCRATCH}/CMOR  #Directory where all the data will be placed (typically
 
 ARCH_BASE=/store/c2sm/ch4/ssilje/Archive_cosmo_runs # directory where the raw data of the simulations are archived
 SRCDIR=${BASEDIR}/src       # directory where the post processing scripts are stored
+SRCDIR_POST=${BASEDIR}/src/cclm_post    # directory where the subscripts are stored
+
 WORKDIR=${DATADIR}/work/post # work directory, CAUTION: WITH OPTION "--clean" ALL FILES IN THIS FOLDER WILL BE DELETED AFTER PROCESSING!
 LOGDIR=${BASEDIR}/logs/shell #logging directory
 

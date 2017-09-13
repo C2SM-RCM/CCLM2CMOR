@@ -380,54 +380,50 @@ def proc_chunking(params,reslist):
         outdir = get_out_dir(var,res)
         for dirpath,dirnames,filenames in os.walk(outdir):
             f_list = []
-            start_yr = 0
-            stop_yr = 0
-            flist = ''
+            start_date = 0
             for f in sorted(filenames):
                 if f[-3:] != ".nc": #skip unsuitable files
                     continue
                 idx = f.index("%s_" % res)
-#                    act_yr = int(f[idx+len("%s_" % res):f.index(".nc")][:4])
-                if start_yr == 0:
+                if start_date == 0:
                     if res == 'day':
-                        start_yr = int(f[idx+len("%s_" % res):f.index(".nc")][:8])
+                        start_date = int(f[idx+len("%s_" % res):f.index(".nc")][:8])
                     elif res == 'mon' or res == 'sem':
-                        start_yr = int(f[idx+len("%s_" % res):f.index(".nc")][:6])
+                        start_date = int(f[idx+len("%s_" % res):f.index(".nc")][:6])
 
-                start_yr_curr=int(f[idx+len("%s_" % res):f.index(".nc")][:4])
+                start_yr=int(f[idx+len("%s_" % res):f.index(".nc")][:4])
                 idx = f.rindex("-")
                 if res == 'day':
-                    stop_yr = int(f[idx+1:f.index(".nc")][:8])
+                    stop_date = int(f[idx+1:f.index(".nc")][:8])
                 elif res == 'mon' or res == 'sem':
-                    stop_yr = int(f[idx+1:f.index(".nc")][:6])
+                    stop_date = int(f[idx+1:f.index(".nc")][:6])
 
-                # use year of stop date for chunk border
-                act_yr = int(f[idx+1:f.index(".nc")][:4])
-                if act_yr > start_yr_curr + 1:
+                # if there is more than one year between start and stop year: skip file
+                stop_yr = int(f[idx+1:f.index(".nc")][:4])
+                if stop_yr > start_yr + 1:
                     log.debug("%s is not a yearly file. Skipping..." % f)
                     continue
 
                 f_list.append("%s/%s" % (outdir,f))
-                if act_yr % max_agg == 0:
+                if stop_yr % max_agg == 0:
 
-                    do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir)
+                    do_chunking(f_list,var,res,start_date, stop_date,outdir)
                     # reset parameter
                     f_list = []
-                    start_yr = 0
-                    stop_yr = 0
-                    flist = ''
+                    start_date = 0
             # do the same for whats left in list
             if len(f_list) > 1:
-                do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir)
+                do_chunking(f_list,var,res,start_date, stop_date,outdir)
 
 # -----------------------------------------------------------------------------
-def do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir):
-    """ Execute actual chunking"""
+def do_chunking(f_list,var,res,start_date, stop_date, outdir):
+    """  Execute actual chunking of files in f_list """
 
+    flist=""
     if len(f_list) > 1:
 
         # generate complete output path with output filename
-        outfile = create_filename(var,res,str(start_yr),str(stop_yr))
+        outfile = create_filename(var,res,str(start_date),str(stop_date))
         # generate outpath with outfile and outdir
         #extra directory to put chunked files into
         if config.get_config_value('settings','chunk_into',exitprog=False)!="":
@@ -436,7 +432,6 @@ def do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir):
             os.makedirs(outdir)
         outpath = "%s/%s" % (outdir,outfile)
 
-        # TODO: correct this to first step and last step
         # generate input filelist
         for y in f_list:
             flist = ("%s %s " % (flist,y))
@@ -459,9 +454,7 @@ def do_chunking(flist,f_list,var,res,start_yr, stop_yr,outdir):
 
 # -----------------------------------------------------------------------------
 def leap_year(year, calendar='standard'):
-    """
-    Determine if year is a leap year
-    """
+    """    Determine if year is a leap year    """
     leap = False
     if ((calendar in ['standard','gregorian','proleptic_gregorian','julian']) and (year % 4 == 0)):
         leap = True
@@ -474,9 +467,7 @@ def leap_year(year, calendar='standard'):
 
 # -----------------------------------------------------------------------------
 def add_vertices(f_out,logger=log):
-    """
-    add vertices to output from vertices file
-    """
+    """    add vertices to output file from vertices file    """
     # read vertices from file if exist
     if os.path.isfile(config.get_sim_value("vertices_file")):
         f_vert = Dataset(config.get_sim_value("vertices_file"),'r')
@@ -535,7 +526,7 @@ def add_vertices(f_out,logger=log):
 # -----------------------------------------------------------------------------
 def check_resolution(params,res,process_table_only):
     '''
-    check whether requested resolution is in table or not
+    check whether resolution "res" is declared in specific row of variables table "param".
     '''
     if res in ["1hr","3hr","6hr","12hr"]:
         res_hr=(float(res[:-2])) #extract time resolution in hours
@@ -569,8 +560,7 @@ def check_resolution(params,res,process_table_only):
 
 def get_attr_list(var_name):
     '''
-    TODO: ATTR_SETTING
-    set pre defined attributes for some variable like lon,lat
+    set pre defined attributes for variables lon,lat
     '''
     att_lst = {}
     if var_name == 'lon':
@@ -591,7 +581,7 @@ def get_attr_list(var_name):
 # -----------------------------------------------------------------------------
 def copy_var(f_in,f_out,var_name,logger=log):
     '''
-    copy variable from in_file to out_file
+    copy variable with corresponding attributes from in_file to out_file if present there
     '''
     if var_name in f_in.variables and var_name not in f_out.variables:
         var_in = f_in.variables[var_name]
@@ -620,10 +610,8 @@ def copy_var(f_in,f_out,var_name,logger=log):
 # -----------------------------------------------------------------------------
 def add_coordinates(f_out,logger=log):
     """
-    add lat/lon to output from coordinates file
+    add lat,lon and rotated_pole to output file from coordinates file if present there
     """
-    # read vertices from file if exist
-    logger.debug(os.path.isfile(settings.coordinates_file))
     if os.path.isfile(settings.coordinates_file):
         f_coor = Dataset(settings.coordinates_file,'r')
         try:
@@ -645,31 +633,24 @@ def add_coordinates(f_out,logger=log):
     else:
         raise Exception("Coordinates file %s does not exist!" % settings.coordinates_file)
 # -----------------------------------------------------------------------------
-def get_derotate_vars(flt=None):
+def get_derotate_vars():
     '''
-    INDEX_VAR_ROTATE
+    Read from variables table all variables that are supposed to be derotated
     '''
     lst = []
     for row in settings.param:
-        if settings.param[row][config.get_config_value('index','INDEX_VAR_ROTATE')] == 'derotate':
+        rotate=settings.param[row][config.get_config_value('index','INDEX_VAR_ROTATE')]
+        if rotate.lower() in ['derotate','yes','1']:
             var=settings.param[row][config.get_config_value('index','INDEX_VAR')]
-            if flt == None or (flt and var.find(flt) == 0):
-                if not var in lst:
-                    lst.append(var)
+            if not var in lst:
+                lst.append(var)
     return lst
 
 
 # -----------------------------------------------------------------------------
 def process_file_fix(params,in_file):
     '''
-    process one input file and create one one output file
-
-    call with:
-        var: variable name (cf notification)
-        res: resolution: 3hr,6h3,day,mon,cm_sem
-        cm_type: cell method: sum,mean,max,min,...
-        in_file: path to in file
-        outdir: output directory (where the complete data goes
+    Main function for constant variables: process input_file
     '''
     # get cdf variable name
 
@@ -889,7 +870,7 @@ def process_file_fix(params,in_file):
 
 # -----------------------------------------------------------------------------
 def proc_seasonal_mean(params,year):
-    ''' create seasonal mean from monthly data '''
+    ''' create seasonal mean for one variable and one year from daily data '''
 
     if config.get_config_value("boolean","multi"):
         logger = logging.getLogger("cmorlight_"+year)
@@ -1136,7 +1117,6 @@ def derotate_uv(params,in_file,var,logger=log):
     if (not os.path.isfile(out_file_u)) or (not os.path.isfile(out_file_v)) or (config.get_config_value('boolean','overwrite')):
         out_file = "%s/UV_%s-%s_%s.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
         out_file_derotate = "%s/UV_%s-%s_%s_derotate.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
-        logger.debug("Before merge")
         if not os.path.isfile(out_file) or config.get_config_value('boolean','overwrite'):
             cmd = "cdo -O merge %s %s %s" % (in_file_u,in_file_v,out_file)
             retval = shell(cmd,logger=logger)

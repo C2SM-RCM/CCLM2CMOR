@@ -42,7 +42,7 @@ do
   key="$1"
   case $key in
       -h|--help)
-      source ${SRCDIR}/cclm_post/help 
+      source ${SRCDIR_POST}/help 
       exit
       ;;    
       -g|--gcm)
@@ -182,7 +182,7 @@ then
       endex=${YYE}
     fi
     echon "Extracting years ${YYA} to ${endex} \n\n"
-    sbatch --job-name=CMOR_sh --error=${xfer}.${YYA}.err --output=${xfer}.${YYA}.out ${SRCDIR}/cclm_post/xfer.sh -s ${YYA} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR}/cclm_post -x ${xfer}
+    sbatch --job-name=CMOR_sh --error=${xfer}.${YYA}.err --output=${xfer}.${YYA}.out ${SRCDIR_POST}/xfer.sh -s ${YYA} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -x ${xfer}
     #abort running job and restart it after extraction is done
     sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${YYA} -F ${FIRST} 
     exit
@@ -208,7 +208,7 @@ then
     if [ ${startex} -le ${YYE} ]
     then
       echon "Extracting years from ${startex} to  ${endex} \n\n"
-      sbatch  --job-name=CMOR_sh --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR}/cclm_post/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR}/cclm_post -x ${xfer}
+      sbatch  --job-name=CMOR_sh --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -x ${xfer}
        #Submit job for the following year when all other jobs (to wait for extraction) are finished
       sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
     else
@@ -241,7 +241,7 @@ then
   echo "######################################################"  
   echo "Start: " ${START_DATE}
   echo "Stop: " ${STOP_DATE}
-  source ${SRCDIR}/cclm_post/first.sh
+  source ${SRCDIR_POST}/first.sh
 
 fi
 
@@ -254,7 +254,7 @@ then
   echo "######################################################"
   echo "Start: " ${YYA}
   echo "Stop: " ${YYE}
-  source ${SRCDIR}/cclm_post/second.sh
+  source ${SRCDIR_POST}/second.sh
 fi
 
 #Delete input data

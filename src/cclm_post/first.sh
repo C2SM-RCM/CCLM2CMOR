@@ -157,8 +157,7 @@ do
   constDone=true
 
   # --- build time series for selected variables
-  cd ${SRCDIR}
-  source ./timeseries.sh
+  source ${SRCDIR_POST}/timeseries.sh
 
   #stop timing and print information
   DATE2=$(date +%s)
