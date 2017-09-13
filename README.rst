@@ -94,7 +94,7 @@ experiment name, the time range for the post-processing, directory paths
 and some more specific settings which are explained later on.
 The available command line options are displayed with the command
 ``ksh master_post.sh --help``. The script can either be called with the
-shell command ``ksh`` or with ``sbatch`` (if available). If using sbatch,
+shell command ``ksh`` or with ``sbatch`` (if available) from the source directory. If using sbatch,
 change the name of your account and the location of the log output and
 error in the first few lines of *master_post.sh*. Without the option
 ``--no_batch`` set, the script will continuously give out jobs with

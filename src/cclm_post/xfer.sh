@@ -30,6 +30,7 @@ do
       ARCHDIR=$2
       args="${args} -a $2"
       shift
+      ;;
       -x|--xfer)
       xfer=$2
       args="${args} -x $2"
@@ -49,7 +50,7 @@ done
 
 if [[ -z $startyear || -z $endyear || -z $OUTDIR || -z $ARCHDIR || -z $xfer || -z $SRCDIR ]]
 then
-  echo "Please provide all necessary arguments! Exiting."
+  echo "Please provide all necessary arguments! Exiting..."
   exit
 fi
 

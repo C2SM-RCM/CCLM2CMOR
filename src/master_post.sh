@@ -23,10 +23,6 @@ done
 
 TIME1=$(date +%s)
 
-# go to source directory
-DIR="${0%/*}"
-cd ${DIR}
-
 source ./settings.sh
 
 #default values
@@ -41,8 +37,6 @@ num_extract=10 #number of years to extract at once
 
 args=""
 concat=false
-
-
 while [[ $# -gt 0 ]]
 do
   key="$1"
