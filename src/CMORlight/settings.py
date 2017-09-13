@@ -54,7 +54,7 @@ def init(vartable):
     var_list_fixed =  config.get_sim_value('var_list_fixed',exitprog=False).split(',')
 
     global varlist
-    varlist =  config.get_config_value('settings','var_list',exitprog=False).split(',')
+    varlist =  config.get_config_value('settings','varlist',exitprog=False).split(',')
 
     global FMT
     FMT = '%Y-%m-%d %H:%M:%S'

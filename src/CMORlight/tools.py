@@ -370,8 +370,14 @@ def proc_chunking(params,reslist):
             log.debug(cmd)
             continue
         log.log(35,"resolution: %s " % (res))
-        outdir = get_out_dir(var,res)
-        for dirpath,dirnames,filenames in os.walk(outdir):
+        indir = get_out_dir(var,res)
+        outdir = indir
+        #extra directory to put chunked files into
+        if config.get_config_value('settings','chunk_into',exitprog=False)!="":
+            outdir=outdir+"/"+config.get_config_value('settings','chunk_into',exitprog=False)
+
+        log.info("Output directory: %s" % outdir)
+        for dirpath,dirnames,filenames in os.walk(indir):
             f_list = []
             start_date = 0
             for f in sorted(filenames):
@@ -397,7 +403,7 @@ def proc_chunking(params,reslist):
                     log.debug("%s is not a yearly file. Skipping..." % f)
                     continue
 
-                f_list.append("%s/%s" % (outdir,f))
+                f_list.append("%s/%s" % (indir,f))
                 if stop_yr % max_agg == 0:
 
                     do_chunking(f_list,var,res,start_date, stop_date,outdir)
@@ -418,9 +424,7 @@ def do_chunking(f_list,var,res,start_date, stop_date, outdir):
         # generate complete output path with output filename
         outfile = create_filename(var,res,str(start_date),str(stop_date))
         # generate outpath with outfile and outdir
-        #extra directory to put chunked files into
-        if config.get_config_value('settings','chunk_into',exitprog=False)!="":
-            outdir=outdir+"/"+config.get_config_value('settings','chunk_into',exitprog=False)
+
         if not os.path.isdir(outdir):
             os.makedirs(outdir)
         outpath = "%s/%s" % (outdir,outfile)
@@ -865,7 +869,7 @@ def process_file_fix(params,in_file):
 def proc_seasonal_mean(params,year):
     ''' create seasonal mean for one variable and one year from daily data '''
 
-    if config.get_config_value("boolean","multi"):
+    if config.get_config_value("integer","multi") > 1:
         logger = logging.getLogger("cmorlight_"+year)
     else:
         logger = logging.getLogger("cmorlight")
@@ -944,7 +948,7 @@ def proc_seasonal_mean(params,year):
                     # first: last December of previous year
                     f_hlp12 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     f_prev = "%s/%s" % (dirpath,f_lst[i-1])
-                    if config.get_config_value("boolean","multi"):
+                    if config.get_config_value("integer","multi") > 1:
                         timepkg.sleep(3)#wait for previous year to definitely finish when multiprocessing
                     cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
                     retval = shell(cmd,logger=logger)
@@ -1160,7 +1164,7 @@ def process_file(params,in_file,var,reslist,year):
 
     '''
 
-    if config.get_config_value("boolean","multi"):
+    if config.get_config_value("integer","multi") > 1:
         logger = logging.getLogger("cmorlight_"+year)
     else:
         logger = logging.getLogger("cmorlight")
