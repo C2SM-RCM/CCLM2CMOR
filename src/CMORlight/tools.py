@@ -1064,7 +1064,7 @@ def proc_seasonal_mean(params,year):
 # -----------------------------------------------------------------------------
 def derotate_uv(params,in_file,var,logger=log):
     """
-    derotate u and v variables
+    derotate input file if this is declared for the variable in the variables table (generally for wind speed variables)
     """
     logger.info("Derotating file")
     #set environment variable correct
@@ -1153,17 +1153,17 @@ def derotate_uv(params,in_file,var,logger=log):
             logger.error(cmd)
             raise Exception(cmd)
 
-        # remove temp files
-      #  if os.path.isfile(out_file):
-       #     os.remove(out_file)
-       # if os.path.isfile(out_file_derotate):
-        #    os.remove(out_file_derotate)
+        #remove temp files
+        if os.path.isfile(out_file):
+            os.remove(out_file)
+        if os.path.isfile(out_file_derotate):
+            os.remove(out_file_derotate)
 
     return out_file_u, out_file_v
 # -----------------------------------------------------------------------------
 def process_file(params,in_file,var,reslist,year):
     '''
-    process one input file and create one one output file
+    Main function for time-dependent variables: process input_file at resolutions defined in reslist
 
     '''
 

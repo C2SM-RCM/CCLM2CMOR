@@ -258,10 +258,20 @@ then
 fi
 
 #Delete input data
-if ${batch} && [ ${post_step} -ne 2 ]
+if [ ${post_step} -ne 2 ]
 then
-  echo "deleting input data"
-  sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP} -I ${INDIR1}
+  if ${batch} 
+  then
+    echo "deleting input data"
+    sbatch --job-name=delete --error=${delete}.${YYA}.err --output=${delete}.${YYA}.out ${SRCDIR}/delete.sh -s ${YYA} -e ${YYE} -g ${GCM} -x ${EXP} -I ${INDIR1}
+  else
+    while [ ${YYA} -le ${YYE} ]
+    do
+      echo "Deleting ${INDIR1}/${YYA}" 
+      rm -r  ${INDIR1}/${YYA} 
+      (( YYA=YYA+1 ))
+    done
+  fi
 fi
 
 echo "######################################################"
@@ -274,6 +284,7 @@ echo "total time for postprocessing: ${SEC_TOTAL} s"
 if ${concat}
 then
   year=${FIRST}
+  echo "Concatenate all log files"
   while [ ${year} -le ${YYE} ]
   do
     echo "CMOR STEP 1 \n GCM: ${GCM} \n Experiment: ${GCM} \n Years: ${FIRST} - ${YYE} ######################################################" >> ${CMOR}.log

@@ -99,7 +99,9 @@ change the name of your account and the location of the log output and
 error in the first few lines of *master_post.sh*. Without the option
 ``--no_batch`` set, the script will continuously give out jobs with
 ``sbatch`` for one year each to process as many years simultaneously
-as possible. Without the option --no_extract the script assumes each
+as possible. If using ``ksh`` instead of ``sbatch``, add the option
+``--no_batch`` to inhibit batch processing completetly and thus process
+the years sequentially. Without the option --no_extract the script assumes each
 year is compressed in a tar archive and extracts these archives when
 needed. In batch mode, it actually extracts a number of years at once
 (controlled with --num_extract). The base path to the archives has to
