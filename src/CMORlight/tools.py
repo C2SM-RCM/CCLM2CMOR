@@ -16,7 +16,7 @@ import tempfile
 import subprocess
 
 # configuration
-import configuration as config
+import get_configuration as config
 
 # global variables
 import settings
@@ -82,23 +82,16 @@ def get_var_lists():
 
 
 # -----------------------------------------------------------------------------
-def set_attributes(params,proc_list=None):
+def set_attributes(params):
     '''
     fill dictionaries in settings with global attributes and additional netcdf attributes
     '''
-    # get attributes for actual model
+    # get global attributes from file
     for name in settings.global_attr_list :
-        if config.get_sim_value(name.strip()) != '':
+        try:
             settings.Global_attributes[name.strip()] = config.get_sim_value(name.strip())
-    if proc_list:
-        settings.Global_attributes['driving_model_id'] = proc_list[0]
-        settings.Global_attributes['driving_experiment_name'] = proc_list[1]
-        settings.Global_attributes['experiment_id'] = proc_list[1]
-        settings.Global_attributes['experiment'] = proc_list[1]
-        settings.Global_attributes['driving_model_ensemble_member'] = proc_list[2]
-        settings.Global_attributes['driving_experiment'] = "%s, %s, %s" % (proc_list[0],proc_list[1],proc_list[2])
-
-    settings.Global_attributes['title'] = "%s %s" % (settings.Global_attributes['title'],proc_list[1])
+        except:
+            raise("Global attribute %s is in global_attr_list but is not defined in the configuration file!")
 
     #Invariant attributes
     settings.Global_attributes['project_id']="CORDEX"
@@ -1202,7 +1195,7 @@ def process_file(params,in_file,var,reslist,year):
     else:
         in_calendar = config.get_sim_value("calendar",exitprog = False)
         if in_calendar=="":
-            raise Exception("Calendar attribute not found in file! Specify calendar in .ini file instead!")
+            raise Exception("Calendar attribute not found input file! Specify calendar in simulation settings section of configuration file instead!")
 
    # in_calendar=config.get_sim_value("calendar")
 
