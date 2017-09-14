@@ -314,6 +314,7 @@ def main():
         if reslist_act==[]:
             log.warning("None of the given resolutions appears in the table! Skipping variable...")
             continue
+
         # set global attributes in the dictionary
         tools.set_attributes(params)
         # skip fixed fields from chunking, makes no sense to chunk

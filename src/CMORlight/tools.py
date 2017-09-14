@@ -445,8 +445,9 @@ def do_chunking(f_list,var,res,start_date, stop_date, outdir):
             set_attributes_create(outpath,res)
         else:
             log.info("Output file exist: %s, skipping!" % (outfile))
-                                    # remove source files
+        # remove source files
         if config.get_config_value('boolean','remove_src'):
+            log.info("Removing yearly input files")
             retval=shell("rm -f %s " % (flist))
 
 # -----------------------------------------------------------------------------
@@ -1201,7 +1202,6 @@ def process_file(params,in_file,var,reslist,year):
         if in_calendar=="":
             raise Exception("Calendar attribute not found input file! Specify calendar in simulation settings section of configuration file instead!")
 
-   # in_calendar=config.get_sim_value("calendar")
 
     # mark for use another time unit
     if config.get_config_value('boolean','use_in_units'):
@@ -1340,7 +1340,6 @@ def process_file(params,in_file,var,reslist,year):
                     nstep = 360. * 24. / (tdelta_seconds/3600.)
                 elif in_calendar in ('366_day','all_leap'):
                     nstep = 366. * 24. / (tdelta_seconds/3600.)
-            # TODO
             #elif res == 'sem':
                 #if time.calendar in ('standard','gregorian','proleptic_gregorian','noleap','365_day','julian','all_leap'):
                     #nstep = (365 * 24 / (tdelta_seconds/3600)) / 4
@@ -1523,15 +1522,6 @@ def process_file(params,in_file,var,reslist,year):
                 else:
                     att_lst = {}
                     for k in var_in.ncattrs():
-                       # if k in ['_FillValue','missing_value','grid_north_pole_latitude','grid_north_pole_longitude']:
-                        #    att_lst[k] = np.float32(var_in.getncattr(k))
-
-                            #also set the respective other value
-                         #   if k=='_FillValue':
-                           #     att_lst['missing_value'] = np.float32(var_in.getncattr(k))
-                          #  elif k=='missing_value':
-                            #    att_lst['_FillValue'] = np.float32(var_in.getncattr(k))
-                        #else:
                         att_lst[k] = var_in.getncattr(k)
                 var_out.setncatts(att_lst)
 
