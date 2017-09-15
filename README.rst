@@ -14,7 +14,7 @@ Rewriting.
 In this project we are developing a CMORization tool which works
 specifically for the COSMO-CLM (CCLM) model. However, the different
 processing steps are separated in such a way that it is also possible
-to use the tool with other models than the CCLM model.
+to use the main part of the tool (second step) with other models than the CCLM model.
 
 Requirements
 ============
