@@ -18,6 +18,8 @@ import subprocess
 # configuration
 import get_configuration as config
 
+import numpy as np
+
 # global variables
 import settings
 
@@ -104,7 +106,7 @@ def set_attributes(params):
     settings.netCDF_attributes['long_name'] = params[config.get_config_value('index','INDEX_VAR_LONG_NAME')]
     settings.netCDF_attributes['standard_name'] = params[config.get_config_value('index','INDEX_VAR_STD_NAME')]
     settings.netCDF_attributes['units'] = params[config.get_config_value('index','INDEX_UNIT')]
-    settings.netCDF_attributes['missing_value'] = config.get_config_value('float','missing_value')
+    settings.netCDF_attributes['missing_value'] = np.float32(config.get_config_value('float','missing_value'))
     settings.netCDF_attributes['_FillValue'] = config.get_config_value('float','missing_value')
 
 
@@ -776,10 +778,8 @@ def process_file_fix(params,in_file):
                     continue
                 if k in ['coordinates']:
                     continue
-               # if k != '_FillValue':
                 att_lst[k] = var_in.getncattr(k)
-                #if k in ['grid_north_pole_latitude','grid_north_pole_longitude']:
-                 #   att_lst[k] = np.float32(var_in.getncattr(k))
+
             if var_name == 'rlon':
                 att_lst['axis'] = 'X'
                 att_lst['long_name'] = 'longitude in rotated pole grid'
@@ -1517,12 +1517,19 @@ def process_file(params,in_file,var,reslist,year):
                 logger.debug("Dimensions (of variable %s): %s" % (var_name,str(f_out.dimensions)))
                 # set all character fields as character converted with str() function
                 # create attribute list
+
+                change_fill=False
                 if var_name in ['lat','lon']:
                     att_lst = get_attr_list(var_name)
                 else:
                     att_lst = {}
                     for k in var_in.ncattrs():
-                        att_lst[k] = var_in.getncattr(k)
+                        if k in ["_FillValue","missing_value"]:
+                            if var_in.getncattr(k) != settings.netCDF_attributes['missing_value']:
+                                change_fill = True
+                            att_lst[k] = settings.netCDF_attributes['missing_value']
+                        else:
+                            att_lst[k] = var_in.getncattr(k)
                 var_out.setncatts(att_lst)
 
                 # copy content to new datatype
@@ -1571,7 +1578,7 @@ def process_file(params,in_file,var,reslist,year):
                     else:
                         att_lst = {}
                         for k in var_in.ncattrs():
-                            att_lst[k] = str(var_in.getncattr(k))
+                            att_lst[k] = var_in.getncattr(k)
                     var_out.setncatts(att_lst)
                     # copy content to new datatype
                     var_out[:] = var_in[:]
@@ -1830,6 +1837,15 @@ def process_file(params,in_file,var,reslist,year):
             # set attributes: frequency,tracking_id,creation_date
             set_attributes_create(outpath,res,year,logger=logger)
 
+            #change fillvalue in file (not just attribute) if necessary
+            if change_fill:
+                #use help file as -O option for cdo does not seem to work here
+                log.info("Changing missing values to %s" % settings.netCDF_attributes['missing_value'])
+                help_file = "%s/help-%s-%s-%s.nc" % (settings.DirWork,year,var,str(uuid.uuid1()))
+                cmd="cdo setmisstoc,%s %s %s" % (settings.netCDF_attributes['missing_value'],outpath,help_file)
+                shell(cmd)
+                os.remove(outpath)
+                shell ("mv %s %s" % (help_file, outpath))
             # ncopy file to correct output format
             if config.get_config_value('boolean','nc_compress') == True:
                 compress_output(outpath,year,logger=logger)
@@ -1841,14 +1857,9 @@ def process_file(params,in_file,var,reslist,year):
             cmd = "No cell method set for this variable (%s) and time resolution (%s)." % (var,res)
             logger.warning(cmd)
 
-    # ATTENTION: 'in_file' is only to be deleted here for these variables, otherwise it is read-only!!
-    if var in ['mrso','mrfso'] and os.path.isfile(in_file_org):
-        try:
-            in_file = in_file_org
-            os.remove(in_file_help)
-        except:
-            cmd = "Could not remove file: %s" % (in_file)
-            logger.warning(cmd)
+    # delete help file
+    if var in ['mrso','mrfso'] and os.path.isfile(in_file_help):
+        os.remove(in_file_help)
 
 
     # close input file
