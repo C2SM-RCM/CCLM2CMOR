@@ -14,7 +14,7 @@ Rewriting.
 In this project we are developing a CMORization tool which works
 specifically for the COSMO-CLM (CCLM) model. However, the different
 processing steps are separated in such a way that it is also possible
-to use the main part of the tool (second step) with other models than the CCLM model.
+to use the tool with other models than the CCLM model.
 
 Requirements
 ============
@@ -199,51 +199,39 @@ optional arguments:
                         which simulation specific settings to choose
 
 In a file here called *control_cmor.ini* processing options, paths and
-simulation details are set. You can create several such configuration
-files and choose the one you want to use with the ``--ini`` option when
-running the main script *cmorlight.py*. All lists in this file should
+simulation details are set.  All lists in this file should
 be comma-separated and not contain spaces. In the last section
 (e.g. named *settings_CCLM*) of this file you can set simulation specific
-options such as global attributes. You can define several such sections
-(always named *settings_[EXT]* and choose one by specifying the
-extension EXT in the configuration file (entry *simulation*) or in the
-command line (option ``--sim``). Detailed instructions which
+options such as global attributes. Note that some command line options can overwrite the settings in this file. Detailed instructions which
 variables should be processed with what method at which resolution are
 taken from a modified version of the CORDEX variables requirement table.
 Here a table for the CCLM model and for the WRF model are included.
-Specify which table to use in the configuration file (*vartable*) or
-on the command line (``--table`` option). For other models you have
+Specify which table to use in the configuration file (*vartable*). For other models you have
 to create your own table starting with the CORDEX variables requirement
 table (pdf version here: https://is-enes-data.github.io/CORDEX_variables_requirement_table.pdf).
 Make sure to use the semicolon ";" as delimiter and include a header line.
-MORE ON THE TABLE?
 
 If essential variables as *lon*, *lat* or *rotated_pole* are missing in
 the data, the script tries to copy them from a file specified under
 *coordinates_file* in the configuration file. 
 Make sure to provide such a file suitable for your domain and resolution.
 Here, files for the domains EUR-11 and EUR-44 are provided.
-If you want to add vertices to your output files, you have to specify a
-file from which to take them (entry *vertices_file*) and set
-*add_vertices=True*.
 
 If you want to process all variables in the table, use the ``--all`` option.
 Otherwise, specify the variables with ``--varlist``. You can also choose
 the resolutions at which to produce the output with ``--resolution`` or
-in the variable *reslist* in the configuration file. Unless ``--force_proc``
-is set, only the resolutions specified in the table are considered for
-each variable. Note that the seasonal processing uses the output of
+in the variable *reslist* in the configuration file. Note that the seasonal processing uses the output of
 the daily processing. Hence, the latter has to be executed before the
 former.
 
 You can limit the time range for processing with the option ``--limit``
 and providing the start and end years on the command line
-(``--start``,``--end``) or in the configuration file. Otherwise,
+(``--start``, ``--end``) or in the configuration file. Otherwise,
 all available years are processed.
 
 The processing will finish much faster when using multiprocessing
 (``--multi``). In this way several years are processed simultaneously.
-For this, specify the number of available cores in the configuration file 
+For this, specify the number of available cores with the command 
 and the desired time range over the command line or in the configuration
 file. When multiprocessing, a log file for each year is created. Search
 for logged errors or warnings in all these files (on Linux e.g. with
@@ -253,6 +241,25 @@ everything went ok.
 After the processing you can concatenate the files to chunks by running
 the script again with the ``--chunk-var`` option. Add the option
 ``--remove`` to this call to delete the superfluent yearly files .
+
+
+More optional features:
+
+You can create several configuration
+files and choose the one you want to use with the ``--ini`` option when
+running the main script *cmorlight.py*.
+Within each configuration file you can define several simulation specific sections
+(always named *settings_[EXT]*) and choose one by specifying the
+extension EXT in the configuration file (entry *simulation*) or on the
+command line (option ``--sim``).
+
+If you want to add vertices to your output files, you have to specify a
+file from which to take them (entry *vertices_file*) and set
+*add_vertices=True*.
+
+If you want to output at a resolution even if it is not written in the table
+use the option ``--force_proc`` to force the processing. The output will be created if
+the desired resolution is lower or equal the input file resolution.
 
 You can use the job script *master_cmor.sh* to run the job on a
 compute node with ``sbatch master_cmor.sh [OPTIONS]``. You can
