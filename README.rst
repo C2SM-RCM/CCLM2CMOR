@@ -24,11 +24,10 @@ needed.
 The command line programs you need are:
 *ncrcat, ncks, ncap2, ncatted, nccopy* and *cdo*
 
-For the Python packages please look into the .py source code files or
-just try to run the code to see which packages are 
-missing.
+For the Python packages please look into the *.py* source code files or
+just try to run the code to see which packages are missing.
 The code works with Python 2.7 and 3.6 (and maybe also older versions).
-If you have the relevant tools installed on your machine, there is no 
+If you have these tools installed on your machine, there is no 
 further installation needed.
 
 
@@ -85,7 +84,7 @@ variable with the time variable meeting the CORDEX requirements.
 Additional required fields that are not contained in the model output
 have to be calculated. Note that this step is dependent on the climate
 model used. In this project the step is carried out for the **CCLM**
-model. The scripts here are not directly applicable to other models.
+model. The scripts referred to in this section are not directly applicable to other models.
 
 For the CCLM model the first step of CMOR can be achieved by calling the
 script *master_post.sh*. Before that, adjust the file *settings.sh* to
@@ -94,26 +93,28 @@ experiment name, the time range for the post-processing, directory paths
 and some more specific settings which are explained later on.
 The available command line options are displayed with the command
 ``ksh master_post.sh --help``. The script can either be called with the
-shell command ``ksh`` or with ``sbatch`` (if available) from the source directory. If using sbatch,
+shell command ``ksh`` or with ``sbatch`` (if available on your machine) in the source directory. If using ``sbatch``,
 change the name of your account and the location of the log output and
 error in the first few lines of *master_post.sh*. Without the option
-``--no_batch`` set, the script will continuously give out jobs with
+``--no_batch`` set, the script will continuously give out jobs using
 ``sbatch`` for one year each to process as many years simultaneously
-as possible. Without the option --no_extract the script assumes each
-year is compressed in a tar archive and extracts these archives when
-needed. In batch mode, it actually extracts a number of years at once
-(controlled with --num_extract). The base path to the archives has to
+as possible. Try out first with ``ksh`` and ``--no_batch`` to see if the script runs and then use ``sbatch`` to have it most efficient.  The program will extract (or just move if already extracted) the archived 
+year directories from the archive directory (*ARCHDIR*) to the input directory of this 
+first step (*INDIR1*).
+In batch mode, it actually extracts a number of years at once
+(controlled with *num_extract* in *settings.sh*). The base path to the archives has to
 be specified in *settings.sh*, whereas the specific subdirectory
 *ARCH_SUB* for the chosen GCM and experiment is created in
 *master_post.sh* just after reading the command line arguments.
-How this subdirectory is created can be changed there.
+How this subdirectory is created can be changed there. 
+
 
 The master script calls two subscripts: *first.sh* and *second.sh*. In
 the first script separate monthly time series files are generated for
 each variable. This script was extracted from the post-script routine
 of the subchain job-control from the CCLM starter package. Thus, if
 you use the post-processing of the starter package you do not need
-to carry out this step. Use the option --second to skip it. Otherwise
+to carry out this step. Use the option ``--second`` to skip it. Otherwise
 you need to specify three values in *settings.sh*: The number of
 boundary lines (latitude and longitude) to be cut off from the data,
 *NBOUNDCUT* and the total number of grid points in longitudinal and
@@ -126,11 +127,9 @@ The first argument is the variable name and the second the output stream
 in which the variable is located in the model output. For variables on
 several pressure levels the function *timeseriesp* is used. The pressure
 levels *PLEVS* on which the variable is extracted into separate files can
-be specified right before the function. Otherwise the value from the settings
-file is taken. To create *timeseries.sh* you can use the Python script
+be specified right before the function as you will see in the example file of this package. To create *timeseries.sh* you can use the Python script
 *write_vars.py*. This script reads in the *CORDEX_CMOR_CCLM_variables_table.csv*
-to obtain the required variables (and levels) and the CCLM file which
-which contains the information on the output streams (e.g. *INPUT_IO.1949*)
+to obtain the required variables (and levels) and the CCLM file which contains the information on the output streams (e.g. *INPUT_IO.1949* in this package)
 and creates the file *timeseries.sh*. Specify the paths to the input
 files in *write_vars.py*.
 
@@ -161,50 +160,6 @@ terminal configuration file (e.g. .bashrc).
 The script is run with ``python cmorlight.py [OPTIONS]``. All available
 command line options are displayed when using the ``--help`` option and
 are repeated here:
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -i INIFILE, --ini INIFILE
-                        configuration file (.ini)
-  -t VARTABLE, --table VARTABLE
-                        variables table
-  -r RESLIST, --resolution RESLIST
-                        list of desired output resolutions, comma-separated
-                        (supported: 1hr (1-hourly), 3hr (3-hourly),6hr
-                        (6-hourly),day (daily),mon (monthly) ,sem
-                        (seasonal),fx (for time invariant variables)
-  -v VARLIST, --varlist VARLIST
-                        comma-separated list of variables to be processed
-  -a, --all             process all available variables
-  -c, --chunk-var
-  -n USE_VERSION, --use-version USE_VERSION
-                        version to be added to directory structure
-  -d, --no_derotate     derotate all u and v avariables
-  -m SIMULATION, --simulation SIMULATION
-                        which simulation specific settings to choose
-  -g DRIVING_MODEL_ID, --gcm DRIVING_MODEL_ID
-                        set used driving model
-  -x DRIVING_EXPERIMENT_NAME, --exp DRIVING_EXPERIMENT_NAME
-                        set used experiment
-  -E DRIVING_MODEL_ENSEMBLE_MEMBER, --ensemble DRIVING_MODEL_ENSEMBLE_MEMBER
-                        set used ensemble
-  -O, --overwrite       Overwrite existent output files
-  -f, --force_proc      Try to process variable at specific resolution
-                        regardless of what is written in the parameter table
-  -S, --silent          Write only minimal information to log (variables and
-                        resolutions in progress, warnings and errors)
-  -V, --verbose         Verbose logging for debugging
-  -A, --append_log      Append to log instead of overwrite
-  -l, --limit           Limit time range for processing (range set in .ini
-                        file or parsed)
-  -s PROC_START, --start PROC_START
-                        Start year for processing if --limit is set.
-  -e PROC_END, --end PROC_END
-                        End year for processing if --limit is set.
-  -M, --multi           Use multiprocessing with number of cores specified in
-                        .ini file.
-  -P, --propagate       Propagate log to standard output.
-  --remove              Remove source files after chunking
 
 
 In a file here called *control_cmor.ini* processing options, paths and

@@ -52,11 +52,11 @@ OUTDIR_BASE2=${DATADIR}/work/input_CMORlight
 
 #-------------------------------------------
 #Special settings for first step
-
+num_extract=10 #number of archived years to extract/move at once (depends e.g. on the file number limit you have on your working director (scratch))
 NBOUNDCUT=13 # number of boundary lines to be cut off in the time series data 
 IE_TOT=132 # number of gridpoints in longitudinal direction?
 JE_TOT=129 # number of gridpoints in latitudinal direction
-PLEVS=(200. 500. 850. 925.)  # list of pressure levels to output.The list must be the same as or a subset	of the list in the specific GRIBOUT. 
+PLEVS=(200. 500. 850. 925.)  # list of pressure levels to output if not set in timeseries.sh.The list must be the same as or a subset	of the list in the specific GRIBOUT. 
 
 #-------------------------------------------
 #Special settings for second step

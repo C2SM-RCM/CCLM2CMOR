@@ -31,9 +31,6 @@ n=true #normal printing mode
 v=false #verbose printing mode
 clean=false #clean  files in WORKDIR  
 batch=true #create batch jobs continously always for one year
-extract=true #whether to extract archives with tar 
-num_extract=10 #number of years to extract at once
-
 
 args=""
 concat=false
@@ -67,13 +64,6 @@ do
       -F|--first_year) #only needed internally
       FIRST=$2
       shift
-      ;;
-      --num_extract)
-      num_extract=$2
-      shift
-      ;;
-      --no_extract)
-      extract=false
       ;;
       --first)
       post_step=1
@@ -173,7 +163,7 @@ else
 fi
 
 #if no archives have been extracted in the beginning:
-if [ ! -d ${INDIR1}/*${YYA} ] && [ ${post_step} -ne 2 ] && ${batch} && ${extract}
+if [ ! -d ${INDIR1}/*${YYA} ] && [ ${post_step} -ne 2 ] && ${batch}
 then
     (( endex=YYA+num_extract-1 ))
     #limit to extraction to end year
@@ -196,7 +186,7 @@ then
   #Extract archived years every 10 years
   (( d=YYA-FIRST ))
   (( mod=d%num_extract ))
-  if [ $mod -eq 0 ] && [ ${post_step} -ne 2 ] && ${extract}
+  if [ $mod -eq 0 ] && [ ${post_step} -ne 2 ]
   then
     (( startex=YYA+num_extract ))
     (( endex=YYA+2*num_extract-1 ))

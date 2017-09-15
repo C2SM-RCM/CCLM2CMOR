@@ -76,18 +76,25 @@ fi
 
 if [ ! -d ${OUTDIR}/*${startyear} ]
 then
-  if [ -f ${ARCHDIR}/*${startyear}.tar ] 
+  if [ -d ${ARCHDIR}/*${startyear} ] 
   then
-    echo "Extracting archive for year ${startyear}"
+    echo "Moving input directory for year ${startyear} to ${OUTDIR} "
+    mv ${ARCHDIR}/*${startyear} ${OUTDIR}
+  elif [ -d ${ARCHDIR}/*${startyear}.tar ]
+  then
+    echo "Extracting archive for year ${startyear} to ${OUTDIR}"
     tar -xf ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}
-    rm -r ${OUTDIR}/${startyear}/input
-
   else
-    echo "Cannot find .tar file for year ${startyear} in archive directory! Skipping..."
+    echo "Cannot find .tar file or extracted archive for year ${startyear} in archive directory ${ARCHDIR}! Skipping year..."
     exit 1
   fi
+  #remove model input folder
+  if [ -d ${OUTDIR}/${startyear}/input ]
+  then
+    rm -r ${OUTDIR}/${startyear}/input
+  fi
 else
-  echo "Input files for year ${startyear} have already been extracted. Skipping..."
+  echo "Input files for year ${startyear} are already at ${OUTDIR}. Skipping..."
 fi
 
 

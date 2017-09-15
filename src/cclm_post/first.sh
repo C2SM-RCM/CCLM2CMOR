@@ -120,8 +120,17 @@ do
       echo "Cannot find input directory for year ${YYYY}. Skipping..."
       continue
     else
-      echo "Cannot find input directory for year ${YYYY}. Extracting..."
-      tar -xf ${ARCHDIR}/*${YYYY}.tar -C ${INDIR1}
+      echo "Cannot find input directory for year ${YYYY}. Transfering from ${ARCHDIR}..."
+      if [ -d ${ARCHDIR}/*${YYYY} ] 
+      then
+        mv ${ARCHDIR}/*${YYYY} ${INDIR1}
+      elif [ -d ${ARCHDIR}/*${YYYY}.tar ]
+      then
+        tar -xf ${ARCHDIR}/*${YYYY}.tar -C ${INDIR1}
+      else
+        echo "Cannot find .tar file or extracted archive! Exiting..."
+        exit 
+      fi      
     fi
   fi
 
