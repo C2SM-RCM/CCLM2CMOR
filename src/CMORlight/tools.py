@@ -585,7 +585,7 @@ def copy_var(f_in,f_out,var_name,logger=log):
     '''
     if var_name in f_in.variables and var_name not in f_out.variables:
         var_in = f_in.variables[var_name]
-        if var_name in ['lat','lon','rotated_latitude_longitude','rotated_pole']:
+        if var_name in ['rlat','rlon','lat','lon','rotated_latitude_longitude','rotated_pole']:
             new_datatype = 'd'
         else:
             new_datatype = var_in.datatype
@@ -619,6 +619,10 @@ def add_coordinates(f_out,logger=log):
             copy_var(f_coor,f_out,'lon',logger=logger)
             # copy lat
             copy_var(f_coor,f_out,'lat',logger=logger)
+            # copy rlon
+            copy_var(f_coor,f_out,'rlon',logger=logger)
+            # copy rlat
+            copy_var(f_coor,f_out,'rlat',logger=logger)
             #copy rotated pole
             copy_var(f_coor,f_out,'rotated_pole',logger=logger)
             copy_var(f_coor,f_out,'rotated_latitude_longitude',logger=logger)
@@ -1551,26 +1555,17 @@ def process_file(params,in_file,var,reslist,year):
 
             # copy lon/lat and rlon/rlat from input if needed:
             for var_name in f_in.variables.keys():
-                # take only the variables lat and lon
                 if (var_name in ['lon','lat','rlon','rlat'] and var_name in f_in.variables.keys() and
                             var_name not in f_out.variables.keys() ):
                     var_in = f_in.variables[var_name]
-                    #print "IN: ",var_name, var_in.dimensions
-                    #print "OUT: ",var_name,f_out.dimensions()
                     j = 0
                     for var_dim in var_in.dimensions:
                         if var_dim not in f_out.dimensions:
-                            #print "CREATE DIM ",var_dim,len(var_dim),len(var_in),var_in.shape[j]
                             f_out.createDimension(var_dim,size=var_in.shape[j])
                         j = j + 1
-                    if var_name in ['rlon','rlat']:
-                        data_type = 'd'
-                    elif var_name in ['lon','lat']:
-                        data_type = 'd'
-                    elif var_name in settings.varlist_reject:
-                        continue
+
                     # create output variable
-                    var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_in.dimensions)
+                    var_out = f_out.createVariable(var_name,datatype="d",dimensions=var_in.dimensions)
                     # set all character fields as character converted with str() function
                     # create attribute list
                     if var_name in ['lat','lon']:
@@ -1601,8 +1596,6 @@ def process_file(params,in_file,var,reslist,year):
                 data_len = f_out.variables[settings.netCDF_attributes['cf_name']].shape[0]
             data_len = min(data_len,data_max_len)
             logger.debug("Date len: %s" % str(data_len))
-
-            #TODO  use/no use of time_bnds??
 
             # get time_bnds variable from input
             if 'time_bnds' in f_in.variables.keys():
@@ -1669,7 +1662,7 @@ def process_file(params,in_file,var,reslist,year):
                 num = 0.125
                 # set time and time_bnds
                 if cm != 'point':
-                    logger.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
+                    logger.debug("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
                     for n in range(data_len):
                         time_bnds[n,0] = num_refdate_diff + (n * num)
                         time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
@@ -1682,7 +1675,7 @@ def process_file(params,in_file,var,reslist,year):
                 num = 0.25
                 # set time and time_bnds
                 if cm != 'point':
-                    logger.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
+                    logger.debug("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
                     for n in range(data_len):
                         time_bnds[n,0] = num_refdate_diff + (n * num)
                         time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
@@ -1695,7 +1688,7 @@ def process_file(params,in_file,var,reslist,year):
                 num = 0.5
                 # set time and time_bnds
                 if cm != 'point':
-                    logger.info("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
+                    logger.debug("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
                     for n in range(data_len):
                         time_bnds[n,0] = num_refdate_diff + (n * num)
                         time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
@@ -1718,12 +1711,9 @@ def process_file(params,in_file,var,reslist,year):
                 for n in range(data_len):
                     time_bnds[n,0] = num_refdate_diff
                     logger.debug("bnds1: %s" % (num2date(num_refdate_diff,time.units,calendar=in_calendar)))
-
-                    #d = num2date(time[n],time.units,time.calendar)
                     d = num2date(num_refdate_diff,time.units,calendar=in_calendar)
                     # only 12 month!
                     m = n % 12
-#                    print m,m+1,data_len,time.calendar,d
                     days = settings.dpm[time.calendar][m+1]
                     # add one day in February of leap year
                     if leap_year(d.year,time.calendar) and m == 1:
@@ -1755,7 +1745,7 @@ def process_file(params,in_file,var,reslist,year):
                 try:
                     f_var.delncattr('bounds')
                 except:
-                    logger.info("Attribute %s not available for variable %s." % ('bounds','time'))
+                    pass
 
             if int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip()) > 0 and not var in ['mrfso','mrro']:
                 if params[config.get_config_value('index','INDEX_MODEL_LEVEL')] == config.get_config_value('settings','PModelType'):
@@ -1800,10 +1790,8 @@ def process_file(params,in_file,var,reslist,year):
             f_var.units = settings.netCDF_attributes['units']
             f_var.cell_methods = "time: %s" % (cm_type)
 
-            # check wether lon/lat exist
-            if not 'lon' in f_out.variables or not 'lat' in f_out.variables:
-                # add lon/lat
-                add_coordinates(f_out,logger=logger)
+            # add lon/lat
+            add_coordinates(f_out,logger=logger)
 
             # set attribute coordinates
             set_coord_attributes(f_var,f_out)
