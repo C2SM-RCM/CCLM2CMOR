@@ -1355,9 +1355,6 @@ def process_file(params,in_file,var,reslist,year):
             if params[config.get_config_value('index','INDEX_COVERT_FACTOR')] != '' and float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.')) != 0 \
                     and float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.')) != 1:
                 cmd_mul = ' -mulc,%s ' % (params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.'))
-                # to use the time steps from input to correct the conversation factor
-                # commented out for now!!
-                # TODO
                 if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'i' or params[config.get_config_value('index','INDEX_FRE_AGG')] == '':
                     input_time_step = 1
                 mulc_factor = float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.')) / float(input_time_step)
@@ -1825,14 +1822,16 @@ def process_file(params,in_file,var,reslist,year):
             # set attributes: frequency,tracking_id,creation_date
             set_attributes_create(outpath,res,year,logger=logger)
 
-            #change fillvalue in file (not just attribute) if necessary
+           # change fillvalue in file (not just attribute) if necessary
             if change_fill:
                 #use help file as -O option for cdo does not seem to work here
                 log.info("Changing missing values to %s" % settings.netCDF_attributes['missing_value'])
-                help_file = "%s/help-%s-%s-%s.nc" % (settings.DirWork,year,var,str(uuid.uuid1()))
+                help_file = "%s/help-missing-%s-%s-%s.nc" % (settings.DirWork,year,var,str(uuid.uuid1()))
                 cmd="cdo setmisstoc,%s %s %s" % (settings.netCDF_attributes['missing_value'],outpath,help_file)
                 shell(cmd)
-                os.remove(outpath)
+                cmd="ncks -h -A -v lon,lat %s %s" % (outpath,help_file)
+		shell(cmd)
+		os.remove(outpath)
                 shell ("mv %s %s" % (help_file, outpath))
             # ncopy file to correct output format
             if config.get_config_value('boolean','nc_compress') == True:
