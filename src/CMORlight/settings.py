@@ -7,7 +7,7 @@ reads in the variables table
 
 
 import csv
-import configuration as config
+import get_configuration as config
 
 def init(vartable):
     '''
@@ -52,6 +52,9 @@ def init(vartable):
 
     global var_list_fixed
     var_list_fixed =  config.get_sim_value('var_list_fixed',exitprog=False).split(',')
+
+    global varlist
+    varlist =  config.get_config_value('settings','varlist',exitprog=False).split(',')
 
     global FMT
     FMT = '%Y-%m-%d %H:%M:%S'

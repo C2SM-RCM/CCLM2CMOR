@@ -16,7 +16,7 @@ import tempfile
 import subprocess
 
 # configuration
-import configuration as config
+import get_configuration as config
 
 # global variables
 import settings
@@ -82,23 +82,16 @@ def get_var_lists():
 
 
 # -----------------------------------------------------------------------------
-def set_attributes(params,proc_list=None):
+def set_attributes(params):
     '''
     fill dictionaries in settings with global attributes and additional netcdf attributes
     '''
-    # get attributes for actual model
+    # get global attributes from file
     for name in settings.global_attr_list :
-        if config.get_sim_value(name.strip()) != '':
+        try:
             settings.Global_attributes[name.strip()] = config.get_sim_value(name.strip())
-    if proc_list:
-        settings.Global_attributes['driving_model_id'] = proc_list[0]
-        settings.Global_attributes['driving_experiment_name'] = proc_list[1]
-        settings.Global_attributes['experiment_id'] = proc_list[1]
-        settings.Global_attributes['experiment'] = proc_list[1]
-        settings.Global_attributes['driving_model_ensemble_member'] = proc_list[2]
-        settings.Global_attributes['driving_experiment'] = "%s, %s, %s" % (proc_list[0],proc_list[1],proc_list[2])
-
-    settings.Global_attributes['title'] = "%s %s" % (settings.Global_attributes['title'],proc_list[1])
+        except:
+            raise("Global attribute %s is in global_attr_list but is not defined in the configuration file!")
 
     #Invariant attributes
     settings.Global_attributes['project_id']="CORDEX"
@@ -377,8 +370,14 @@ def proc_chunking(params,reslist):
             log.debug(cmd)
             continue
         log.log(35,"resolution: %s " % (res))
-        outdir = get_out_dir(var,res)
-        for dirpath,dirnames,filenames in os.walk(outdir):
+        indir = get_out_dir(var,res)
+        outdir = indir
+        #extra directory to put chunked files into
+        if config.get_config_value('settings','chunk_into',exitprog=False)!="":
+            outdir=outdir+"/"+config.get_config_value('settings','chunk_into',exitprog=False)
+
+        log.info("Output directory: %s" % outdir)
+        for dirpath,dirnames,filenames in os.walk(indir):
             f_list = []
             start_date = 0
             for f in sorted(filenames):
@@ -404,7 +403,7 @@ def proc_chunking(params,reslist):
                     log.debug("%s is not a yearly file. Skipping..." % f)
                     continue
 
-                f_list.append("%s/%s" % (outdir,f))
+                f_list.append("%s/%s" % (indir,f))
                 if stop_yr % max_agg == 0:
 
                     do_chunking(f_list,var,res,start_date, stop_date,outdir)
@@ -425,9 +424,7 @@ def do_chunking(f_list,var,res,start_date, stop_date, outdir):
         # generate complete output path with output filename
         outfile = create_filename(var,res,str(start_date),str(stop_date))
         # generate outpath with outfile and outdir
-        #extra directory to put chunked files into
-        if config.get_config_value('settings','chunk_into',exitprog=False)!="":
-            outdir=outdir+"/"+config.get_config_value('settings','chunk_into',exitprog=False)
+
         if not os.path.isdir(outdir):
             os.makedirs(outdir)
         outpath = "%s/%s" % (outdir,outfile)
@@ -872,7 +869,7 @@ def process_file_fix(params,in_file):
 def proc_seasonal_mean(params,year):
     ''' create seasonal mean for one variable and one year from daily data '''
 
-    if config.get_config_value("boolean","multi"):
+    if config.get_config_value("integer","multi") > 1:
         logger = logging.getLogger("cmorlight_"+year)
     else:
         logger = logging.getLogger("cmorlight")
@@ -951,7 +948,7 @@ def proc_seasonal_mean(params,year):
                     # first: last December of previous year
                     f_hlp12 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     f_prev = "%s/%s" % (dirpath,f_lst[i-1])
-                    if config.get_config_value("boolean","multi"):
+                    if config.get_config_value("integer","multi") > 1:
                         timepkg.sleep(3)#wait for previous year to definitely finish when multiprocessing
                     cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
                     retval = shell(cmd,logger=logger)
@@ -1064,7 +1061,7 @@ def proc_seasonal_mean(params,year):
 # -----------------------------------------------------------------------------
 def derotate_uv(params,in_file,var,logger=log):
     """
-    derotate u and v variables
+    derotate input file if this is declared for the variable in the variables table (generally for wind speed variables)
     """
     logger.info("Derotating file")
     #set environment variable correct
@@ -1153,21 +1150,21 @@ def derotate_uv(params,in_file,var,logger=log):
             logger.error(cmd)
             raise Exception(cmd)
 
-        # remove temp files
-      #  if os.path.isfile(out_file):
-       #     os.remove(out_file)
-       # if os.path.isfile(out_file_derotate):
-        #    os.remove(out_file_derotate)
+        #remove temp files
+        if os.path.isfile(out_file):
+            os.remove(out_file)
+        if os.path.isfile(out_file_derotate):
+            os.remove(out_file_derotate)
 
     return out_file_u, out_file_v
 # -----------------------------------------------------------------------------
 def process_file(params,in_file,var,reslist,year):
     '''
-    process one input file and create one one output file
+    Main function for time-dependent variables: process input_file at resolutions defined in reslist
 
     '''
 
-    if config.get_config_value("boolean","multi"):
+    if config.get_config_value("integer","multi") > 1:
         logger = logging.getLogger("cmorlight_"+year)
     else:
         logger = logging.getLogger("cmorlight")
@@ -1202,7 +1199,7 @@ def process_file(params,in_file,var,reslist,year):
     else:
         in_calendar = config.get_sim_value("calendar",exitprog = False)
         if in_calendar=="":
-            raise Exception("Calendar attribute not found in file! Specify calendar in .ini file instead!")
+            raise Exception("Calendar attribute not found input file! Specify calendar in simulation settings section of configuration file instead!")
 
    # in_calendar=config.get_sim_value("calendar")
 

@@ -161,6 +161,42 @@ The script is run with ``python cmorlight.py [OPTIONS]``. All available
 command line options are displayed when using the ``--help`` option and
 are repeated here:
 
+optional arguments:
+  -h, --help            show this help message and exit
+  -r RESLIST, --resolution RESLIST
+                        list of desired output resolutions, comma-separated
+                        (supported: 1hr (1-hourly), 3hr (3-hourly),6hr
+                        (6-hourly),day (daily),mon (monthly) ,sem
+                        (seasonal),fx (for time invariant variables)
+  -v VARLIST, --varlist VARLIST
+                        comma-separated list of variables to be processed
+  -a, --all             process all available variables
+  -O, --overwrite       Overwrite existent output files
+  -M MULTI, --multi MULTI
+                        Use multiprocessing and specify number of available
+                        cores.
+  -c, --chunk-var       Concatenate files to chunks
+  --remove              Remove source files after chunking
+  -l, --limit           Limit time range for processing (range set in
+                        configuration file or parsed)
+  -s PROC_START, --start PROC_START
+                        Start year for processing if --limit is set.
+  -e PROC_END, --end PROC_END
+                        End year for processing if --limit is set.
+  -P, --propagate       Propagate log to standard output.
+  -S, --silent          Write only minimal information to log (variables and
+                        resolutions in progress, warnings and errors)
+  -V, --verbose         Verbose logging for debugging
+  -A, --append_log      Append to log instead of overwrite
+  -f, --force_proc      Try to process variable at specific resolution
+                        regardless of what is written in the variables table
+  -n USE_VERSION, --use-version USE_VERSION
+                        version to be added to directory structure
+  -i INIFILE, --ini INIFILE
+                        configuration file (.ini)
+  -d, --no_derotate     derotate all u and v avariables
+  -m SIMULATION, --simulation SIMULATION
+                        which simulation specific settings to choose
 
 In a file here called *control_cmor.ini* processing options, paths and
 simulation details are set. You can create several such configuration
@@ -175,8 +211,8 @@ command line (option ``--sim``). Detailed instructions which
 variables should be processed with what method at which resolution are
 taken from a modified version of the CORDEX variables requirement table.
 Here a table for the CCLM model and for the WRF model are included.
-Specify which table to use in the configuration file (*paramfile*) or
-on the command line (``--param`` option). For other models you have
+Specify which table to use in the configuration file (*vartable*) or
+on the command line (``--table`` option). For other models you have
 to create your own table starting with the CORDEX variables requirement
 table (pdf version here: https://is-enes-data.github.io/CORDEX_variables_requirement_table.pdf).
 Make sure to use the semicolon ";" as delimiter and include a header line.

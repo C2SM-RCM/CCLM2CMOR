@@ -17,7 +17,7 @@ from multiprocessing import Pool
 import argparse
 
 # configuration
-import configuration as config
+import get_configuration as config
 
 # global settings
 import settings
@@ -62,8 +62,8 @@ def process_resolution(params,reslist):
         log.error("Input directory does not exist(0): %s \n \t Change base path in .ini file or create directory! " % in_dir)
         return
 
-    multilst=[] #argument list for multiprocessing
-    cores=config.get_config_value("integer","cores",exitprog=False)
+    cores=config.get_config_value("integer","multi",exitprog=False)
+    multilst=[]
 
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
@@ -74,7 +74,7 @@ def process_resolution(params,reslist):
         for f in sorted(filenames):
             year=f.split("_")[-1][:4]
             #use other logger
-            if config.get_config_value("boolean","multi") and var not in settings.var_list_fixed :
+            if cores > 1 and var not in settings.var_list_fixed :
                 log = logging.getLogger("cmorlight_"+year)
                 log.info("\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (var, varRCM))
                 log.info("Start processing at: "+str(datetime.now()))
@@ -93,7 +93,7 @@ def process_resolution(params,reslist):
                         tools.process_file_fix(params,in_file)
 
                     else:
-                        if config.get_config_value("boolean","multi"):
+                        if cores > 1:
                             multilst.append([params,in_file,var,reslist,year])
 
                         else:
@@ -105,7 +105,7 @@ def process_resolution(params,reslist):
             i=i+1
 
             #process as many files simultaneously as there are cores specified
-            if config.get_config_value("boolean","multi") and i==cores and multilst!=[]:
+            if cores >1 and i==cores and multilst!=[]:
                 pool=Pool(processes=cores)
                 R=pool.map(process_file_unpack,multilst)
                 pool.terminate()
@@ -129,49 +129,39 @@ def main():
     ''' main program, first read command line parameter '''
 
     parser = argparse.ArgumentParser()
-
-    parser.add_argument("-i", "--ini",
-                            action="store", dest = "inifile", default = "control_cmor.ini",
-                            help = "configuration file (.ini)")
-    parser.add_argument("-t", "--table",
-                            action="store", dest = "vartable", default = "",
-                            help = "variables table")
     parser.add_argument("-r", "--resolution",
                             action="store", dest = "reslist", default = "",
                             help = "list of desired output resolutions, comma-separated (supported: 1hr (1-hourly), 3hr (3-hourly),6hr (6-hourly),day (daily),mon (monthly) ,sem (seasonal),fx (for time invariant variables)")
     parser.add_argument("-v", "--varlist",
-                            action="store", dest = "varlist", default = "pr",
+                            action="store", dest = "varlist", default = "",
                             help = "comma-separated list of variables to be processed")
     parser.add_argument("-a", "--all",
                             action="store_true", dest = "all_vars", default = False,
                             help = "process all available variables")
-    parser.add_argument("-c", "--chunk-var",
-                            action="store_true", dest="chunk_var", default = False,
-                            help="")
-    parser.add_argument("-n", "--use-version",
-                            action="store", dest = "use_version", default = tools.new_dataset_version(),
-                            help = "version to be added to directory structure")
-    parser.add_argument("-d", "--no_derotate",
-                            action="store_false", dest = "derotate_uv", default=True,
-                            help = "derotate all u and v avariables")
-    parser.add_argument("-m", "--simulation",
-                           action="store", dest="simulation", default = '',
-                          help="which simulation specific settings to choose")
-    parser.add_argument("-g", "--gcm",
-                            action="store", dest="driving_model_id", default = "",
-                            help="set used driving model")
-    parser.add_argument("-x", "--exp",
-                            action="store", dest="driving_experiment_name", default = "",
-                            help="set used experiment")
-    parser.add_argument("-E", "--ensemble",
-                            action="store", dest="driving_model_ensemble_member", default = "",
-                            help="set used ensemble")
     parser.add_argument("-O", "--overwrite",
                             action="store_true", dest="overwrite", default = False,
                             help="Overwrite existent output files")
-    parser.add_argument("-f", "--force_proc",
-                            action="store_false", dest="process_table_only", default = True,
-                            help="Try to process variable at specific resolution regardless of what is written in the parameter table")
+    parser.add_argument("-M", "--multi",
+                            action="store", dest="multi", default = 1,
+                            help="Use multiprocessing and specify number of available cores.")
+    parser.add_argument("-c", "--chunk-var",
+                            action="store_true", dest="chunk_var", default = False,
+                            help="Concatenate files to chunks")
+    parser.add_argument( "--remove",
+                            action="store_true", dest="remove_src", default = False,
+                            help="Remove source files after chunking")
+    parser.add_argument("-l", "--limit",
+                            action="store_true", dest="limit_range", default = False,
+                            help="Limit time range for processing (range set in configuration file or parsed)")
+    parser.add_argument("-s", "--start",
+                            action="store", dest="proc_start", default = "",
+                            help="Start year for processing if --limit is set.")
+    parser.add_argument("-e", "--end",
+                            action="store", dest="proc_end", default = "",
+                            help="End year for processing if --limit is set.")
+    parser.add_argument("-P", "--propagate",
+                            action="store_true", dest="propagate", default = False,
+                            help="Propagate log to standard output.")
     parser.add_argument("-S", "--silent",
                             action="store_false", dest="normal_log", default = True,
                             help="Write only minimal information to log (variables and resolutions in progress, warnings and errors)")
@@ -181,27 +171,22 @@ def main():
     parser.add_argument("-A", "--append_log",
                             action="store_true", dest="append_log", default = False,
                             help="Append to log instead of overwrite")
-    parser.add_argument("-l", "--limit",
-                            action="store_true", dest="limit_range", default = False,
-                            help="Limit time range for processing (range set in .ini file or parsed)")
-    parser.add_argument("-s", "--start",
-                            action="store", dest="proc_start", default = "",
-                            help="Start year for processing if --limit is set.")
-    parser.add_argument("-e", "--end",
-                            action="store", dest="proc_end", default = "",
-                            help="End year for processing if --limit is set.")
-    parser.add_argument("-M", "--multi",
-                            action="store_true", dest="multi", default = False,
-                            help="Use multiprocessing with number of cores specified in .ini file.")
-    parser.add_argument("-P", "--propagate",
-                            action="store_true", dest="propagate", default = False,
-                            help="Propagate log to standard output.")
-    parser.add_argument( "--remove",
-                            action="store_true", dest="remove_src", default = False,
-                            help="Remove source files after chunking")
-
+    parser.add_argument("-f", "--force_proc",
+                            action="store_false", dest="process_table_only", default = True,
+                            help="Try to process variable at specific resolution regardless of what is written in the variables table")
+    parser.add_argument("-n", "--use-version",
+                            action="store", dest = "use_version", default = tools.new_dataset_version(),
+                            help = "version to be added to directory structure")
+    parser.add_argument("-i", "--ini",
+                            action="store", dest = "inifile", default = "control_cmor.ini",
+                            help = "configuration file (.ini)")
+    parser.add_argument("-d", "--no_derotate",
+                            action="store_false", dest = "derotate_uv", default=True,
+                            help = "derotate all u and v avariables")
+    parser.add_argument("-m", "--simulation",
+                           action="store", dest="simulation", default = '',
+                          help="which simulation specific settings to choose")
     options = parser.parse_args()
-    options_dict=vars(options)
 
     config.load_configuration(options.inifile)
     if options.simulation != "":
@@ -212,23 +197,20 @@ def main():
         options.limit_range=True
 
    #store parsed arguments in config
-    setval_settings_model=["vartable","driving_model_id","driving_experiment_name","driving_model_ensemble_member"]
-    setval_integer=["proc_start","proc_end"]
-    setval=[]
-    setval.extend(setval_settings_model)
-    setval.extend(setval_integer)
-    for val in setval:
-        if options_dict[val]!="":
-            if val in setval_settings_model:
-                config.set_config_value('settings_',val,options_dict[val])
-            elif val in setval_integer:
-                config.set_config_value('integer',val,options_dict[val])
+    if options.proc_start != "":
+        config.set_config_value('integer',"proc_start",options.proc_start)
+    if options.proc_end != "":
+        config.set_config_value('integer',"proc_end",options.proc_end)
+    if options.varlist != "":
+        config.set_config_value('settings','varlist',options.varlist)
+
+
 
 
     config.set_config_value('boolean','overwrite',options.overwrite)
     config.set_config_value('boolean','limit_range',options.limit_range)
     config.set_config_value('boolean','remove_src',options.remove_src)
-    config.set_config_value('boolean','multi',options.multi)
+    config.set_config_value('integer','multi',options.multi)
     config.set_config_value('boolean','derotate_uv',options.derotate_uv)
     config.set_config_value('boolean','propagate_log',options.propagate)
 
@@ -239,7 +221,6 @@ def main():
       DirDerotated=config.get_config_value('settings','DirDerotated')+'/'+ config.get_sim_value('driving_model_id')+'/'+ config.get_sim_value('driving_experiment_name')
       config.set_config_value('settings','DirDerotated',DirDerotated)
 
-    process_list=[config.get_sim_value('driving_model_id'),config.get_sim_value('driving_experiment_name'),config.get_sim_value('driving_model_ensemble_member')]
     # now read vartable for all variables for this RCM
 
     vartable= config.get_sim_value('vartable')
@@ -255,7 +236,7 @@ def main():
     logext = datetime.now().strftime("%d-%m-%Y")+'.log'
 
     # get logger and assign logging filename (many loggers for multiprocessing)
-    if options.limit_range and options.multi:
+    if options.limit_range and options.multi > 1:
         #create logger for each processing year
         for y in range(config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end")+1):
             logfile=LOG_FILENAME+str(y)+'.'+logext
@@ -265,7 +246,7 @@ def main():
 
     log = init_log.setup_custom_logger("cmorlight",LOG_FILENAME+logext,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
 
-    if not options.limit_range and options.multi:
+    if not options.limit_range and options.multi > 1:
         print("To use multiprocessing you have to limit the time range (with -l) and specify this range in the .ini file or over the command line! Exiting...")
         log.error("To use multiprocessing you have to limit the time range (with -l) and specify this range in the .ini file! Exiting...")
         sys.exit()
@@ -285,10 +266,10 @@ def main():
         settings.use_version = options.use_version
 
     if options.all_vars == False:
-        varlist = options.varlist.split(',')
-        if varlist==[]:
-            log.error("No variables set for processing! Exiting...")
-            return
+        varlist = settings.varlist
+        if varlist==[] or varlist==[''] :
+            raise Exception("No variables set for processing! Set with -v or in configuration file.")
+
     else:
         varlist = [] #config.varlist['3hr'] + config.varlist['6hr']
         varlist.extend(tools.get_var_lists())
@@ -334,7 +315,7 @@ def main():
             log.warning("None of the given resolutions appears in the table! Skipping variable...")
             continue
         # set global attributes in the dictionary
-        tools.set_attributes(params,process_list)
+        tools.set_attributes(params)
         # skip fixed fields from chunking, makes no sense to chunk
         if options.chunk_var == True and not var in settings.var_list_fixed:
             log.log(35, "Chunking files \n #######################")
