@@ -362,11 +362,11 @@ def proc_chunking(params,reslist):
 
     for res in reslist:
         if res == 'day':
-            max_agg = config.get_config_value('index','AGG_DAY')
+            max_agg = config.get_config_value('integer','AGG_DAY')
         elif res == 'mon':
-            max_agg = config.get_config_value('index','AGG_MON')
+            max_agg = config.get_config_value('integer','AGG_MON')
         elif res == 'sem':
-            max_agg = config.get_config_value('index','AGG_SEM')
+            max_agg = config.get_config_value('integer','AGG_SEM')
         else:
             cmd = "Resolution (%s) is not supported in chunking, keep it as it is." % res
             log.debug(cmd)
@@ -1207,12 +1207,10 @@ def process_file(params,in_file,var,reslist,year):
             raise Exception("Calendar attribute not found input file! Specify calendar in simulation settings section of configuration file instead!")
 
 
-    # mark for use another time unit
-    if config.get_config_value('boolean','use_in_units'):
-        time_in_units = config.get_config_value('settings','in_units')
-    else:
-        time_in_units = time_in.units
-
+    time_in_units = time_in.units
+    if time_in_units != config.get_config_value('settings','units'):
+        logger.warning("The time units of the input file (%s) and of the configuration file (%s) are not identical!" % (time_in_units,config.get_config_value('settings','units')))
+        
     # now get the 'new' time/date
     dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
     dt_in_year = num2date(time_in[0],time_in_units,calendar=in_calendar).year

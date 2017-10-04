@@ -93,7 +93,7 @@ experiment name, the time range for the post-processing, directory paths
 and some more specific settings which are explained later on.
 The available command line options are displayed with the command
 ``ksh master_post.sh --help``. The script can either be called with the
-shell command ``ksh`` or with ``sbatch`` (if available on your machine) in the source directory. If using ``sbatch``,
+shell command ``ksh`` or with the job script command ``sbatch`` (if available on your machine) in the source directory. If using ``sbatch``,
 change the name of your account and the location of the log output and
 error in the first few lines of *master_post.sh*. Without the option
 ``--no_batch`` set, the script will continuously give out jobs using
@@ -143,6 +143,23 @@ variables or restrict the processing to specific variables.
 Finally, in case of the batch processing, the extracted archives are
 deleted and the logs of the different years concatenated.
 
+**Examples:**
+
+Testing program in the login shell by processing the year 2005:
+
+``ksh master_post.sh --no_batch -s 2005 -e 2005``
+
+Submit job for several years and overwrite output if already existent:
+
+``sbatch master_post.sh -s 2005 -e 2030 -O``
+
+Only run the second script, when first part was already carried out (e.g. by using the CCLM starter package):
+
+``sbatch master_post.sh -s 2005 -e 2030 -O --second``
+
+
+
+
 Second step
 -----------
 
@@ -169,7 +186,7 @@ optional arguments:
                         (6-hourly),day (daily),mon (monthly) ,sem
                         (seasonal),fx (for time invariant variables)
   -v VARLIST, --varlist VARLIST
-                        comma-separated list of variables to be processed
+                        comma-separated list of variables (RCM or CORDEX name) to be processed
   -a, --all             process all available variables
   -O, --overwrite       Overwrite existent output files
   -M MULTI, --multi MULTI
@@ -177,8 +194,6 @@ optional arguments:
                         cores.
   -c, --chunk-var       Concatenate files to chunks
   --remove              Remove source files after chunking
-  -l, --limit           Limit time range for processing (range set in
-                        configuration file or parsed)
   -s PROC_START, --start PROC_START
                         Start year for processing if --limit is set.
   -e PROC_END, --end PROC_END
@@ -218,23 +233,20 @@ Make sure to provide such a file suitable for your domain and resolution.
 Here, files for the domains EUR-11 and EUR-44 are provided.
 
 If you want to process all variables in the table, use the ``--all`` option.
-Otherwise, specify the variables with ``--varlist``. You can also choose
+Otherwise, specify the variables with ``--varlist`` (RCM or CORDEX names supported). You can also choose
 the resolutions at which to produce the output with ``--resolution`` or
 in the variable *reslist* in the configuration file. Note that the seasonal processing uses the output of
 the daily processing. Hence, the latter has to be executed before the
 former.
 
-You can limit the time range for processing with the option ``--limit``
-and providing the start and end years on the command line
-(``--start``, ``--end``) or in the configuration file. Otherwise,
-all available years are processed.
+You can limit the time range for processing by providing the start and end years on the command line
+(``--start``, ``--end``). Otherwise, all available years are processed.
 
 The processing will finish much faster when using multiprocessing
-(``--multi``). In this way several years are processed simultaneously.
-For this, specify the number of available cores with the command 
-and the desired time range over the command line or in the configuration
-file. When multiprocessing, a log file for each year is created. Search
-for logged errors or warnings in all these files (on Linux e.g. with
+(option ``--multi``). In this way several years are processed simultaneously.
+For this, specify the number of available cores after the ``--multi`` command 
+and the desired time range over the command line. When multiprocessing, a log file for each year is created. Search
+for logged errors or warnings in all these files (e.g. with
 ``grep WARNING -r`` and ``grep ERROR -r`` in the log directory) to make sure
 everything went ok.
 
@@ -243,31 +255,70 @@ the script again with the ``--chunk-var`` option. Add the option
 ``--remove`` to this call to delete the superfluent yearly files .
 
 
-More optional features:
+**More optional features**
 
-You can create several configuration
-files and choose the one you want to use with the ``--ini`` option when
-running the main script *cmorlight.py*.
-Within each configuration file you can define several simulation specific sections
-(always named *settings_[EXT]*) and choose one by specifying the
-extension EXT in the configuration file (entry *simulation*) or on the
-command line (option ``--sim``).
+In the following some more advanced options are described:
 
-If you want to add vertices to your output files, you have to specify a
-file from which to take them (entry *vertices_file*) and set
-*add_vertices=True*.
+-  You can create several configuration
+   files and choose the one you want to use with the ``--ini`` option when
+   running the main script *cmorlight.py*.
+   Within each configuration file you can define several simulation specific sections
+   (always named *settings_[EXT]*) and choose one by specifying the
+   extension EXT in the configuration file (entry *simulation*) or on the
+   command line (option ``--simulation``).
 
-If you want to output at a resolution even if it is not written in the table
-use the option ``--force_proc`` to force the processing. The output will be created if
-the desired resolution is lower or equal the input file resolution.
+-  You can use the job script *master_cmor.sh* to run the job on a
+   compute node with ``sbatch master_cmor.sh [OPTIONS]``. Specify your account
+   and the location of log output and error in this file. You can
+   directly pass the options of the python program. With the option
+   ``--batch`` you can run several jobs simultaneously, processing *cores*
+   years each. In this case you have to specify the variable *cores* in
+   this script.
 
-You can use the job script *master_cmor.sh* to run the job on a
-compute node with ``sbatch master_cmor.sh [OPTIONS]``. You can
-directly pass the options of the python program. With the option
-``--batch`` you can run several jobs simultaneously processing *cores*
-years each. In this case you have to specify the variable *cores* in
-this script.
+-  The logger has some additional command line options:
+   verbose (``--verbose``) and silent (``--silent``) logging, propagation to
+   standard output (``--propagate``) and appending to file instead of 
+   overwriting (``--append_log``)
+    
+-  The entries *global_attr_list* and *global_attr_file* control which global
+   attributes should be taken from the configuration file and from your input
+   data files, respectively.
+   
+-  You can specify the variables to be processed by default and the variables
+   to be automatically skipped in the configuration file entries *varlist*
+   and *var_skip_list*, respectively.
+   
+-  If you want to add vertices to your output files, you have to specify a
+   file from which to take them (entry *vertices_file*) and set
+   *add_vertices=True* in the configuration file.
 
+-  If you want to output at a resolution even if it is not written in the table
+   use the option ``--force_proc`` to force the processing. The output will be created if
+   the desired resolution is lower or equal the input file resolution.
+   
+-  If you want to put the output in separate folder for testing purposes, 
+   change the entry *add_version_to_outpath* in the configuration file to *True*
+   . You can provide the version name on the command line (option ``--use_version``). 
+   By default the current date is used.
+
+-  If you want to test out the chunking and be able to delete the chunked output 
+   easily afterwards, specify a separate folder to put the chunked files into 
+   by changing the entry *chunk_into*.
+   
+-  The time ranges of the chunked output is set by the entries *AGG_DAY*, 
+   *AGG_MON* and *AGG_SEM* for daily, monthly and seasonal resolution, respectively.
+   You can change these values, but note the maximum time ranges allowed by CORDEX.
+   
+-  NetCDF compression can be switched on or off in the entry *nc_compress*.
+
+-  If your wind speed variables are already derotated use the command line
+   option ``--no_derotate`` to skip the derotation
+
+-  By default the input path *DirIn* is extended by the chosen GCM and experiment.
+   If you do not want this to happen. Change the entry *extend_DirIn* to 
+   *False*.
+   
+   
 
 Quality Assessment
 ==================
@@ -277,7 +328,7 @@ the CORDEX requirements after processing. Please use the Quality Assessment
 tool of the DKRZ to check your data. You can find the latest version 
 of it here: https://github.com/IS-ENES-Data/QA-DKRZ/
 If any errors occur that might have to do with the CMOR tool, don't 
-hesitate to contact us.
+hesitate to contact us. 
 
 
 Contributing
@@ -287,6 +338,11 @@ We are happy for everybody who wants to participate in the development
 of the CMOR tool. Look at the open issues to see what there is to do
 or create an issue yourself if you found one.
 
+Contact
+=======
+
+Currently the tool is administrated by Matthias Göbel. You can contact him at:
+matthias-goebel@freenet.de
 
 Involved people
 ===============

@@ -134,7 +134,7 @@ def main():
                             help = "list of desired output resolutions, comma-separated (supported: 1hr (1-hourly), 3hr (3-hourly),6hr (6-hourly),day (daily),mon (monthly) ,sem (seasonal),fx (for time invariant variables)")
     parser.add_argument("-v", "--varlist",
                             action="store", dest = "varlist", default = "",
-                            help = "comma-separated list of variables to be processed")
+                            help = "comma-separated list of variables (RCM or CORDEX name)  to be processed")
     parser.add_argument("-a", "--all",
                             action="store_true", dest = "all_vars", default = False,
                             help = "process all available variables")
@@ -150,9 +150,6 @@ def main():
     parser.add_argument( "--remove",
                             action="store_true", dest="remove_src", default = False,
                             help="Remove source files after chunking")
-    parser.add_argument("-l", "--limit",
-                            action="store_true", dest="limit_range", default = False,
-                            help="Limit time range for processing (range set in configuration file or parsed)")
     parser.add_argument("-s", "--start",
                             action="store", dest="proc_start", default = "",
                             help="Start year for processing if --limit is set.")
@@ -194,7 +191,9 @@ def main():
 
     #limit range if start and end are given in command line
     if options.proc_start!="" and options.proc_end!="":
-        options.limit_range=True
+        limit_range=True
+    else:
+        limit_range=False
 
    #store parsed arguments in config
     if options.proc_start != "":
@@ -236,7 +235,7 @@ def main():
     logext = datetime.now().strftime("%d-%m-%Y")+'.log'
 
     # get logger and assign logging filename (many loggers for multiprocessing)
-    if options.limit_range and options.multi > 1:
+    if limit_range and options.multi > 1:
         #create logger for each processing year
         for y in range(config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end")+1):
             logfile=LOG_FILENAME+str(y)+'.'+logext
@@ -246,9 +245,9 @@ def main():
 
     log = init_log.setup_custom_logger("cmorlight",LOG_FILENAME+logext,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
 
-    if not options.limit_range and options.multi > 1:
-        print("To use multiprocessing you have to limit the time range (with -l) and specify this range in the .ini file or over the command line! Exiting...")
-        log.error("To use multiprocessing you have to limit the time range (with -l) and specify this range in the .ini file! Exiting...")
+    if not limit_range and options.multi > 1:
+        print("To use multiprocessing you have to limit the time range by specifying this range over the command line (-s START, -e END)! Exiting...")
+        log.error("To use multiprocessing you have to limit the time range by specifying this range over the command line (-s START, -e END)! Exiting...")
         sys.exit()
 
     # creating working directory if not existent
