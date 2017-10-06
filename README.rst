@@ -176,7 +176,8 @@ terminal configuration file (e.g. .bashrc).
 
 The script is run with ``python cmorlight.py [OPTIONS]``. All available
 command line options are displayed when using the ``--help`` option and
-are repeated here:
+are repeated here. In most cases there is a short (starting with ``-``) 
+and a long option (starting with ``--``):
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -253,6 +254,23 @@ everything went ok.
 After the processing you can concatenate the files to chunks by running
 the script again with the ``--chunk-var`` option. Add the option
 ``--remove`` to this call to delete the superfluent yearly files .
+
+**Examples**
+
+Process all variables fully declared in the variables table at all resolutions 
+specified in the configuration file (entry *reslist*):
+
+``python cmorlight.py --all``
+
+Process precipitation (pr) and surface air pressure (ps) at a resolution of 
+three hours (if declared in variables table for these variables) from 2006 to 2025 using 10 cores simultaneously for computing. Overwrite output if already existent:
+
+``python cmorlight.py -M 10 -s 2006 -e 2025 -v pr,ps -r 3hr -O``
+
+Concatenate all monthly files to chunks for all available variables and 
+delete original files afterwards
+
+``python cmorlight.py --chunk-var --remove -r mon``
 
 
 **More optional features**

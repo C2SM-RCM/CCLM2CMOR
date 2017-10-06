@@ -1828,8 +1828,8 @@ def process_file(params,in_file,var,reslist,year):
                 cmd="cdo setmisstoc,%s %s %s" % (settings.netCDF_attributes['missing_value'],outpath,help_file)
                 shell(cmd)
                 cmd="ncks -h -A -v lon,lat %s %s" % (outpath,help_file)
-		shell(cmd)
-		os.remove(outpath)
+                shell(cmd)    
+                os.remove(outpath)
                 shell ("mv %s %s" % (help_file, outpath))
             # ncopy file to correct output format
             if config.get_config_value('boolean','nc_compress') == True:
