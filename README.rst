@@ -236,9 +236,7 @@ Here, files for the domains EUR-11 and EUR-44 are provided.
 If you want to process all variables in the table, use the ``--all`` option.
 Otherwise, specify the variables with ``--varlist`` (RCM or CORDEX names supported). You can also choose
 the resolutions at which to produce the output with ``--resolution`` or
-in the variable *reslist* in the configuration file. Note that the seasonal processing uses the output of
-the daily processing. Hence, the latter has to be executed before the
-former.
+in the variable *reslist* in the configuration file.
 
 You can limit the time range for processing by providing the start and end years on the command line
 (``--start``, ``--end``). Otherwise, all available years are processed.

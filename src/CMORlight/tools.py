@@ -100,9 +100,8 @@ def set_attributes(params):
     settings.Global_attributes['product']="output"
 
     # set addtitional netcdf attributes
-    settings.netCDF_attributes['RCM_NAME'] = params[0]
-    settings.netCDF_attributes['RCM_NAME_ORG'] = params[1]
-    settings.netCDF_attributes['cf_name'] = params[config.get_config_value('index','INDEX_VAR')]
+    settings.netCDF_attributes['RCM_NAME'] = params[config.get_config_value('index','INDEX_VAR')]
+    settings.netCDF_attributes['RCM_NAME_ORG'] = params[config.get_config_value('index','INDEX_RCM_NAME_ORG')]
     settings.netCDF_attributes['long_name'] = params[config.get_config_value('index','INDEX_VAR_LONG_NAME')]
     settings.netCDF_attributes['standard_name'] = params[config.get_config_value('index','INDEX_VAR_STD_NAME')]
     settings.netCDF_attributes['units'] = params[config.get_config_value('index','INDEX_UNIT')]
@@ -115,36 +114,21 @@ def create_outpath(res,var):
     '''
     Create and return the output path string from global attributes and dependent on resolution res and variable var
     '''
-    result = ""
 
-    if res == 'fx':
-        result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
-                    (settings.Global_attributes["project_id"],
-                     settings.Global_attributes["product"],
-                     settings.Global_attributes["CORDEX_domain"],
-                     settings.Global_attributes["institute_id"],
-                     settings.Global_attributes["driving_model_id"],
-                     settings.Global_attributes["experiment_id"],
-                     settings.Global_attributes["driving_model_ensemble_member"],
-                     settings.Global_attributes["model_id"],
-                     settings.Global_attributes["rcm_version_id"],
-                     res,
-                     var
-                    )
-    else:
-        result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
-                    (settings.Global_attributes["project_id"],
-                     settings.Global_attributes["product"],
-                     settings.Global_attributes["CORDEX_domain"],
-                     settings.Global_attributes["institute_id"],
-                     settings.Global_attributes["driving_model_id"],
-                     settings.Global_attributes["experiment_id"],
-                     settings.Global_attributes["driving_model_ensemble_member"],
-                     settings.Global_attributes["model_id"],
-                     settings.Global_attributes["rcm_version_id"],
-                     res,
-                     var
-                    )
+    result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
+                (settings.Global_attributes["project_id"],
+                 settings.Global_attributes["product"],
+                 settings.Global_attributes["CORDEX_domain"],
+                 settings.Global_attributes["institute_id"],
+                 settings.Global_attributes["driving_model_id"],
+                 settings.Global_attributes["experiment_id"],
+                 settings.Global_attributes["driving_model_ensemble_member"],
+                 settings.Global_attributes["model_id"],
+                 settings.Global_attributes["rcm_version_id"],
+                 res,
+                 var
+                )
+
     if settings.use_version!="":
         result += "/" + settings.use_version
     return result
@@ -159,14 +143,13 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
     #File naming different for instantaneous and interval representing (average,min,max) variables
     agg=settings.param[var][config.get_config_value('index','INDEX_FRE_AGG')] #subdaily aggregation method: average or instantaneous
 
-    if res in ["1hr","3hr","6hr"]:
+    if res in ["1hr","3hr","6hr","12hr"]:
         if agg=="i":
-            bounds=[["0000","2300"],["0000","2100"],["0000","1800"]]
+            bounds=[["0000","2300"],["0000","2100"],["0000","1800"],["0000","1200"]]
         elif agg=="a":
-            bounds=[["0030","2330"],["0130","2230"],["0300","2100"]]
+            bounds=[["0030","2330"],["0130","2230"],["0300","2100"],["0600","1800"]]
         else:
-            #TODO: do check of parameter table before to rule out this case
-            bounds=[["0000","2100"],["0000","1800"]]
+            bounds=[["0000","2300"],["0000","2100"],["0000","1800"],["0000","1200"]]
             logger.error("Subdaily aggregation method in column %s of parameter table must be 'i' or 'a'! Assumed instantaneous..." % config.get_config_value('index','INDEX_FRE_AGG'))
 
     if res == "1hr":
@@ -178,28 +161,25 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
     elif res == "6hr":
         dt_start = "%s%s" % (dt_start,bounds[2][0])
         dt_stop = "%s%s" % (dt_stop,bounds[2][1])
+    elif res == "12hr":
+        dt_start = "%s%s" % (dt_start,bounds[3][0])
+        dt_stop = "%s%s" % (dt_stop,bounds[3][1])
     elif res == "day":
         dt_start = dt_start[:8]
         dt_stop = dt_stop[:8]
     elif res in ["mon","sem"]:
         dt_start = dt_start[:6]
         dt_stop = dt_stop[:6]
-    elif res == 'fx':
-        result = "%s_%s_%s_%s_%s_%s_%s_%s.nc" % (var,
-                        settings.Global_attributes["CORDEX_domain"],
-                        settings.Global_attributes["driving_model_id"],
-                        settings.Global_attributes["experiment_id"],
-                        settings.Global_attributes["driving_model_ensemble_member"],
-                        settings.Global_attributes["model_id"],
-                        settings.Global_attributes["rcm_version_id"],
-                        res
-                    )
-        return result
+    
+    #time range to add to file name for non-constant variables
+    if res == 'fx':
+        trange = ""
+    else:
+        trange = "_%s-%s" % (dt_start,dt_stop)
 
     logger.debug("Filename start/stop: %s, %s" % (dt_start,dt_stop))
 
-    result = ""
-    result = "%s_%s_%s_%s_%s_%s_%s_%s_%s-%s.nc" % (var,
+    result = "%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
                     settings.Global_attributes["CORDEX_domain"],
                     settings.Global_attributes["driving_model_id"],
                     settings.Global_attributes["experiment_id"],
@@ -207,8 +187,7 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
                     settings.Global_attributes["model_id"],
                     settings.Global_attributes["rcm_version_id"],
                     res,
-                    dt_start,
-                    dt_stop
+                    trange,
                 )
     return result
 
@@ -344,6 +323,7 @@ def get_out_dir(var,res):
     '''
     outpath = create_outpath(res,var)
     outpath = "%s/%s" % (settings.DirOut,outpath)
+    #try to make directory
     try:
         os.makedirs(outpath)
     except:
@@ -709,7 +689,7 @@ def process_file_fix(params,in_file):
         f_out.createDimension('vertices',4)
 
     try:
-        mulc_factor = float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.'))
+        mulc_factor = float(params[config.get_config_value('index','INDEX_CONVERT_FACTOR')].strip().replace(',','.'))
     except ValueError:
         log.warning("No conversion factor set for %s in parameter table. Setting it to 1..." % params[config.get_config_value('index','INDEX_RCM_NAME')])
         mulc_factor = 1.0
@@ -813,7 +793,7 @@ def process_file_fix(params,in_file):
     ###################################
     # rename variable
     try:
-        f_out.renameVariable(settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['cf_name'])
+        f_out.renameVariable(settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME'])
     except:
         log.warning("Variable has cf name already: %s" % (var))
 
@@ -833,7 +813,7 @@ def process_file_fix(params,in_file):
         add_vertices(f_out)
 
     # create variable object to output file
-    f_var = f_out.variables[settings.netCDF_attributes['cf_name']]
+    f_var = f_out.variables[settings.netCDF_attributes['RCM_NAME']]
     # set additional variables attributes
     f_var.standard_name = settings.netCDF_attributes['standard_name']
     f_var.long_name = settings.netCDF_attributes['long_name']
@@ -1218,14 +1198,14 @@ def process_file(params,in_file,var,reslist,year):
 
     ## get start and stop date from in_file
 
-    # get first value of array time
+    # start date for file names
     dt_start_in = str(dt_in[0])
     dt_start_in = dt_start_in[:dt_start_in.index(' ')].replace('-','')
 
-    # get last value of array time
+    # stop date for file names
     dt_stop_in = str(dt_in[data_max_len-1])
     dt_stop_in = dt_stop_in[:dt_stop_in.index(' ')].replace('-','')
-
+        
     # calculate time difference between first two time steps (in hours)
     # in hours: should be 1 or 3 or 6
     a = datetime.strptime(str(dt_in[0]), settings.FMT)
@@ -1233,7 +1213,9 @@ def process_file(params,in_file,var,reslist,year):
 
     input_time_step = (b-a).total_seconds() / 3600. 
     logger.debug("Input data time interval: %shourly" % (str(input_time_step)))
-
+    #check if first time step is correct
+   # if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
+        
     #stop if year is not correct
     if str(a)[:4] != year:
         cmd= "File %s seems to be corrupt! The year from the filename is not the same as the year of the first data point %s! Skipping year..." % (in_file,str(a))
@@ -1245,9 +1227,10 @@ def process_file(params,in_file,var,reslist,year):
 
     new_reslist=list(reslist) #remove resolutions from this list that are higher than the input data resolution
     # process all requested resolutions
+    
     for res in reslist:
         if res in ["1hr","3hr","6hr","12hr"]:
-            res_hr=(float(res[:-2])) #extract time resolution in hours
+            res_hr = float(res[:-2]) #extract time resolution in hours
             cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SUB')]
         elif res=="day":
             res_hr=24.
@@ -1266,7 +1249,7 @@ def process_file(params,in_file,var,reslist,year):
             continue
 
         # process only if cell method is definded in input matrix
-        if cm_type != '':
+        if cm_type == '':
             cmd = "No cell method set for this variable (%s) and time resolution (%s)." % (var,res)
             logger.warning(cmd)
             # close input file and return
@@ -1283,15 +1266,16 @@ def process_file(params,in_file,var,reslist,year):
             proc_seasonal_mean(params,year)
             continue
 
-        # out directory
+        # output directory
         outdir = get_out_dir(var,res)
 
         # get file name
         outfile = create_filename(var,res,dt_start_in,dt_stop_in,logger=logger)
+        
         # create complete outpath: outdir + outfile
         outpath = "%s/%s" % (outdir,outfile)
+        
         # skip file if exist
-
         if os.path.isfile(outpath):
             logger.info("Output file exists: %s" % (outpath))
             if not config.get_config_value('boolean','overwrite'):
@@ -1301,136 +1285,89 @@ def process_file(params,in_file,var,reslist,year):
                 logger.info("Overwriting..")
         logger.debug("Output to: %s" % (outpath))
 
-        # set step wide of cdo command
-        if res == '1hr':
-            selhour = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23"
-            nstep = 1. / input_time_step
-        elif res == '3hr':
-            selhour = "0,3,6,9,12,15,18,21"
-            nstep = 3. / input_time_step
-        # 6 hourly data
-        elif res == '6hr':
-            selhour = "0,6,12,18"
-            nstep = 6. / input_time_step
-        # 12 hourly data
-        elif res == '12hr':
-            selhour = "0,12"
-            nstep = 12. / input_time_step
+        # options for cdo command
+        #subdaily
+        if res_hr < 24:
+            selhour = str(list(np.arange(0,24,res_hr)))[1:-1].replace(" ","")
+            nstep = res_hr / input_time_step
         # daily data
         elif res == 'day':
             nstep = 24. / input_time_step
-        # yearly data, consider calendar!!
+        # monthly data, consider calendar!!
         elif res == 'mon':
             if in_calendar in ('standard','gregorian','proleptic_gregorian','noleap','365_day','julian'):
-                nstep = 365. * 24. / input_time_step
+                ndays = 365.
             elif in_calendar == '360_day':
-                nstep = 360. * 24. / input_time_step
+                ndays = 360.
             elif in_calendar in ('366_day','all_leap'):
-                nstep = 366. * 24. / input_time_step
-
-        if params[config.get_config_value('index','INDEX_COVERT_FACTOR')] != '' and float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.')) != 0 \
-                and float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.')) != 1:
-            cmd_mul = ' -mulc,%s ' % (params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.'))
-            if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'i' or params[config.get_config_value('index','INDEX_FRE_AGG')] == '':
-                input_time_step = 1
-            mulc_factor = float(params[config.get_config_value('index','INDEX_COVERT_FACTOR')].strip().replace(',','.')) / float(input_time_step)
-            mulc_factor_str = str(mulc_factor)
-            cmd_mul = ' -mulc,%s ' % (mulc_factor_str)
+                ndays = 366.
+            nstep = ndays * 24. / input_time_step
+        
+        #conversion factor            
+        conv_factor = params[config.get_config_value('index','INDEX_CONVERT_FACTOR')].strip().replace(',','.')
+        if  conv_factor not in ['', '0', '1']:
+            #change conversion factor for accumulated variables
+            if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
+                conv_factor = str(float(conv_factor) / input_time_step)
+            cmd_mul = ' -mulc,%s ' %  conv_factor
         else:
             cmd_mul = ""
-        logger.debug("mulc factor for variable(%s): %s" % (var,cmd_mul))
+        logger.debug("Multiplicative conversion factor: %s" % cmd_mul)
 
-        # create help output file which is at the zthe new in_file
-        # define variable for storing the pathes for mrfso and mrso
+        # for mrso and mrfso sum up desired soil levels
         in_file_help = ""
         if var in ['mrso','mrfso']:
-            cmd1 = "cdo enssum "
-            # use only layer 1 to 8 for the output
+            # use start soil layer 1 
             idx_from = 1
-            # use value from table + 1 as upper limit for the soil levels e.g. 8 + 1 = 9!
-            idx_to = int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip()) + 1
+            # take stop soil layer from table
+            idx_to = int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip())
             arr = {}
-            for i in range(idx_from,idx_to):
+            for i in range(idx_from,idx_to+1):
                 f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
                 arr[i] = f_hlp.name
                 retval = shell("cdo -f %s sellevidx,%d %s %s" %(config.get_config_value('settings', 'cdo_nctype'),i,in_file,arr[i]))
 
             # now calculate the sum
             f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
-            #write files in arr into str with whitespace separation for cdo command
+            #write files of arr into str with whitespace separation for cdo command
             files_str=" ".join(arr.values())
-            cmd = "%s %s %s" % (cmd1,files_str,f_hlp.name)
+            cmd = "cdo enssum %s %s" % (files_str,f_hlp.name)
             retval = shell(cmd,logger=logger)
-            # multiply with factor 1000 (from csv table)
-            # switch from original in_file to the new in_file for these variables
-            #in_file = "%s/%s-%s.nc" % (settings.DirWork,'help','1000')
-            in_file_help = "%s/help-%s-%s-%s.nc" % (settings.DirWork,year,var,str(uuid.uuid1()))
-#                in_file = tempfile.NamedTemporaryFile(dir=settings.DirWork)
-            cmd = "cdo mulc,%d %s %s" % (int(params[config.get_config_value('index','INDEX_COVERT_FACTOR')]),f_hlp.name,in_file_help)
-            retval = shell(cmd,logger=logger)
+            
             # remove all help files
-            os.remove(f_hlp.name)
             for i in range(idx_from,idx_to):
                 os.remove(arr[i])
-            in_file = in_file_help
+                
+            # switch from original in_file to the new in_file
+            in_file = f_hlp.name
 
         ftmp_name = "%s/%s-%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()),var)
 #
-        # get type of function to create the output file: point,mean,maximum,minimum,sum
-        # extract cell method from string
-        t_delim = 'mean over days'
-        if t_delim in cm_type:
-            cm0 = cm_type[cm_type.index(' '):]
-            cm = 'mean' #cm_type[cm_type.index(t_delim)+len(t_delim):]
-            cmd = "Cell method used: %s" % (cm0)
-
+        # get type of cell method to create the output file: point,mean,maximum,minimum,sum
+        if 'mean over days' in cm_type:
+            cm = 'mean' 
         else:
             cm = cm_type
-
-        # mulc has been already done before!!
-        if var in ['mrso','mrfso']:
-            cmd_mul = ""
-
-        # 3 / 6 hourly data
-        if res == '1hr' or res == '3hr' or res == "6hr":
+        
+        if cm in ['maximum','minimum']:
+            cm = cm[:3]
+            
+        if res_hr < 24:
             if cm == 'point':
                 cmd = "cdo -f %s -s selhour,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),selhour,cmd_mul,in_file,ftmp_name)
             else:
                 cmd = "cdo -f %s -s timsel%s,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,int(nstep),cmd_mul,in_file,ftmp_name)
-        # daily data
-        elif res == 'day':
-            if cm in ['maximum','minimum']:
-                cm1 = cm[:3]
-            else:
-                cm1 = cm
-            # multiply with constant value from table (only if not 0)
-            #if float(params[config.get_config_value('index','INDEX_COVERT_FACTOR].strip().replace(',','.')) != 0 and float(params[config.get_config_value('index','INDEX_COVERT_FACTOR].strip().replace(',','.')) != 1:
-                #cmd_mul = ' -mulc,%s ' % (params[config.get_config_value('index','INDEX_COVERT_FACTOR].strip().replace(',','.'))
-            #else:
-                #cmd_mul = ""
-            cmd = "cdo -f %s -s day%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm1,cmd_mul,in_file,ftmp_name)
-        # monthy data
-        elif res == 'mon':
-            # get file with daily data from the same input (if exist)
-            DayFile = create_filename(var,'day',dt_start_in,dt_stop_in,logger=logger)
-            DayPath = "%s/%s" % (get_out_dir(var,'day'),DayFile)
-            # use day files or prcess this step before
-            if os.path.isfile(DayPath):
-                cmd = "cdo -f %s -s mon%s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,DayPath,ftmp_name)
-            else:
-                # day and mon: same cell methods (cm)
-                cmd = "cdo -f %s -s -mon%s -day%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,cm,cmd_mul,in_file,ftmp_name)
-        # do cmd
+        # daily and monthly data
+        elif res in  ['day','mon']:
+            cmd = "cdo -f %s -s %s%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),res,cm,cmd_mul,in_file,ftmp_name)
         retval = shell(cmd,logger=logger)
 
-
         ####################################################
-        # open to output file
+        # open output file
         ####################################################
 
         # open ftmp_name for reading
         f_tmp = Dataset(ftmp_name,'r')
-        #print "Variables: ",f_tmp.variables.keys()
 
         # create object for output file
         f_out = Dataset(outpath,'w')
@@ -1440,7 +1377,6 @@ def process_file(params,in_file,var,reslist,year):
             # skip list items
             if name in settings.varlist_reject:
                 continue
-                #f_out.createDimension(name, len(dimension) if not dimension.isunlimited() else None)
             else:
                 f_out.createDimension(name, len(dimension) if not dimension.isunlimited() else None)
 
@@ -1451,26 +1387,21 @@ def process_file(params,in_file,var,reslist,year):
 
         # copy variables from temp file
         for var_name in f_tmp.variables.keys():
-            # don't copy time_bnds if cm == point or variable time_bnds
-            if cm == 'point' and var_name == 'time_bnds': # or var_name == 'pressure':
+            # don't copy time_bnds for instantaneous variables
+            if cm == 'point' and var_name == 'time_bnds': 
                 continue
             var_in = f_tmp.variables[var_name]
             # create output variable
-            if var_name in ['rlon','rlat']:
-                data_type = 'd'
-            elif var_name in ['lon','lat']:
+            if var_name in ['rlon','rlat','lon','lat']:
                 data_type = 'd'
             elif var_name in settings.varlist_reject:
                 continue
-                #data_type = 'i8'
             else:
                 data_type = var_in.datatype
-            # at variable creation set fill_vlue, later is impossible
             # also set the compression
             if config.get_config_value('boolean','nc_compress') == True:
                 logger.debug("COMPRESS variable: %s" % (var_name))
 
-            # skip 'pressure'!!
             my_lst = []
             for dim in var_in.dimensions:
                 if str(dim) not in settings.varlist_reject:
@@ -1478,6 +1409,7 @@ def process_file(params,in_file,var,reslist,year):
             var_dims = tuple(my_lst)
             logger.debug("Dimensions (of variable %s): %s" % (var_name,str(var_dims)))
             logger.debug("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
+            
             if var_name in [var,settings.netCDF_attributes['RCM_NAME_ORG']]:
                 if config.get_config_value('boolean','nc_compress') == True:
                     var_out = f_out.createVariable(var_name,datatype=data_type,
@@ -1485,7 +1417,6 @@ def process_file(params,in_file,var,reslist,year):
                 else:
                     var_out = f_out.createVariable(var_name,datatype=data_type,
                         dimensions=var_dims,fill_value=settings.netCDF_attributes['missing_value'])
-                logger.debug("FillValue(output): %s,%s" % (var_name,var_out._FillValue))
             else:
                 if config.get_config_value('boolean','nc_compress') == True:
                     var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims,complevel=4)
@@ -1504,6 +1435,7 @@ def process_file(params,in_file,var,reslist,year):
                 for k in var_in.ncattrs():
                     if k in ["_FillValue","missing_value"]:
                         if var_in.getncattr(k) != settings.netCDF_attributes['missing_value']:
+                            #fillvalue or missing_value is incorrect and needs to be changed                            
                             change_fill = True
                         att_lst[k] = settings.netCDF_attributes['missing_value']
                     else:
@@ -1514,23 +1446,10 @@ def process_file(params,in_file,var,reslist,year):
             var_out[:] = var_in[:]
 
             logger.debug("Copy from tmp: %s" % (var_out.name))
-            if var_out.name == 'time':
-                if 'calendar' in var_out.ncattrs():
-                    if var_out.getncattr('calendar') != in_calendar:
-                        var_out.calendar = in_calendar
-                    else:
-                        var_out.calendar = str(var_out.getncattr('calendar'))
-                elif 'bounds' in var_out.ncattrs():
-                    var_out.bounds = str(var_out.getncattr('bounds'))
-                    var_out.setncattr('test_bounds1',var_out.getncattr('bounds'))
-                    var_out.test_bounds2 = var_out.getncattr('bounds')
-                elif 'standard_name' in var_out.ncattrs():
-                    var_out.standard_name = str(var_out.getncattr('standard_name'))
 
         # copy lon/lat and rlon/rlat from input if needed:
         for var_name in f_in.variables.keys():
-            if (var_name in ['lon','lat','rlon','rlat'] and var_name in f_in.variables.keys() and
-                        var_name not in f_out.variables.keys() ):
+            if (var_name in ['lon','lat','rlon','rlat'] and var_name not in f_out.variables.keys() ):
                 var_in = f_in.variables[var_name]
                 j = 0
                 for var_dim in var_in.dimensions:
@@ -1559,124 +1478,47 @@ def process_file(params,in_file,var,reslist,year):
 
         # get time and time_bnds variables from output
         time = f_out.variables['time']
-        # only if not point
+        # get time_bnds for averaged variables
         if cm != 'point':
             time_bnds = f_out.variables['time_bnds']
 
-        # get length of data array (== length of time array and length of time_bnds array
+        # get length of data array
         try:
             data_len = f_out.variables[settings.netCDF_attributes['RCM_NAME_ORG']].shape[0]
         except:
-            data_len = f_out.variables[settings.netCDF_attributes['cf_name']].shape[0]
+            data_len = f_out.variables[settings.netCDF_attributes['RCM_NAME']].shape[0]
         data_len = min(data_len,data_max_len)
-        logger.debug("Date len: %s" % str(data_len))
 
         # get time_bnds variable from input
+        #TODO: time bounds do not have to be correct or even existent!!
         if 'time_bnds' in f_in.variables.keys():
             time_bnds_in = f_in.variables['time_bnds']
-            # get first time step in input file to distingish ref date
             date_start = num2date(time_bnds_in[0,0],time_in_units,in_calendar)
         else:
-            date_start = num2date(time_in[0],time_in_units,in_calendar)
-
-        # first time step
-        #date_start = num2date(time_in[0],time_in_units,in_calendar)
-
-        # check first lower time_bound if exist
-        if date_start.year < dt_in_year:
-            if 'time_bnds' in f_in.variables.keys():
-                # or first time_bound lower value
-                date_start = num2date(time_bnds_in[0,0],time_in_units,in_calendar)
-            else:
-                # or second time step
-                date_start = num2date(time_in[1],time_in_units,in_calendar)
-        # check first upper time_bound if exist
-        if date_start.year < dt_in_year:
-            if 'time_bnds' in f_in.variables.keys():
-                # or first time_bound higher value
-                date_start = num2date(time_bnds_in[0,1],time_in_units,in_calendar)
-
-        # if year of first time step still not in actual year: search time steps until actual year
-        n = 1
-        while date_start.year < dt_in_year and n < len(time_in):
-            # next time step
-            date_start = num2date(time_in[n],time_in_units,in_calendar)
-            # increment index
-            n += 1
+            date_start = dt_in[0]
+            
+     
+        while date_start.year < dt_in_year:
+            logger.warning("First date of time variable (%s) is not in current year (%s)!" % (date_start.year, dt_in_year))
 
         # move the reference date to 1949-12-01T00:00:00Z
-        # by setting time:units to: "days since 1949-12-01T00:00:00Z"
         time.units = config.get_config_value('settings','units')
         # now get the difference in time.units for refdate: start point for all settings in time and time_bnds
         num_refdate_diff = date2num(date_start,time.units,calendar=in_calendar)
 
-        # show some numbers
-        logger.debug("num_refdate_diff: %s" % str(num_refdate_diff))
+        if res_hr <= 24:
+            num = res_hr / 24.
+            # set time and time_bnds
+            if cm != 'point':
+                for n in range(data_len):
+                    time_bnds[n,0] = num_refdate_diff + (n * num)
+                    time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
+                    time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
+            else:
+                # set time
+                for n in range(data_len):
+                    time[n] = num_refdate_diff + n * num
 
-        # start always with time = 00:00:00
-        if date_start.hour > 0:
-            num_refdate_diff = float(int(num_refdate_diff))
-            logger.warning("Set time of start date (%s) to 00:00!" % str(date_start))
-
-
-        if res == '1hr':
-            num = 1. / 24.
-            # set time and time_bnds
-            if cm != 'point':
-                logger.debug("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
-                for n in range(data_len):
-                    time_bnds[n,0] = num_refdate_diff + (n * num)
-                    time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
-                    time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
-            else:
-                # set time
-                for n in range(data_len):
-                    time[n] = num_refdate_diff + n * num
-        elif res == '3hr':
-            num = 0.125
-            # set time and time_bnds
-            if cm != 'point':
-                logger.debug("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
-                for n in range(data_len):
-                    time_bnds[n,0] = num_refdate_diff + (n * num)
-                    time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
-                    time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
-            else:
-                # set time
-                for n in range(data_len):
-                    time[n] = num_refdate_diff + n * num
-        elif res == '6hr':
-            num = 0.25
-            # set time and time_bnds
-            if cm != 'point':
-                logger.debug("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
-                for n in range(data_len):
-                    time_bnds[n,0] = num_refdate_diff + (n * num)
-                    time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
-                    time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
-            else:
-                # set time
-                for n in range(data_len):
-                    time[n] = num_refdate_diff + n * num
-        elif res == '12hr':
-            num = 0.5
-            # set time and time_bnds
-            if cm != 'point':
-                logger.debug("Start for time_bnds: %s, %s",str(num_refdate_diff),str(num2date(num_refdate_diff,time.units,time.calendar)))
-                for n in range(data_len):
-                    time_bnds[n,0] = num_refdate_diff + (n * num)
-                    time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
-                    time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
-            else:
-                # set time
-                for n in range(data_len):
-                    time[n] = num_refdate_diff + n * num
-        elif res == 'day':
-            num = 1.
-            for n in range(data_len):
-                time_bnds[n,0] = num_refdate_diff + (n * num)
-                time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
-                time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
         # TODO, monthly settings
         elif res == 'mon':
             # n: 0,1,...11!!
@@ -1709,7 +1551,7 @@ def process_file(params,in_file,var,reslist,year):
         ###################################
         # rename variable
         try:
-            f_out.renameVariable(settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['cf_name'])
+            f_out.renameVariable(settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME'])
         except:
             logger.debug("Variable has cf name already: %s" % (var))
 
@@ -1757,7 +1599,7 @@ def process_file(params,in_file,var,reslist,year):
             add_vertices(f_out,logger=logger)
 
         # create variable object to output file
-        f_var = f_out.variables[settings.netCDF_attributes['cf_name']]
+        f_var = f_out.variables[settings.netCDF_attributes['RCM_NAME']]
         # set additional variables attributes
         f_var.standard_name = settings.netCDF_attributes['standard_name']
         f_var.long_name = settings.netCDF_attributes['long_name']
