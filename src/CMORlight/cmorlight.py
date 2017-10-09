@@ -207,7 +207,7 @@ def main():
 
 
     config.set_config_value('boolean','overwrite',options.overwrite)
-    config.set_config_value('boolean','limit_range',options.limit_range)
+    config.set_config_value('boolean','limit_range',limit_range)
     config.set_config_value('boolean','remove_src',options.remove_src)
     config.set_config_value('integer','multi',options.multi)
     config.set_config_value('boolean','derotate_uv',options.derotate_uv)
