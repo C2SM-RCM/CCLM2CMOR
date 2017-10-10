@@ -108,7 +108,17 @@ def set_attributes(params):
     settings.netCDF_attributes['missing_value'] = np.float32(config.get_config_value('float','missing_value'))
     settings.netCDF_attributes['_FillValue'] = config.get_config_value('float','missing_value')
 
-
+# -----------------------------------------------------------------------------
+def print_progress(currfile,nfiles):
+    '''
+    Prints progress to standard output
+    '''
+    
+    percent = currfile / nfiles
+    hashes = '#' * int(round(percent * 20))
+    spaces = ' ' * (20 - len(hashes))
+    sys.stdout.write("\ [{0}] {1:.1f}%".format(hashes + spaces, percent * 100))
+    sys.stdout.flush() 
 # -----------------------------------------------------------------------------
 def create_outpath(res,var):
     '''

@@ -37,7 +37,7 @@ def process_file_unpack(args):
 
     return tools.process_file(*args)
 
-def process_resolution(params,reslist):
+def process_resolution(params,reslist,nvar,nfiles,currfile):
     '''
     Processes files for variable defined by params for all resolutions in reslist
 
@@ -47,6 +47,12 @@ def process_resolution(params,reslist):
         Row in variables table corresponding to variable processed in the call of this function
     reslist : list
         List of resolutions the variable should be processed at
+    nvar : int
+        Number of variables (needed for progress bar)
+    nfiles : int
+        Currently estimated total number of files for all variables (needed for progress bar)
+    currfile : int
+        Currently already processed number of files
     '''
 
     log = logging.getLogger("cmorlight")
@@ -67,11 +73,18 @@ def process_resolution(params,reslist):
 
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
+        if not nfiles:
+            #estimate total 
+            if config.get_config_value('boolean','limit_range'):
+                nfiles = nvar * (config.get_config_value('integer','proc_end') - config.get_config_value('integer','proc_start') + 1)
+            else:
+                nfiles = nvar * len(filenames)
         if len(filenames)==0:
             log.warning("No files found! Skipping this variable...")
 
         i=0
         for f in sorted(filenames):
+
             year=f.split("_")[-1][:4]
             #use other logger
             if cores > 1 and var not in settings.var_list_fixed :
@@ -114,15 +127,28 @@ def process_resolution(params,reslist):
                 i=0
                 #change reslist
                 reslist=R[0]
-
+                #update currfile
+                currfile += len(multilst)
+                
+            if  cores <= 1:
+                currfile += 1
+                
+            #print progress bar
+            tools.print_progress(currfile,nfiles)
+            
+    
     #process remaining files
     if len(multilst)!=0:
         pool=Pool(processes=cores)
         R=pool.map(process_file_unpack,multilst)
         pool.terminate()
+        #update currfile
+        currfile += len(multilst)
+        tools.print_progress(currfile,nfiles)
 
     log.info("Variable '%s' finished!" % (var))
-
+    
+    return nfiles,currfile
 
 # -----------------------------------------------------------------------------
 def main():
@@ -291,6 +317,9 @@ def main():
         log.info("Processing all resolutions lower equal the input data resolution")
 
     # process all var in varlist with input model and input experiment for proc_list item
+    # needed for progress bar
+    nfiles = None #estimated total number of files
+    currfile = 0 #currently processed files
     for var in varlist:
         if var not in settings.param:
             log.warning("Variable '%s' not supported!" % (var))
@@ -323,7 +352,7 @@ def main():
 
         # process all vars from varlist with all output resolutions from reslist
         else:
-            process_resolution(params,reslist_act)
+            nfiles, currfile = process_resolution(params,reslist_act,len(varlist),nfiles,currfile)
 
 
 #########################################################
