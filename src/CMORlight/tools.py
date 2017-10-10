@@ -117,7 +117,7 @@ def print_progress(currfile,nfiles):
     percent = currfile / nfiles
     hashes = '#' * int(round(percent * 20))
     spaces = ' ' * (20 - len(hashes))
-    sys.stdout.write("\ [{0}] {1:.1f}%".format(hashes + spaces, percent * 100))
+    sys.stdout.write('\r'+"[{0}] {1:.1f}%".format(hashes + spaces, percent * 100))
     sys.stdout.flush() 
 # -----------------------------------------------------------------------------
 def create_outpath(res,var):
