@@ -10,6 +10,7 @@ import sys
 from netCDF4 import Dataset
 from netCDF4 import num2date
 from netCDF4 import date2num
+from netCDF4 import netcdftime
 import tempfile
 
 # sub process library
@@ -23,7 +24,7 @@ import numpy as np
 # global variables
 import settings
 
-from datetime import datetime
+import datetime
 
 # uuid support
 import uuid
@@ -239,7 +240,7 @@ def set_attributes_create(outpath,res=None,year=0,logger=log):
         # set new tracking_id
         f_out.setncattr("tracking_id",str(year)+str(uuid.uuid1()))
         # set new creation_date
-        f_out.setncattr("creation_date",datetime.now().strftime(settings.FMT))
+        f_out.setncattr("creation_date",datetime.datetime.now().strftime(settings.FMT))
 
         if 'history' in f_out.ncattrs():
             f_out.delncattr("history")
@@ -321,7 +322,7 @@ def new_dataset_version():
     this will be inserted in the output directory structure
     if add_version_to_outpath=True in configuration file
     '''
-    return datetime.now().strftime("%Y%m%d")
+    return datetime.datetime.now().strftime("%Y%m%d")
 
 
 # -----------------------------------------------------------------------------
@@ -1199,13 +1200,6 @@ def process_file(params,in_file,var,reslist,year):
     dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
     dt_in_year = dt_in[0].year
 
-    for n in range(len(time_in)):
-        if dt_in[n].year == dt_in_year:
-            data_max_len = n
-
-    # add one count
-    data_max_len = data_max_len + 1
-
     ## get start and stop date from in_file
 
     # start date for file names
@@ -1213,26 +1207,46 @@ def process_file(params,in_file,var,reslist,year):
     dt_start_in = dt_start_in[:dt_start_in.index(' ')].replace('-','')
 
     # stop date for file names
-    dt_stop_in = str(dt_in[data_max_len-1])
+    dt_stop_in = str(dt_in[-1])
     dt_stop_in = dt_stop_in[:dt_stop_in.index(' ')].replace('-','')
         
     # calculate time difference between first two time steps (in hours)
-    # in hours: should be 1 or 3 or 6
-    a = datetime.strptime(str(dt_in[0]), settings.FMT)
-    b = datetime.strptime(str(dt_in[1]), settings.FMT)
+    a = datetime.datetime.strptime(str(dt_in[0]), settings.FMT)
+    b = datetime.datetime.strptime(str(dt_in[1]), settings.FMT)
+    
+    time_delta_raw = np.array(time_in)[1]-np.array(time_in)[0]
+    time_delta = b-a
+    #input time resolution in hours
+    input_res_hr = time_delta.total_seconds() / 3600. 
 
-    input_time_step = (b-a).total_seconds() / 3600. 
-    logger.debug("Input data time interval: %shourly" % (str(input_time_step)))
-    #check if first time step is correct
-   # if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
-        
-    #stop if year is not correct
-    if str(a)[:4] != year:
-        cmd= "File %s seems to be corrupt! The year from the filename is not the same as the year of the first data point %s! Skipping year..." % (in_file,str(a))
+    log.info("First time step in input file: %s" % (str(a)))
+    if input_res_hr not in [1.,3.,6.,12.,24]:
+        cmd = "Time resolution of input data must be 1,3,6,12 or 24 hours, found %s hours!" % (input_res_hr)
         logger.error(cmd)
-        print(cmd)
-        f_in.close()
-        return reslist
+        raise(cmd) 
+        
+    logger.debug("Input data time interval: %shourly" % (str(input_res_hr)))
+  
+    #check if time variable is correct
+  
+    #correct start and end date for averaged and instantaneous varoables
+    start_date =  num2date(0,"seconds since %i-01-01" % int(year),calendar=in_calendar)
+    end_date = num2date(0,"seconds since %i-01-01" % (int(year)+1),calendar=in_calendar)
+    if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'i':
+        end_date -= time_delta
+    else:
+        start_date += time_delta * 0.5  
+        end_date -= time_delta * 0.5      
+    #convert to numbers
+    start_num = date2num(start_date,time_in_units,calendar=in_calendar)   
+    end_num = date2num(end_date, time_in_units, calendar=in_calendar)   
+    #correct time array
+    time_range = np.arange(start_num ,end_num+time_delta_raw, time_delta_raw)
+    
+    if any(np.array(time_in) != time_range):
+        cmd = "Time variable of input data not correct!"
+        logger.error(cmd)
+        raise(cmd) 
 
 
     new_reslist=list(reslist) #remove resolutions from this list that are higher than the input data resolution
@@ -1253,8 +1267,8 @@ def process_file(params,in_file,var,reslist,year):
             cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SEM')]
 
         #check if requested time resolution is possible given the input time resolution
-        if res_hr < input_time_step:
-            logger.warning("Requested time resolution (%s) is higher than time resolution of input data (%s hr). Skip this resolution for all following files.." % (res,input_time_step))
+        if res_hr < input_res_hr:
+            logger.warning("Requested time resolution (%s) is higher than time resolution of input data (%s hr). Skip this resolution for all following files.." % (res,input_res_hr))
             new_reslist.remove(res)
             continue
 
@@ -1299,10 +1313,10 @@ def process_file(params,in_file,var,reslist,year):
         #subdaily
         if res_hr < 24:
             selhour = str(list(np.arange(0,24,res_hr)))[1:-1].replace(" ","")
-            nstep = res_hr / input_time_step
+            nstep = res_hr / input_res_hr
         # daily data
         elif res == 'day':
-            nstep = 24. / input_time_step
+            nstep = 24. / input_res_hr
         # monthly data, consider calendar!!
         elif res == 'mon':
             if in_calendar in ('standard','gregorian','proleptic_gregorian','noleap','365_day','julian'):
@@ -1311,14 +1325,14 @@ def process_file(params,in_file,var,reslist,year):
                 ndays = 360.
             elif in_calendar in ('366_day','all_leap'):
                 ndays = 366.
-            nstep = ndays * 24. / input_time_step
+            nstep = ndays * 24. / input_res_hr
         
         #conversion factor            
         conv_factor = params[config.get_config_value('index','INDEX_CONVERT_FACTOR')].strip().replace(',','.')
         if  conv_factor not in ['', '0', '1']:
             #change conversion factor for accumulated variables
             if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
-                conv_factor = str(float(conv_factor) / input_time_step)
+                conv_factor = str(float(conv_factor) / input_res_hr)
             cmd_mul = ' -mulc,%s ' %  conv_factor
         else:
             cmd_mul = ""
@@ -1490,23 +1504,18 @@ def process_file(params,in_file,var,reslist,year):
         time = f_out.variables['time']
         # get time_bnds for averaged variables
         if cm != 'point':
-            time_bnds = f_out.variables['time_bnds']
-
+            time_bnds = f_out.createVariable('time_bnds',datatype="d",dimensions=f_out.dimensions["time"])
+            date_start = dt_in[0]-datetime.timedelta(hours=res_hr*0.5)
+        else:
+            date_start = dt_in[0]        
+            
         # get length of data array
         try:
             data_len = f_out.variables[settings.netCDF_attributes['RCM_NAME_ORG']].shape[0]
         except:
             data_len = f_out.variables[settings.netCDF_attributes['RCM_NAME']].shape[0]
-        data_len = min(data_len,data_max_len)
+        data_len = min(data_len,len(time_in))
 
-        # get time_bnds variable from input
-        #TODO: time bounds do not have to be correct or even existent!!
-        if 'time_bnds' in f_in.variables.keys():
-            time_bnds_in = f_in.variables['time_bnds']
-            date_start = num2date(time_bnds_in[0,0],time_in_units,in_calendar)
-        else:
-            date_start = dt_in[0]
-            
      
         while date_start.year < dt_in_year:
             logger.warning("First date of time variable (%s) is not in current year (%s)!" % (date_start.year, dt_in_year))
@@ -1517,12 +1526,12 @@ def process_file(params,in_file,var,reslist,year):
         num_refdate_diff = date2num(date_start,time.units,calendar=in_calendar)
 
         if res_hr <= 24:
-            num = res_hr / 24.
+            res_day = res_hr / 24.
             # set time and time_bnds
             if cm != 'point':
                 for n in range(data_len):
-                    time_bnds[n,0] = num_refdate_diff + (n * num)
-                    time_bnds[n,1] = num_refdate_diff + ((n + 1) * num)
+                    time_bnds[n,0] = num_refdate_diff + (n * res_day)
+                    time_bnds[n,1] = num_refdate_diff + ((n + 1) * res_day)
                     time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
             else:
                 # set time

@@ -8,7 +8,7 @@ import os
 import sys
 import shutil
 
-from datetime import datetime
+import datetime
 
 #for multiprocessing
 from multiprocessing import Pool
@@ -90,7 +90,7 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
             if cores > 1 and var not in settings.var_list_fixed :
                 log = logging.getLogger("cmorlight_"+year)
                 log.info("\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (var, varRCM))
-                log.info("Start processing at: "+str(datetime.now()))
+                log.info("Start processing at: "+str(datetime.datetime.now()))
             #if limit_range is set: skip file if it is out of range
             if config.get_config_value('boolean','limit_range') and var not in settings.var_list_fixed:
                 if int(year) < config.get_config_value('integer','proc_start') or int(year) > config.get_config_value('integer','proc_end'):
@@ -258,7 +258,7 @@ def main():
         if not os.path.isdir(LOG_BASE):
             os.makedirs(LOG_BASE)
     LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')
-    logext = datetime.now().strftime("%d-%m-%Y")+'.log'
+    logext = datetime.datetime.now().strftime("%d-%m-%Y")+'.log'
 
     # get logger and assign logging filename (many loggers for multiprocessing)
     if limit_range and options.multi > 1:
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     ''' main program '''
 
     #start timing
-    time1=datetime.now()
+    time1=datetime.datetime.now()
 
     # call main function
     main()
@@ -376,7 +376,7 @@ if __name__ == "__main__":
                 os.remove(os.path.join(root, file))
 
 
-    time2=datetime.now()
+    time2=datetime.datetime.now()
     log = logging.getLogger('cmorlight')
 
     #calculate processing time
