@@ -1,8 +1,4 @@
-timeseries  QV         out01
-timeseries  T          out01
 timeseries  T_S        out01
-timeseries  U          out01
-timeseries  V          out01
 timeseries  W_SNOW     out01
 timeseries  W_SO       out01
 #
