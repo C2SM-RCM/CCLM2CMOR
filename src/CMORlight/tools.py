@@ -566,6 +566,15 @@ def get_attr_list(var_name):
         att_lst['units'] = 'degrees_north'
         if config.get_config_value('boolean','add_vertices') == True:
             att_lst['bounds'] = "lat_vertices"
+
+    elif var_name == 'rlon':
+        att_lst['axis'] = 'X'
+        att_lst['long_name'] = 'longitude in rotated pole grid'
+
+    elif var_name == 'rlat':
+        att_lst['axis'] = 'Y'
+        att_lst['long_name'] = 'latitude in rotated pole grid'
+
     return att_lst
 
 
@@ -648,19 +657,6 @@ def process_file_fix(params,in_file):
     # get cdf variable name
 
     var = params[config.get_config_value('index','INDEX_VAR')]
-    # fixed
-    res = 'fx'
-
-    # create object from netcdf file to access all parameters and attributes
-    f_in = Dataset(in_file,"r")
-
-    for name in f_in.ncattrs():
-        if name in settings.global_attr_file: #only take attribute from file if in this list
-            settings.Global_attributes[name] = str(f_in.getncattr(name))
-
-    #TODO: ist this fix?
-    name = "driving_model_ensemble_member"
-    settings.Global_attributes[name] = 'r0i0p0'
 
     # out directory
     outdir = get_out_dir(var,'fx')
@@ -668,6 +664,7 @@ def process_file_fix(params,in_file):
     outfile = create_filename(var,'fx','','')
     # create complete outpath: outdir + outfile
     outpath = "%s/%s" % (outdir,outfile)
+    
     # skip file if exists or overwrite
     if os.path.isfile(outpath):
         log.info("Output file exists: %s" % (outpath))
@@ -677,9 +674,16 @@ def process_file_fix(params,in_file):
         else:
             log.info("Overwriting..")
     log.info("Output to: %s" % (outpath))
+    
+    
+    # create object from netcdf file to access all parameters and attributes
+    f_in = Dataset(in_file,"r")
+    
+    for name in f_in.ncattrs():
+        if name in settings.global_attr_file: #only take attribute from file if in this list
+            settings.Global_attributes[name] = str(f_in.getncattr(name))
 
-    # create object for output file
-    global f_out
+    settings.Global_attributes["driving_model_ensemble_member"] = 'r0i0p0'
 
     f_out = Dataset(outpath,'w')
 
@@ -688,10 +692,8 @@ def process_file_fix(params,in_file):
         # skip dimension
         if name in settings.varlist_reject or name in ['bnds','time']:
             continue
-            #f_out.createDimension(name, len(dimension) if not dimension.isunlimited() else None)
         else:
-            if dimension not in ['bnds','time']:
-                f_out.createDimension(name, len(dimension) if not dimension.isunlimited() else None)
+            f_out.createDimension(name, len(dimension) if not dimension.isunlimited() else None)
 
     # set dimension vertices only if set to True in settings file
     if config.get_config_value('boolean','add_vertices') == True:
@@ -700,99 +702,65 @@ def process_file_fix(params,in_file):
     try:
         mulc_factor = float(params[config.get_config_value('index','INDEX_CONVERT_FACTOR')].strip().replace(',','.'))
     except ValueError:
-        log.warning("No conversion factor set for %s in parameter table. Setting it to 1..." % params[config.get_config_value('index','INDEX_RCM_NAME')])
+        log.warning("No conversion factor set in parameter table. Setting it to 1...")
         mulc_factor = 1.0
     if mulc_factor == 0:
-        log.warning("Conversion factor for %s is set to 0 in parameter table. Setting it to 1..." % params[config.get_config_value('index','INDEX_RCM_NAME')])
+        log.warning("Conversion factor is set to 0 in parameter table. Setting it to 1...")
         mulc_factor = 1.0
 
     if config.get_config_value('boolean','nc_compress') == True:
         log.info("COMPRESS all variables")
     else:
-            log.info("NO COMPRESS")
+        log.info("NO COMPRESS")
     for var_name, variable in f_in.variables.items():
-        # don't copy time_bnds if cm == point or variable time_bnds
-        log.debug("VAR: %s" % (var_name))
-
-        if var_name in ['time','time_bnds','bnds']:
+        if var_name in settings.varlist_reject or var_name in ['time','time_bnds','bnds']:
             continue
         var_in = f_in.variables[var_name]
         # create output variable
-        if var_name in ['rlon','rlat']:
+        if var_name in ['rlon','rlat','lon','lat']:
             data_type = 'd'
-        elif var_name in ['lon','lat']:#already added as variables further down
-            data_type = 'd'
-            continue
-        elif var_name in settings.varlist_reject:
-            continue
         else:
             data_type = var_in.datatype
-        # at variable creation set fill_vlue, later is impossible
-        # also set the compression
 
-        # skip 'pressure'!!
         dim_lst = []
         for dim in var_in.dimensions:
-            log.debug("DIM: %s" % (dim))
-            if dim in ['time','time_bnds','bnds']:
-                continue
-            if str(dim) not in settings.varlist_reject:
+            if dim not in ['time','time_bnds','bnds'] and dim not in settings.varlist_reject:
                 dim_lst.append(dim)
         var_dims = tuple(dim_lst)
         log.debug("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
-
-
-  #      if var_name not in f_out.variables:
-        if var_name in [var,settings.netCDF_attributes['RCM_NAME_ORG']]:
-            # TODO:test on FillValue for variables: mrfso,mrso,mrro
-            # could be negativ!
+        
+        #TODO: check if fillValue correct -> changeFill
+        if var_name in [var,settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME']]:
             if config.get_config_value('boolean','nc_compress') == True:
-                var_out = f_out.createVariable(var_name,datatype=data_type,
+                var_out = f_out.createVariable(var,datatype=data_type,
                     dimensions=var_dims,complevel=4,fill_value=settings.netCDF_attributes['missing_value'])
             else:
-                var_out = f_out.createVariable(var_name,datatype=data_type,
+                var_out = f_out.createVariable(var,datatype=data_type,
                     dimensions=var_dims,fill_value=settings.netCDF_attributes['missing_value'])
 
         else:
+            #no conversion factor needed
+            mulc_factor = 1.0
             if config.get_config_value('boolean','nc_compress') == True:
-                var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims,complevel=4)
+                var_out = f_out.createVariable(var,datatype=data_type,dimensions=var_dims,complevel=4)
             else:
-                var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims)
+                var_out = f_out.createVariable(var,datatype=data_type,dimensions=var_dims)
 
 
-        # set all as character converted with str() function
-
-        if var_name in ['lat','lon']:
+        if var_name in ['lat','lon','rlat','rlon']:
             att_lst = get_attr_list(var_name)
         else:
             att_lst = {}
             for k in var_in.ncattrs():
+                #TODO: ???                
                 if config.get_config_value('boolean','add_vertices') == False and k == 'bounds':
                     continue
-                if k in ['coordinates']:
-                    continue
                 att_lst[k] = var_in.getncattr(k)
-
-            if var_name == 'rlon':
-                att_lst['axis'] = 'X'
-                att_lst['long_name'] = 'longitude in rotated pole grid'
-
-            elif var_name == 'rlat':
-                att_lst['axis'] = 'Y'
-                att_lst['long_name'] = 'latitude in rotated pole grid'
-
+                
         var_out.setncatts(att_lst)
 
-
         # copy content to new datatype
-        log.debug("Copy from input: %s" % (var_out.name))
-
-        if var_name in ['rlon','rlat','rotated_pole','rotated_latitude_longitude']:
-            var_out[:] = var_in[:]
-        else:
-            var_out[:] = mulc_factor * var_in[:]
-
-
+        var_out[:] = mulc_factor * var_in[:]
 
     # commit changes
     f_out.sync()
@@ -800,29 +768,22 @@ def process_file_fix(params,in_file):
     ###################################
     # do some additional settings
     ###################################
-    # rename variable
-    try:
-        f_out.renameVariable(settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME'])
-    except:
-        log.warning("Variable has cf name already: %s" % (var))
 
     # set all predefined global attributes
     f_out.setncatts(settings.Global_attributes)
     log.info("Global attributes set!")
 
-
-    # add lon/lat variables
+    # add lon/lat variables if not yet present
     add_coordinates(f_out)
 
     # commit changes
     f_out.sync()
 
-    # exist in some output (e.g. CCLM) in CORDEX, default: False
+    # add vertices from extra file if requested in config file 
     if config.get_config_value('boolean','add_vertices') == True:
         add_vertices(f_out)
 
-    # create variable object to output file
-    f_var = f_out.variables[settings.netCDF_attributes['RCM_NAME']]
+    f_var = f_out.variables[var]
     # set additional variables attributes
     f_var.standard_name = settings.netCDF_attributes['standard_name']
     f_var.long_name = settings.netCDF_attributes['long_name']
@@ -830,11 +791,8 @@ def process_file_fix(params,in_file):
     #add coordinates attribute to fx-variables
     f_var.coordinates = 'lon lat'
 
-
-
     # set attribute missing_value
     f_var.missing_value = settings.netCDF_attributes['missing_value']
-    log.debug("#####################: %s" % (f_var.ncattrs()))
     try:
         f_var.setncattr('grid_mapping','rotated_pole')
     except:
@@ -846,14 +804,12 @@ def process_file_fix(params,in_file):
     #close output file
     f_out.close()
 
-
     # set attributes: frequency,tracking_id,creation_date
-    set_attributes_create(outpath,res)
+    set_attributes_create(outpath,"fx")
 
     # ncopy file to correct output format
     if config.get_config_value('boolean','nc_compress') == True:
         compress_output(outpath)
-    log.info("Variable attributes set!")
 
     # close input file
     f_in.close()
@@ -1419,11 +1375,12 @@ is here the time resolution of the input data in hours."
         # copy variables from temp file
         for var_name in f_tmp.variables.keys():
             var_in = f_tmp.variables[var_name]
-            # create output variable
-            if var_name in ['rlon','rlat','lon','lat']:
-                data_type = 'd'
+
             if var_name in settings.varlist_reject:
                 continue
+            
+            if var_name in ['rlon','rlat','lon','lat']:
+                data_type = 'd'
             else:
                 data_type = var_in.datatype
           
@@ -1505,7 +1462,7 @@ is here the time resolution of the input data in hours."
         # get time_bnds for averaged variables
         if cm != 'point':
             f_out.createDimension('bnds',size=2)
-            time_bnds = f_out.createVariable('time_bnds',datatype="d",dimensions=('time','bnds'))
+            time_bnds = f_out.createVariable('time_bnds',datatype="d",dimensions=('time','bnds'))                
             date_start = dt_in[0]-datetime.timedelta(hours=input_res_hr*0.5)
         else:
             date_start = dt_in[0]        
@@ -1516,17 +1473,16 @@ is here the time resolution of the input data in hours."
         # move the reference date to the one given in the config file (for CORDEX: 1949-12-01T00:00:00Z)
         time.units = config.get_config_value('settings','units')
         
-        # reference date
-        refdate = num2date(0,time.units,calendar=in_calendar)
-        
         # the first time step (or first lower time bound) as numeric value in the desired time units
         num_date_start = date2num(date_start,time.units,calendar=in_calendar)
         
-        #output time resolution measured in the time units from the config file       
-        res_units = date2num(refdate + datetime.timedelta(hours=res_hr),time.units,calendar=in_calendar)
-        
-        #TODO: time bounds and time not correct for day,mon?
         if res_hr <= 24:
+            # reference date
+            refdate = num2date(0,time.units,calendar=in_calendar)
+        
+            #output time resolution measured in the time units from the config file       
+            res_units = date2num(refdate + datetime.timedelta(hours=res_hr),time.units,calendar=in_calendar)
+        
             # set time and time_bnds
             if cm != 'point':
                 for n in range(data_len):
@@ -1538,20 +1494,10 @@ is here the time resolution of the input data in hours."
                 for n in range(data_len):
                     time[n] = num_date_start + n * res_units
 
-
         elif res == 'mon':
-            for n in range(data_len):
-                time_bnds[n,0] = num_date_start
-                d = num2date(num_date_start,time.units,calendar=in_calendar)
-                # only 12 months!
-                m = n % 12
-                days = settings.dpm[time.calendar][m+1]
-                # add one day in February of leap year
-                if leap_year(d.year,time.calendar) and m == 1:
-                    days += 1
-
-                num_date_start += days
-                time_bnds[n,1] = num_date_start
+            for n in range(1,12):
+                time_bnds[n,0] = date2num(datetime.datetime(int(year),n,1),time.units,calendar=in_calendar)
+                time_bnds[n,1] = date2num(datetime.datetime(int(year),n+1,1),time.units,calendar=in_calendar)
                 time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
 
         # commit changes
@@ -1618,8 +1564,11 @@ is here the time resolution of the input data in hours."
 
         # set attribute missing_value
         f_var.missing_value = settings.netCDF_attributes['missing_value']
-
-        f_var.setncattr('grid_mapping','rotated_pole')
+        
+        try:
+            f_var.setncattr('grid_mapping','rotated_pole')
+        except:
+            log.warning("Variable '%s' does not exist." % ("rotated_pole"))
 
        # commit changes
         f_out.sync()
