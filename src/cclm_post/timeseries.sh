@@ -1,12 +1,10 @@
 timeseries  W_SNOW     out01
 timeseries  W_SO       out01
 timeseries  T_S        out01
-#
 timeseries  SNOW_CON   out03
 timeseries  RAIN_CON   out03
 timeseries  SNOW_GSP   out03
 timeseries  TOT_PREC   out03
-#
 timeseries  PMSL       out04
 timeseries  ASHFL_S    out04
 timeseries  U_10M      out04
@@ -25,7 +23,6 @@ timeseries  PS         out04
 timeseries  DURSUN     out04
 timeseries  RELHUM_2M  out04
 timeseries  ATHB_T     out04
-#
 timeseries  TQI        out05
 timeseries  RUNOFF_S   out05
 timeseries  TQV        out05
@@ -36,7 +33,6 @@ timeseries  HPBL       out05
 timeseries  RUNOFF_G   out05
 timeseries  SNOW_MELT  out05
 timeseries  H_SNOW     out05
-#
 timeseries  TMIN_2M    out07
 timeseries  TMAX_2M    out07
 timeseries  VMAX_10M   out07
