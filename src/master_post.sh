@@ -151,7 +151,7 @@ then
   FIRST=${YYA}
 fi
 
-#if only years given: process from January to December
+#if only years given: process from January of the year START_DATE to January of the year following STOP_DATE
 if [ ${#START_DATE} -eq 4 ]
 then
   START_DATE="${START_DATE}01"
@@ -162,14 +162,17 @@ else
   STOP_DATE=$(echo ${STOP_DATE} | cut -c1-6)
 fi
 
+#end year for extracting
+YYEext=$(echo ${STOP_DATE} | cut -c1-4)
+
 #if no archives have been extracted in the beginning:
 if [ ! -d ${INDIR1}/*${YYA} ] && [ ${post_step} -ne 2 ] && ${batch}
 then
     (( endex=YYA+num_extract-1 ))
     #limit to extraction to end year
-    if [ ${endex} -gt ${YYE} ]
+    if [ ${endex} -gt ${YYEext} ]
     then
-      endex=${YYE}
+      endex=${YYEext}
     fi
     echon "Extracting years ${YYA} to ${endex} \n\n"
     sbatch --job-name=CMOR_sh --error=${xfer}.${YYA}.err --output=${xfer}.${YYA}.out ${SRCDIR_POST}/xfer.sh -s ${YYA} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -x ${xfer}
@@ -177,6 +180,7 @@ then
     sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${YYA} -F ${FIRST} 
     exit
 fi
+
 
 (( NEXTYEAR=YYA+1 ))
 
@@ -191,11 +195,11 @@ then
     (( startex=YYA+num_extract ))
     (( endex=YYA+2*num_extract-1 ))
     #limit to extraction to end year
-    if [ ${endex} -gt ${YYE} ]
+    if [ ${endex} -gt ${YYEext} ]
     then
-      endex=${YYE}
+      endex=${YYEext}
     fi
-    if [ ${startex} -le ${YYE} ]
+    if [ ${startex} -le ${YYEext} ]
     then
       echon "Extracting years from ${startex} to  ${endex} \n\n"
       sbatch  --job-name=CMOR_sh --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -x ${xfer}
