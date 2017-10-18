@@ -742,9 +742,9 @@ def process_file_fix(params,in_file):
             #no conversion factor needed
             mulc_factor = 1.0
             if config.get_config_value('boolean','nc_compress') == True:
-                var_out = f_out.createVariable(var,datatype=data_type,dimensions=var_dims,complevel=4)
+                var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims,complevel=4)
             else:
-                var_out = f_out.createVariable(var,datatype=data_type,dimensions=var_dims)
+                var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims)
 
 
         if var_name in ['lat','lon','rlat','rlon']:
@@ -760,7 +760,10 @@ def process_file_fix(params,in_file):
         var_out.setncatts(att_lst)
 
         # copy content to new datatype
-        var_out[:] = mulc_factor * var_in[:]
+        try:
+            var_out[:] = mulc_factor * var_in[:]
+        except TypeError:
+            pass
 
     # commit changes
     f_out.sync()
