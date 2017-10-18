@@ -80,7 +80,7 @@ then
   then
     echo "Moving input directory for year ${startyear} to ${OUTDIR} "
     mv ${ARCHDIR}/*${startyear} ${OUTDIR}
-  elif [ -d ${ARCHDIR}/*${startyear}.tar ]
+  elif [ -f ${ARCHDIR}/*${startyear}.tar ]
   then
     echo "Extracting archive for year ${startyear} to ${OUTDIR}"
     tar -xf ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}
