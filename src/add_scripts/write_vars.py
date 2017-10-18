@@ -12,13 +12,13 @@ If variables occur more than once in the INPUT_IO file only the first appearance
 @author: Matthias Göbel, 08/2017
 """
 
-import itertools
 import numpy as np
 import csv
+import operator
 
 path="../../misc/"
-varfile=path+"CORDEX_CMOR_CCLM_variables_table.csv"
-infile=open(path+"INPUT_IO.1949","r")
+varfile="../CMORlight/Config/CORDEX_CMOR_CCLM_variables_table.csv" #variables table
+infile=open(path+"INPUT_IO.1949","r") #gribout file of CCLM
 
 path_cclm="../cclm_post/"  # the output file is placed here
 
@@ -35,38 +35,51 @@ def listit(v):
         return s.split(",")
 
 """Read variables for each output stream from file and put it into list"""
-outvar=[]
-outvarp=[]
-stop=False
-outs=7
+outvar = {} #CCLM output variables on model levels
+outvarp = {} #CCLM output varoables on pressure levels
+res = [] #time resolution of each output stream
 i=0
 j=0
 while True:
     line=infile.readline()
-    v=[]
-    vp=[]
-    if line[:8]=="  yvarml":
+    #get number of output streams
+    if "ngribout" in line:
+        outs = int(line[13:-2])
+    #get resolution for current stream
+    elif "hcomb" in line:
+        hcomb = listit(line[line.find("=")+2:-2])
+        res.append(hcomb[-1])
+    #read out variables
+    elif "yvarml" in line:
+        v=[]
+        vp=[]
         v.extend(listit(line[9:-2]))
+        stop = False
+        #read following lines
         while True:
             line=infile.readline()
-            if line[:8]=="  yvarpl":
-                vp.extend(listit(line[9:-2]))
+            if "yvarpl" in line:
+            #now variables on pressure levels
+                 while True:
+                     vp.extend(listit(line[9:-2]))
+                     line=infile.readline()
+                     if "yvarzl" in line or "plev" in line:
+                    #on z levels not needed
+                         stop = True
+                         break 
+            if stop:
                 break
-
-
             v.extend(listit(line[:-2]))
-
+        
+        #append to dict if not yet in dict or if time resolution is lower
         for var in v:
-            if any(var in sl for sl in outvar):
-                print("Variable %s already appended! Skipping..." % var)
-                v.remove(var)
-        for varp in vp:
-            if any(varp in sl for sl in outvarp):
-                print("Variable %s already appended! Skipping..." % varp)
-                vp.remove(varp)
-        outvar.append(v)
-        outvarp.append(vp)
-        if i==outs:
+            if var not in outvar or res[i] < res[outvar[var]]:
+                outvar[var] = i
+        for var in vp:
+            if var not in outvarp or res[i] < res[outvarp[var]]:
+                outvarp[var] = i
+        
+        if outs and i==outs:
             break
         i=i+1
     if j>1000:
@@ -78,53 +91,51 @@ infile.close()
 """Write file in format of post.job.tmpl"""
 
 #Determine largest variable name
-flat_l=list(itertools.chain(*(outvar+outvarp)))
-lenmax=len(max(flat_l, key=len))
+joint_l=list(outvar.keys())+list(outvarp.keys())
+lenmax=len(max(joint_l, key=len))
 
 #Get variables needed for cordex from csv file
-cordex_vars=[]
-PLEVS={}
+mlvar=[]
+pvar={}
 with open(varfile,'rt') as csvfile:
     reader = csv.reader(csvfile,delimiter=';')
-    for row in reader:
-        if row[1]!="":
-            cordex_vars.append(row[1])
+    for i,row in enumerate(reader):
+        if i != 0 and row[1]!="":
             #write requested pressure levels into dict
-            if row[1]!=row[0]:
-                if row[1] in PLEVS:
-                    PLEVS[row[1]].append(row[0][-4:-1])
+            if row[1] != row[0]:
+                if row[1] in pvar:
+                    pvar[row[1]].append(row[0][-4:-1])
                 else:
-                    PLEVS[row[1]]=[row[0][-4:-1]]
+                    pvar[row[1]]=[row[0][-4:-1]]
+            else:
+                mlvar.append(row[1])
 
-cordex_vars.extend(add)
+    mlvar.extend(add)
 
 #write into file
 timeseries=open(path_cclm+"timeseries.sh","w")
+outvar_sorted = sorted(outvar.items(), key=operator.itemgetter(1))
+outvarp_sorted = sorted(outvarp.items(), key=operator.itemgetter(1))
 
-for o,out in enumerate(outvar):
-    for var in out:
-        if var in cordex_vars or not cordex_only:
-            timeseries.write("timeseries  {:{width}s} out{:02d}\n".format(var,o+1,width=lenmax))
+for var in outvar_sorted:
+    if var[0] in mlvar or not cordex_only:
+        timeseries.write("timeseries  {:{width}s} out{:02d}\n".format(var[0],var[1]+1,width=lenmax))
+       
+timeseries.write("#\n")
 
-       # else:
-        #    print("Variable %s not needed!" % var)
-    for varp in outvarp[o]:
-        if varp in cordex_vars or not cordex_only:
-
-            plev=str(PLEVS[varp]).replace("[","(").replace("]",")").replace(",","").replace("0'","0.").replace("'","")
-            timeseries.write("PLEVS=%s \n" % plev)
-            timeseries.write("timeseriesp {:{width}s} out{:02d} \n \n".format(varp,o+1,width=lenmax))
-     #   else:
-      #      print("Variable %s not needed!" % varp)
-    timeseries.write("#\n")
+for varp in outvarp_sorted:
+    if varp[0] in pvar or not cordex_only:
+        plev=str(pvar[varp[0]]).replace("[","(").replace("]",")").replace(",","").replace("0'","0.").replace("'","")
+        timeseries.write("PLEVS=%s \n" % plev)
+        timeseries.write("timeseriesp {:{width}s} out{:02d} \n".format(varp[0],varp[1]+1,width=lenmax))
 
 timeseries.close()
 
-
+cordex_vars = mlvar + list(pvar.keys())
 #write proc_list into file (can be used for the seconds processing step if desired)
 proc_list=open(path_cclm+"proc_list","w")
 
-for var in sorted(flat_l):
+for var in sorted(joint_l):
     if var in cordex_vars or not cordex_only:
         proc_list.write("{:s} ".format(var))
 
@@ -134,7 +145,7 @@ proc_list.close()
 
 #which cordex variables are not yet processed:
 cordex_vars=np.array(cordex_vars)
-mask=np.in1d(cordex_vars,flat_l)
+mask=np.in1d(cordex_vars,joint_l)
 ava=np.ma.masked_where(mask, cordex_vars)
 print("Variables required by CORDEX but not yet delivered by CCLM (have to be calculated in the postprocessing):\n"+str(ava[~ava.mask]))
 
