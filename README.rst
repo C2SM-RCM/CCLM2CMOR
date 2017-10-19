@@ -82,7 +82,15 @@ In a first step the model output data is prepared for the actual CMOR process:
 Separate yearly time-series files have to be created for each required
 variable with the time variable meeting the CORDEX requirements.
 Additional required fields that are not contained in the model output
-have to be calculated. Note that this step is dependent on the climate
+have to be calculated. 
+For each variable a separate folder (named exactly as the variable) with 
+all the data files has to be created. The file names have to contain the
+variable name and the time range. For the variable *TOT_PREC* and the year
+2007 the name would be the following: 
+
+``TOT_PREC_2007010100-2008010100.nc``
+
+Note that this step is dependent on the climate
 model used. In this project the step is carried out for the **CCLM**
 model. The scripts referred to in this section are not directly applicable to other models.
 

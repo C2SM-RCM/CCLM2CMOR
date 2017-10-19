@@ -283,10 +283,6 @@ def set_coord_attributes(f_var,f_out):
         else:
             cmd = "No lon/lat coordinates available!"
             raise Exception(cmd)
-        #elif 'rlon' in f_out.variables and 'rlat' in f_out.variables:
-            #f_var.coordinates = 'plev rlat rlon'
-        #else:
-            #f_var.coordinates = 'plev'
 
     elif 'height' in f_out.variables:
         var_out = f_out.variables ['height']
@@ -300,10 +296,7 @@ def set_coord_attributes(f_var,f_out):
         else:
             cmd = "No lon/lat coordinates available!"
             raise Exception(cmd)
-        #elif 'rlon' in f_out.variables and 'rlat' in f_out.variables:
-            #f_var.coordinates = 'height rlat rlon'
-        #else:
-            #f_var.coordinates = 'height'
+
     else:
         if 'lon' in f_out.variables and 'lat' in f_out.variables:
             f_var.coordinates = 'lat lon'
@@ -311,9 +304,6 @@ def set_coord_attributes(f_var,f_out):
             cmd = "No lon/lat coordinates available!"
             log.error(cmd)
             raise Exception(cmd)
-        #elif 'rlon' in f_out.variables and 'rlat' in f_out.variables:
-            #f_var.coordinates = 'rlat rlon'
-
 
 # -----------------------------------------------------------------------------
 def new_dataset_version():
@@ -729,7 +719,7 @@ def process_file_fix(params,in_file):
         var_dims = tuple(dim_lst)
         log.debug("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
         
-        #TODO: check if fillValue correct -> changeFill
+        #TODO: check if fillValue correct -> change_Fill
         if var_name in [var,settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME']]:
             if config.get_config_value('boolean','nc_compress') == True:
                 var_out = f_out.createVariable(var,datatype=data_type,
@@ -746,18 +736,22 @@ def process_file_fix(params,in_file):
             else:
                 var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims)
 
-
-        if var_name in ['lat','lon','rlat','rlon']:
-            att_lst = get_attr_list(var_name)
-        else:
-            att_lst = {}
-            for k in var_in.ncattrs():
-                #TODO: ???                
-                if config.get_config_value('boolean','add_vertices') == False and k == 'bounds':
-                    continue
-                att_lst[k] = var_in.getncattr(k)
-                
-        var_out.setncatts(att_lst)
+            change_fill=False
+            if var_name in ['lat','lon','rlat','rlon']:
+                att_lst = get_attr_list(var_name)
+            else:
+                att_lst = {}
+                for k in var_in.ncattrs():
+                    if config.get_config_value('boolean','add_vertices') == False and k == 'bounds':
+                        continue
+                    elif k in ["_FillValue","missing_value"]:
+                        if var_in.getncattr(k) != settings.netCDF_attributes['missing_value']:
+                            #fillvalue or missing_value is incorrect and needs to be changed                            
+                            change_fill = True
+                        att_lst[k] = settings.netCDF_attributes['missing_value']
+                    else:
+                        att_lst[k] = var_in.getncattr(k)
+            var_out.setncatts(att_lst)
 
         # copy content to new datatype
         try:
@@ -809,7 +803,17 @@ def process_file_fix(params,in_file):
 
     # set attributes: frequency,tracking_id,creation_date
     set_attributes_create(outpath,"fx")
-
+       # change fillvalue in file (not just attribute) if necessary
+    if change_fill:
+        #use help file as -O option for cdo does not seem to work here
+        log.info("Changing missing values to %s" % settings.netCDF_attributes['missing_value'])
+        help_file = "%s/help-missing-%s-%s.nc" % (settings.DirWork,var,str(uuid.uuid1()))
+        cmd="cdo setmisstoc,%s %s %s" % (settings.netCDF_attributes['missing_value'],outpath,help_file)
+        shell(cmd)
+        cmd="ncks -h -A -v lon,lat %s %s" % (outpath,help_file)
+        shell(cmd)    
+        os.remove(outpath)
+        shell ("mv %s %s" % (help_file, outpath))
     # ncopy file to correct output format
     if config.get_config_value('boolean','nc_compress') == True:
         compress_output(outpath)
@@ -868,14 +872,13 @@ def proc_seasonal_mean(params,year):
         if cm_type != '':
             t_delim = 'mean over days'
             if t_delim in cm_type:
-#                cm0 = cm_type[cm_type.index(' '):]
-                cm = 'mean' #cm_type[cm_type.index(t_delim)+len(t_delim):]
-
+                cm = 'mean'
+            elif cm_type in ['maximum','minimum']:
+                cm = cm[:3]
             else:
                 cm = cm_type
             logger.info("Cell method used for cdo command: %s" % (cm))
 
-            outdir = get_out_dir(var,res)
             f_lst = sorted(filenames)
             i = 0
             for f in f_lst:
@@ -889,43 +892,41 @@ def proc_seasonal_mean(params,year):
 
                 # first a temp file
                 ftmp_name = "%s/%s-%s%s" % (settings.DirWork,year,str(uuid.uuid1()),'-help.nc')
-                # generate outpath with outfile and outdir
+                # generate input path
                 f = "%s/%s" % (dirpath,f)
 
-                # for season the last month from previous year is needed
+                # for season the last month from the previous year is needed
                 if i == 0:
+                    #for first file: from March to November
                     cmd = "cdo -f %s -seas%s -selmonth,3/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f,ftmp_name)
                     retval=shell(cmd,logger=logger)
 
                 else:
-                    # first: last December of previous year
+                    # get December of previous year
                     f_hlp12 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     f_prev = "%s/%s" % (dirpath,f_lst[i-1])
                     if config.get_config_value("integer","multi") > 1:
-                        timepkg.sleep(3)#wait for previous year to definitely finish when multiprocessing
+                        timepkg.sleep(5) #wait for previous year to definitely finish when using multiprocessing
                     cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
                     retval = shell(cmd,logger=logger)
 
-                    # second: month 1...11 of actual year
+                    # get months 1 to 11 of actual year
                     f_hlp1_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     cmd = "cdo -f %s selmonth,1/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f,f_hlp1_11.name)
                     retval = shell(cmd,logger=logger)
 
-                    # now concatenate all 12 month
+                    # now concatenate all 12 montha
                     f_hlp12_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     cmd = "ncrcat -h -O %s %s %s" % (f_hlp12.name,f_hlp1_11.name,f_hlp12_11.name)
                     retval = shell(cmd,logger=logger)
 
-#                    cmd = "cdo -f %s -s timsel%s,3,2 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f_hlp2.name,ftmp_name)
-#                    cmd = "cdo -f %s -s timsel%s,3 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f_hlp12_11.name,ftmp_name)
-#                    cmd = "cdo -f %s timsel%s,3 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f_hlp12_11.name,ftmp_name)
                     cmd = "cdo -f %s seas%s,3 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f_hlp12_11.name,ftmp_name)
                     retval = shell(cmd,logger=logger)
 
                     # remove all temp files
-                  #  os.remove(f_hlp12.name)
-                   # os.remove(f_hlp1_11.name)
-                    #os.remove(f_hlp12_11.name)
+                    os.remove(f_hlp12.name)
+                    os.remove(f_hlp1_11.name)
+                    os.remove(f_hlp12_11.name)
 
                 # create netcdf4 object from file
                 f_tmp = Dataset(ftmp_name,'r+')
@@ -938,21 +939,10 @@ def proc_seasonal_mean(params,year):
 
                 # variable object
                 f_var = f_tmp.variables[var]
-                try:
-                    #if not 'rotated_latitude_longitude' in f_tmp.variables.keys() and 'rotated_pole' in f_tmp.variables.keys():
-                        #f_tmp.renameVariable('rotated_pole','rotated_latitude_longitude')
-                    if not 'rotated_pole' in f_tmp.variables.keys():
-                        var_name = 'rotated_pole'
-                        if var_name in f_in.variables.keys():
-                            copy_var(f_in,f_tmp,var_name,logger=logger)
-                except:
-                    logger.info("Variable '%s' does not exist." % ("rotated_pole"))
 
-                # copy also height an plev: they are correct at that point
+                # copy variables from input file if they got lost in cdo commands
                 for var_name in ['lat','lon','rotated_pole','plev','height']:
-#                    print var_name,var_name in f_in.variables.keys(),var_name not in f_tmp.variables
-                    if var_name in f_in.variables.keys() and var_name not in f_tmp.variables.keys():
-                        copy_var(f_in,f_tmp,var_name,logger=logger)
+                    copy_var(f_in,f_tmp,var_name,logger=logger)
                 f_var.setncattr('grid_mapping','rotated_pole')
                 f_var.cell_methods = "time: %s" % (cm_type)
 
@@ -975,31 +965,30 @@ def proc_seasonal_mean(params,year):
                 # get the first time value and convert to date
                 dt1 = num2date(time_bnds[0,0],time.units,time.calendar)
                 # get the last time value and convert to date
-                # attention: minus ONE DAY to meet the end month
-                dt2 = num2date(time_bnds[len(time_bnds)-1,1]-1,time.units,time.calendar)
+                dt2 = num2date(time_bnds[-1,1]-1,time.units,time.calendar)
                 dt_start = str(dt1)[:7].replace("-","")
                 dt_stop = str(dt2)[:7].replace("-","")
-
+                
+                if config.get_config_value('boolean','add_vertices') == True:
+                    add_vertices(f_tmp)
+                    
                 # close output object
                 f_tmp.close()
 
                 # create outpath to store
                 outfile = create_filename(var,res,dt_start,dt_stop,logger=logger)
                 outpath = "%s/%s" % (outdir,outfile)
-                # rename temp file to output filename outpath
+                # move temp file to output file
                 retval = shell("mv %s %s" % (ftmp_name,outpath))
 
                 # set attributes
                 set_attributes_create(outpath,res,year)
-                # correct netcdf version
+                
+                # compress output
                 if config.get_config_value('boolean','nc_compress') == True:
                     compress_output(outpath,year,logger=logger)
 
-                # exist in some output (e.g. CCLM) in CORDEX, default: False
-                if config.get_config_value('boolean','add_vertices') == True:
-                    f_out = Dataset(outpath,'r+')
-                    add_vertices(f_out)
-                    f_out.close()
+
 
                 # next file index in the list
                 i += 1
@@ -1054,17 +1043,18 @@ def derotate_uv(params,in_file,var,logger=log):
     out_file_u = "%s/%s" % (out_dir_u,filename_u)
     out_file_v = "%s/%s" % (out_dir_v,filename_v)
 
-    # make directories
-    try:
-        os.makedirs(out_dir_u)
-        os.makedirs(out_dir_v)
-    except:
-        pass
-
-    start_range = in_file[in_file.rindex('_')+1:in_file.rindex('.')]
 
     # start if output files do NOT exist
     if (not os.path.isfile(out_file_u)) or (not os.path.isfile(out_file_v)) or (config.get_config_value('boolean','overwrite')):
+        # make directories
+        try:
+            os.makedirs(out_dir_u)
+            os.makedirs(out_dir_v)
+        except:
+            pass
+    
+        start_range = in_file[in_file.rindex('_')+1:in_file.rindex('.')]
+
         out_file = "%s/UV_%s-%s_%s.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
         out_file_derotate = "%s/UV_%s-%s_%s_derotate.nc" % (settings.DirWork,in_var_u,in_var_v,start_range)
         if not os.path.isfile(out_file) or config.get_config_value('boolean','overwrite'):
