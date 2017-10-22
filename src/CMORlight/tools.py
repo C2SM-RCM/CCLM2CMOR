@@ -6,33 +6,24 @@ Contains all the functions for processing the files
 import os
 import sys
 
-# netcdf4 Library
 from netCDF4 import Dataset
 from netCDF4 import num2date
 from netCDF4 import date2num
 from netCDF4 import netcdftime
+
 import tempfile
-
-# sub process library
 import subprocess
-
-# configuration
-import get_configuration as config
-
 import numpy as np
+import datetime
+
+import uuid
+import time as timepkg
 
 # global variables
 import settings
+# configuration
+import get_configuration as config
 
-import datetime
-
-# uuid support
-import uuid
-
-import traceback
-import time as timepkg
-
-# support logging
 import logging
 log = logging.getLogger("cmorlight")
 
@@ -156,11 +147,11 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
 
     if res in ["1hr","3hr","6hr","12hr"]:
         if agg=="i":
-            bounds=[["0000","2300"],["0000","2100"],["0000","1800"],["0000","1200"]]
+            bounds=[["0000","2300"],["0000","2100"],["00","18"],["00","12"]]
         elif agg=="a":
-            bounds=[["0030","2330"],["0130","2230"],["0300","2100"],["0600","1800"]]
+            bounds=[["0030","2330"],["0130","2230"],["03","21"],["06","18"]]
         else:
-            bounds=[["0000","2300"],["0000","2100"],["0000","1800"],["0000","1200"]]
+            bounds=[["0000","2300"],["0000","2100"],["00","18"],["00","12"]]
             logger.error("Subdaily aggregation method in column %s of parameter table must be 'i' or 'a'! Assumed instantaneous..." % config.get_config_value('index','INDEX_FRE_AGG'))
 
     if res == "1hr":
@@ -462,7 +453,7 @@ def add_vertices(f_out,logger=log):
         if 'lon_vertices' in f_vert.variables.keys() and 'lon_vertices' not in f_out.variables.keys():
             lon_vertices = f_vert.variables['lon_vertices']
             # create lon_vertices in output
-            var_out = f_out.createVariable('lon_vertices',datatype='f',dimensions=lon_vertices.dimensions)
+            var_out = f_out.createVariable('lon_vertices',datatype='d',dimensions=lon_vertices.dimensions)
             # copy content to new datatype
             if 'lon' in f_vert.variables.keys():
                 f_lon = f_vert.variables['lon']
@@ -482,7 +473,7 @@ def add_vertices(f_out,logger=log):
             lat_vertices = f_vert.variables['lat_vertices']
             # create lat_vertices in output
             #var_out = f_out.createVariable('lat_vertices',datatype='f',dimensions=['rlat','rlon','vertices'])
-            var_out = f_out.createVariable('lat_vertices',datatype='f',dimensions=lat_vertices.dimensions)
+            var_out = f_out.createVariable('lat_vertices',datatype='d',dimensions=lat_vertices.dimensions)
             # copy content to new datatype
             if 'lat' in f_vert.variables.keys():
                 f_lat = f_vert.variables['lat']
@@ -558,12 +549,17 @@ def get_attr_list(var_name):
             att_lst['bounds'] = "lat_vertices"
 
     elif var_name == 'rlon':
-        att_lst['axis'] = 'X'
+        att_lst['standard_name'] = 'grid_longitude'
         att_lst['long_name'] = 'longitude in rotated pole grid'
+        att_lst['units'] = 'degrees'
+        att_lst['axis'] = 'X'
 
     elif var_name == 'rlat':
-        att_lst['axis'] = 'Y'
+        att_lst['standard_name'] = 'grid_latitude'
         att_lst['long_name'] = 'latitude in rotated pole grid'
+        att_lst['units'] = 'degrees'
+        att_lst['axis'] = 'Y'
+
 
     return att_lst
 
@@ -578,10 +574,10 @@ def copy_var(f_in,f_out,var_name,logger=log):
         if var_name in ['rlat','rlon','lat','lon','rotated_latitude_longitude','rotated_pole']:
             new_datatype = 'd'
         else:
-            new_datatype = var_in.datatype
+            new_datatype = 'f'
         var_out = f_out.createVariable(var_name,datatype=new_datatype,dimensions=var_in.dimensions )
         # set all as character converted with str() function
-        if var_name in ['lat','lon']:
+        if var_name in ['lat','lon','rlon','rlat']:
             att_lst = get_attr_list(var_name)
         else:
             att_lst = {}
@@ -648,6 +644,15 @@ def process_file_fix(params,in_file):
 
     var = params[config.get_config_value('index','INDEX_VAR')]
 
+    # create object from netcdf file to access all parameters and attributes
+    f_in = Dataset(in_file,"r")
+    
+    for name in f_in.ncattrs():
+        if name in settings.global_attr_file: #only take attribute from file if in this list
+            settings.Global_attributes[name] = str(f_in.getncattr(name))
+
+    settings.Global_attributes["driving_model_ensemble_member"] = 'r0i0p0'
+    
     # out directory
     outdir = get_out_dir(var,'fx')
     # get file name
@@ -666,15 +671,6 @@ def process_file_fix(params,in_file):
     log.info("Output to: %s" % (outpath))
     
     
-    # create object from netcdf file to access all parameters and attributes
-    f_in = Dataset(in_file,"r")
-    
-    for name in f_in.ncattrs():
-        if name in settings.global_attr_file: #only take attribute from file if in this list
-            settings.Global_attributes[name] = str(f_in.getncattr(name))
-
-    settings.Global_attributes["driving_model_ensemble_member"] = 'r0i0p0'
-
     f_out = Dataset(outpath,'w')
 
     # create dimensions in target file
@@ -703,23 +699,22 @@ def process_file_fix(params,in_file):
     else:
         log.info("NO COMPRESS")
     for var_name, variable in f_in.variables.items():
-        if var_name in settings.varlist_reject or var_name in ['time','time_bnds','bnds']:
+        if var_name in settings.varlist_reject or var_name == 'time':
             continue
         var_in = f_in.variables[var_name]
         # create output variable
-        if var_name in ['rlon','rlat','lon','lat']:
+        if var_name in ['rlon','rlat','lon','lat','time']:
             data_type = 'd'
         else:
-            data_type = var_in.datatype
+            data_type = 'f'
 
         dim_lst = []
         for dim in var_in.dimensions:
-            if dim not in ['time','time_bnds','bnds'] and dim not in settings.varlist_reject:
+            if dim != 'time' and dim not in settings.varlist_reject:
                 dim_lst.append(dim)
         var_dims = tuple(dim_lst)
         log.debug("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
         
-        #TODO: check if fillValue correct -> change_Fill
         if var_name in [var,settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME']]:
             if config.get_config_value('boolean','nc_compress') == True:
                 var_out = f_out.createVariable(var,datatype=data_type,
@@ -788,12 +783,9 @@ def process_file_fix(params,in_file):
     #add coordinates attribute to fx-variables
     f_var.coordinates = 'lon lat'
 
-    # set attribute missing_value
+    # set attributes missing_value and grid_mapping
     f_var.missing_value = settings.netCDF_attributes['missing_value']
-    try:
-        f_var.setncattr('grid_mapping','rotated_pole')
-    except:
-        log.warning("Variable '%s' does not exist." % ("rotated_pole"))
+    f_var.setncattr('grid_mapping','rotated_pole')
 
     # commit changes
     f_out.sync()
@@ -1196,7 +1188,32 @@ The last time step must be (24 - resolution) UTC and (24 - resolution * 0.5) UTC
 is here the time resolution of the input data in hours."
         logger.error(cmd)
         raise Exception(cmd) 
+        
+    # for mrso and mrfso sum up desired soil levels
+    if var in ['mrso','mrfso']:
+        # use start soil layer 1 
+        idx_from = 1
+        # take stop soil layer from table
+        idx_to = int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip())
+        arr = {}
+        for i in range(idx_from,idx_to+1):
+            f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
+            arr[i] = f_hlp.name
+            retval = shell("cdo -f %s sellevidx,%d %s %s" %(config.get_config_value('settings', 'cdo_nctype'),i,in_file,arr[i]))
 
+        # now calculate the sum
+        f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
+        #write files of arr into str with whitespace separation for cdo command
+        files_str=" ".join(arr.values())
+        cmd = "cdo enssum %s %s" % (files_str,f_hlp.name)
+        retval = shell(cmd,logger=logger)
+        
+        # remove all help files
+        for i in range(idx_from,idx_to):
+            os.remove(arr[i])
+            
+        # switch from original in_file to the new in_file
+        in_file = f_hlp.name
 
     new_reslist=list(reslist) #remove resolutions from this list that are higher than the input data resolution
     # process all requested resolutions
@@ -1287,40 +1304,13 @@ is here the time resolution of the input data in hours."
             cmd_mul = ""
         logger.debug("Multiplicative conversion factor: %s" % cmd_mul)
 
-        # for mrso and mrfso sum up desired soil levels
-        in_file_help = ""
-        if var in ['mrso','mrfso']:
-            # use start soil layer 1 
-            idx_from = 1
-            # take stop soil layer from table
-            idx_to = int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip())
-            arr = {}
-            for i in range(idx_from,idx_to+1):
-                f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
-                arr[i] = f_hlp.name
-                retval = shell("cdo -f %s sellevidx,%d %s %s" %(config.get_config_value('settings', 'cdo_nctype'),i,in_file,arr[i]))
-
-            # now calculate the sum
-            f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
-            #write files of arr into str with whitespace separation for cdo command
-            files_str=" ".join(arr.values())
-            cmd = "cdo enssum %s %s" % (files_str,f_hlp.name)
-            retval = shell(cmd,logger=logger)
-            
-            # remove all help files
-            for i in range(idx_from,idx_to):
-                os.remove(arr[i])
-                
-            # switch from original in_file to the new in_file
-            in_file = f_hlp.name
-
         ftmp_name = "%s/%s-%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()),var)
 
         # get type of cell method to create the output file: point,mean,maximum,minimum,sum
         cm = cm_type
         
         #for monthly resolution: determine cell method within days time
-        if res == 'mon' and 'within days time' in cm:
+        if res == 'mon' and 'within days time' in cm_type:
             cm = cm[:cm.find(" ")]
         
         #Change cm to max/min
@@ -1333,15 +1323,22 @@ is here the time resolution of the input data in hours."
             else:
                 cmd = "cdo -f %s -s timsel%s,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,int(nstep),cmd_mul,in_file,ftmp_name)
         
-        # daily and monthly resolution. For monthly resolution daily processing is necessary first
-        elif res in  ['day','mon']:
+        # For monthly resolution daily processing is sometimes necessary first
+        elif res == 'day' or 'within days time' in cm_type:
             cmd = "cdo -f %s -s day%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,cmd_mul,in_file,ftmp_name)
+        
+        #monthy resolution
+        else:
+            cmd = "cdo -f %s -s mon%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,cmd_mul,in_file,ftmp_name)
+
         retval = shell(cmd,logger=logger)
         
         #now do mean over days for each month
-        if res == 'mon':
-            cmd = "cdo -f %s -s monmean -O %s %s" % (config.get_config_value('settings', 'cdo_nctype'),ftmp_name,ftmp_name)
+        if 'within days time' in cm_type:
+            ftmp_name2 = "%s/%s-%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()),var)
+            cmd = "cdo -f %s -s monmean %s %s" % (config.get_config_value('settings', 'cdo_nctype'),ftmp_name,ftmp_name2)
             retval = shell(cmd,logger=logger)
+            ftmp_name = ftmp_name2
             
         ####################################################
         # open output file
@@ -1372,10 +1369,10 @@ is here the time resolution of the input data in hours."
             if var_name in settings.varlist_reject:
                 continue
             
-            if var_name in ['rlon','rlat','lon','lat']:
+            if var_name in ['rlon','rlat','lon','lat','time']:
                 data_type = 'd'
             else:
-                data_type = var_in.datatype
+                data_type = 'f'
           
             if config.get_config_value('boolean','nc_compress') == True:
                 logger.debug("COMPRESS variable: %s" % (var_name))
@@ -1450,12 +1447,15 @@ is here the time resolution of the input data in hours."
         # now correct time,time_bnds #
         ##############################
 
-        # get time and time_bnds variables from output
+        # get time variable from output
         time = f_out.variables['time']
-        # get time_bnds for averaged variables
+        # create time_bnds for averaged variables
         if cm != 'point':
             f_out.createDimension('bnds',size=2)
-            time_bnds = f_out.createVariable('time_bnds',datatype="d",dimensions=('time','bnds'))                
+            time_bnds = f_out.createVariable('time_bnds',datatype="d",dimensions=('time','bnds'))
+            
+        #get start date: first time value for inst. input, first lower time bound for averaged input
+        if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
             date_start = dt_in[0]-datetime.timedelta(hours=input_res_hr*0.5)
         else:
             date_start = dt_in[0]        
@@ -1548,20 +1548,19 @@ is here the time resolution of the input data in hours."
                     f_var.coordinates = 'height lat lon'
             else:
                 log.warning("Column %s (Level) should bei either %s or %s! Got %s." % (config.get_config_value('index','INDEX_MODEL_LEVEL'),config.get_config_value('settings','PModelType'),config.get_config_value('settings','MModelType'),params[config.get_config_value('index','INDEX_MODEL_LEVEL')]))
-
+        else:
+            f_var.coordinates = 'lat lon'
         # copy variables lon,lat,rlon,rlat,rotated_pole from extra file if needed
         add_coordinates(f_out,logger=logger)
 
+        #TODO: what to do with this function?
         # set attribute coordinates
-     #   set_coord_attributes(f_var,f_out)
+        # set_coord_attributes(f_var,f_out)
 
         # set attribute missing_value
         f_var.missing_value = settings.netCDF_attributes['missing_value']
         
-        try:
-            f_var.setncattr('grid_mapping','rotated_pole')
-        except:
-            log.warning("Variable '%s' does not exist." % ("rotated_pole"))
+        f_var.setncattr('grid_mapping','rotated_pole')
 
        # commit changes
         f_out.sync()
@@ -1589,8 +1588,8 @@ is here the time resolution of the input data in hours."
             compress_output(outpath,year,logger=logger)
 
     # delete help file
-    if var in ['mrso','mrfso'] and os.path.isfile(in_file_help):
-        os.remove(in_file_help)
+    if var in ['mrso','mrfso'] and os.path.isfile(f_hlp.name):
+        os.remove(f_hlp.name)
 
     # close input file
     f_in.close()
