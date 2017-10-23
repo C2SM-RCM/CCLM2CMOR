@@ -11,6 +11,7 @@ from netCDF4 import num2date
 from netCDF4 import date2num
 from netCDF4 import netcdftime
 
+from collections import OrderedDict
 import tempfile
 import subprocess
 import numpy as np
@@ -225,7 +226,7 @@ def set_attributes_create(outpath,res=None,year=0,logger=log):
         try: #delete unnecessary attribute
             f_out.variables["lon"].delncattr("_CoordinateAxisType")
             f_out.variables["lat"].delncattr("_CoordinateAxisType")
-        except:
+        except RuntimeError:
             pass
 
         # set new tracking_id
@@ -530,17 +531,18 @@ def check_resolution(params,res,process_table_only):
 
 # -----------------------------------------------------------------------------
 
-def get_attr_list(var_name):
+def get_attr_list(var_name,args=[]):
     '''
     set pre defined attributes for variables lon,lat
     '''
-    att_lst = {}
+    att_lst = OrderedDict()
     if var_name == 'lon':
         att_lst['standard_name'] = 'longitude'
         att_lst['long_name'] = 'longitude'
         att_lst['units'] = 'degrees_east'
         if config.get_config_value('boolean','add_vertices') == True:
             att_lst['bounds'] = "lon_vertices"
+            
     elif var_name == 'lat':
         att_lst['standard_name'] = 'latitude'
         att_lst['long_name'] = 'latitude'
@@ -559,7 +561,20 @@ def get_attr_list(var_name):
         att_lst['long_name'] = 'latitude in rotated pole grid'
         att_lst['units'] = 'degrees'
         att_lst['axis'] = 'Y'
+        
+    elif var_name == 'time':
+        att_lst['standard_name'] = 'time'
+        att_lst['long_name'] = 'time'
+        att_lst['units'] = args[0]
+        att_lst['calendar'] = args[1]
+        att_lst['axis'] = 'T'
 
+    elif var_name == 'time_bnds':
+        att_lst['standard_name'] = 'time_bnds'
+        att_lst['long_name'] = 'time bounds'
+        att_lst['units'] = args[0]
+        att_lst['calendar'] = args[1]
+        att_lst['axis'] = 'T'
 
     return att_lst
 
@@ -580,7 +595,7 @@ def copy_var(f_in,f_out,var_name,logger=log):
         if var_name in ['lat','lon','rlon','rlat']:
             att_lst = get_attr_list(var_name)
         else:
-            att_lst = {}
+            att_lst = OrderedDict()
             for k in var_in.ncattrs():
                 if config.get_config_value('boolean','add_vertices') == False and k == 'bounds':
                     continue
@@ -735,7 +750,7 @@ def process_file_fix(params,in_file):
             if var_name in ['lat','lon','rlat','rlon']:
                 att_lst = get_attr_list(var_name)
             else:
-                att_lst = {}
+                att_lst = OrderedDict()
                 for k in var_in.ncattrs():
                     if config.get_config_value('boolean','add_vertices') == False and k == 'bounds':
                         continue
@@ -1275,24 +1290,6 @@ is here the time resolution of the input data in hours."
                 logger.info("Overwriting..")
         logger.debug("Output to: %s" % (outpath))
 
-        # options for cdo command
-        #subdaily
-        if res_hr < 24:
-            selhour = str(list(np.arange(0,24,res_hr)))[1:-1].replace(" ","")
-            nstep = res_hr / input_res_hr
-        # daily data
-        elif res == 'day':
-            nstep = 24. / input_res_hr
-        # monthly data, consider calendar!!
-        elif res == 'mon':
-            if in_calendar in ('standard','gregorian','proleptic_gregorian','noleap','365_day','julian'):
-                ndays = 365.
-            elif in_calendar == '360_day':
-                ndays = 360.
-            elif in_calendar in ('366_day','all_leap'):
-                ndays = 366.
-            nstep = ndays * 24. / input_res_hr
-        
         #conversion factor            
         conv_factor = params[config.get_config_value('index','INDEX_CONVERT_FACTOR')].strip().replace(',','.')
         if  conv_factor not in ['', '0', '1']:
@@ -1318,6 +1315,8 @@ is here the time resolution of the input data in hours."
             cm = cm[:3]
         
         if res_hr < 24:
+            selhour = str(list(np.arange(0,24,res_hr)))[1:-1].replace(" ","")
+            nstep = res_hr / input_res_hr
             if cm == 'point':
                 cmd = "cdo -f %s -s selhour,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),selhour,cmd_mul,in_file,ftmp_name)
             else:
@@ -1364,16 +1363,18 @@ is here the time resolution of the input data in hours."
 
         # copy variables from temp file
         for var_name in f_tmp.variables.keys():
-            var_in = f_tmp.variables[var_name]
 
-            if var_name in settings.varlist_reject:
-                continue
-            
             if var_name in ['rlon','rlat','lon','lat','time']:
                 data_type = 'd'
-            else:
+            elif var_name == 'rotated_pole':
                 data_type = 'f'
-          
+            elif var_name in [settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME']]:
+                data_type = 'f'
+            else:
+                continue
+                
+            var_in = f_tmp.variables[var_name]
+
             if config.get_config_value('boolean','nc_compress') == True:
                 logger.debug("COMPRESS variable: %s" % (var_name))
 
@@ -1385,7 +1386,7 @@ is here the time resolution of the input data in hours."
             logger.debug("Dimensions (of variable %s): %s" % (var_name,str(var_dims)))
             logger.debug("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
             
-            if var_name in [var,settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME']]:
+            if var_name in [settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME']]:
                 if config.get_config_value('boolean','nc_compress') == True:
                     var_out = f_out.createVariable(var,datatype=data_type,
                         dimensions=var_dims,complevel=4,fill_value=settings.netCDF_attributes['missing_value'])
@@ -1400,10 +1401,10 @@ is here the time resolution of the input data in hours."
             
             # create attribute list
             change_fill=False
-            if var_name in ['lat','lon']:
-                att_lst = get_attr_list(var_name)
+            if var_name in ['lat','lon','rlon','rlat','time']:
+                att_lst = get_attr_list(var_name,[time_in_units,in_calendar])
             else:
-                att_lst = {}
+                att_lst = OrderedDict()
                 for k in var_in.ncattrs():
                     if k in ["_FillValue","missing_value"]:
                         if var_in.getncattr(k) != settings.netCDF_attributes['missing_value']:
@@ -1432,12 +1433,8 @@ is here the time resolution of the input data in hours."
                 # create output variable
                 var_out = f_out.createVariable(var_name,datatype="d",dimensions=var_in.dimensions)
                 # create attribute list
-                if var_name in ['lat','lon']:
-                    att_lst = get_attr_list(var_name)
-                else:
-                    att_lst = {}
-                    for k in var_in.ncattrs():
-                        att_lst[k] = var_in.getncattr(k)
+                att_lst = get_attr_list(var_name)
+
                 var_out.setncatts(att_lst)
                 # copy content to new datatype
                 var_out[:] = var_in[:]
@@ -1453,7 +1450,9 @@ is here the time resolution of the input data in hours."
         if cm != 'point':
             f_out.createDimension('bnds',size=2)
             time_bnds = f_out.createVariable('time_bnds',datatype="d",dimensions=('time','bnds'))
-            
+            att_lst = get_attr_list('time_bnds',[time.units,in_calendar])
+            time_bnds.setncatts(att_lst)
+            time.bounds = 'time_bnds'
         #get start date: first time value for inst. input, first lower time bound for averaged input
         if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
             date_start = dt_in[0]-datetime.timedelta(hours=input_res_hr*0.5)
@@ -1568,8 +1567,6 @@ is here the time resolution of the input data in hours."
         # remove help file
         os.remove(ftmp_name)
 
-        # set attributes: frequency,tracking_id,creation_date
-        set_attributes_create(outpath,res,year,logger=logger)
 
        # change fillvalue in file (not just attribute) if necessary
         if change_fill:
@@ -1586,7 +1583,10 @@ is here the time resolution of the input data in hours."
         # ncopy file to correct output format
         if config.get_config_value('boolean','nc_compress') == True:
             compress_output(outpath,year,logger=logger)
-
+        
+        # set global attributes: frequency,tracking_id,creation_date
+        set_attributes_create(outpath,res,year,logger=logger)
+    
     # delete help file
     if var in ['mrso','mrfso'] and os.path.isfile(f_hlp.name):
         os.remove(f_hlp.name)

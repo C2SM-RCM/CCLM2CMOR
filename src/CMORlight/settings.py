@@ -8,6 +8,7 @@ reads in the variables table
 
 import csv
 import get_configuration as config
+from collections import OrderedDict
 
 def init(vartable):
     '''
@@ -67,11 +68,11 @@ def init(vartable):
 
     # dictionary for global attributes
     global Global_attributes
-    Global_attributes = {}
+    Global_attributes = OrderedDict()
 
     # dictionary for additional netcdf atributes
     global netCDF_attributes
-    netCDF_attributes = {}
+    netCDF_attributes = OrderedDict()
 
     global use_version
     use_version = ''
