@@ -568,14 +568,13 @@ def get_attr_list(var_name,args=[]):
         att_lst['units'] = args[0]
         att_lst['calendar'] = args[1]
         att_lst['axis'] = 'T'
-
-    elif var_name == 'time_bnds':
-        att_lst['standard_name'] = 'time_bnds'
-        att_lst['long_name'] = 'time bounds'
-        att_lst['units'] = args[0]
-        att_lst['calendar'] = args[1]
-        att_lst['axis'] = 'T'
-
+        
+    elif var_name == 'rotated_pole':
+        att_lst['long_name'] = 'coordinates of the rotated North Pole'
+        att_lst['grid_mapping_name'] = 'rotated_latitude_longitude'
+        att_lst['grid_north_pole_latitude'] = float(args[0])
+        att_lst['grid_north_pole_longitude'] = float(args[1])
+        
     return att_lst
 
 
@@ -586,14 +585,19 @@ def copy_var(f_in,f_out,var_name,logger=log):
     '''
     if var_name in f_in.variables and var_name not in f_out.variables:
         var_in = f_in.variables[var_name]
-        if var_name in ['rlat','rlon','lat','lon','rotated_latitude_longitude','rotated_pole']:
+        if var_name in ['rlat','rlon','lat','lon','time','time_bnds']:
             new_datatype = 'd'
+        elif var_name in ['rotated_latitude_longitude','rotated_pole']:
+            new_datatype = 'c'
         else:
             new_datatype = 'f'
         var_out = f_out.createVariable(var_name,datatype=new_datatype,dimensions=var_in.dimensions )
         # set all as character converted with str() function
-        if var_name in ['lat','lon','rlon','rlat']:
+        if var_name in ['lat','lon','rlon','rlat','time']:
             att_lst = get_attr_list(var_name)
+        elif var_name == 'rotated_pole':
+            att_lst = get_attr_list(var_name,[var_in.grid_north_pole_latitude,var_in.grid_north_pole_longitude])
+
         else:
             att_lst = OrderedDict()
             for k in var_in.ncattrs():
@@ -720,8 +724,12 @@ def process_file_fix(params,in_file):
         # create output variable
         if var_name in ['rlon','rlat','lon','lat','time']:
             data_type = 'd'
-        else:
+        elif var_name == 'rotated_pole':
+            data_type = 'c'
+        elif var_name in [settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME']]:
             data_type = 'f'
+        else:
+            continue
 
         dim_lst = []
         for dim in var_in.dimensions:
@@ -749,6 +757,8 @@ def process_file_fix(params,in_file):
             change_fill=False
             if var_name in ['lat','lon','rlat','rlon']:
                 att_lst = get_attr_list(var_name)
+            elif var_name == 'rotated_pole':
+                att_lst = get_attr_list(var_name,[var_in.grid_north_pole_latitude,var_in.grid_north_pole_longitude])
             else:
                 att_lst = OrderedDict()
                 for k in var_in.ncattrs():
@@ -1367,7 +1377,7 @@ is here the time resolution of the input data in hours."
             if var_name in ['rlon','rlat','lon','lat','time']:
                 data_type = 'd'
             elif var_name == 'rotated_pole':
-                data_type = 'f'
+                data_type = 'c'
             elif var_name in [settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME']]:
                 data_type = 'f'
             else:
@@ -1403,6 +1413,8 @@ is here the time resolution of the input data in hours."
             change_fill=False
             if var_name in ['lat','lon','rlon','rlat','time']:
                 att_lst = get_attr_list(var_name,[time_in_units,in_calendar])
+            elif var_name == 'rotated_pole':
+                att_lst = get_attr_list(var_name,[var_in.grid_north_pole_latitude,var_in.grid_north_pole_longitude])
             else:
                 att_lst = OrderedDict()
                 for k in var_in.ncattrs():
@@ -1422,7 +1434,7 @@ is here the time resolution of the input data in hours."
 
         # copy lon/lat and rlon/rlat from input if needed:
         for var_name in f_in.variables.keys():
-            if (var_name in ['lon','lat','rlon','rlat'] and var_name not in f_out.variables.keys() ):
+            if (var_name in ['lon','lat','rlon','rlat','rotated_pole'] and var_name not in f_out.variables.keys() ):
                 var_in = f_in.variables[var_name]
                 j = 0
                 for var_dim in var_in.dimensions:
@@ -1450,8 +1462,6 @@ is here the time resolution of the input data in hours."
         if cm != 'point':
             f_out.createDimension('bnds',size=2)
             time_bnds = f_out.createVariable('time_bnds',datatype="d",dimensions=('time','bnds'))
-            att_lst = get_attr_list('time_bnds',[time.units,in_calendar])
-            time_bnds.setncatts(att_lst)
             time.bounds = 'time_bnds'
         #get start date: first time value for inst. input, first lower time bound for averaged input
         if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
@@ -1487,9 +1497,15 @@ is here the time resolution of the input data in hours."
                     time[n] = num_date_start + n * res_units
 
         elif res == 'mon':
-            for n in range(1,12):
-                time_bnds[n,0] = date2num(datetime.datetime(int(year),n,1),time.units,calendar=in_calendar)
-                time_bnds[n,1] = date2num(datetime.datetime(int(year),n+1,1),time.units,calendar=in_calendar)
+            y = int(year)
+            for n in range(12):
+                time_bnds[n,0] = date2num(datetime.datetime(y,n+1,1),time.units,calendar=in_calendar)
+                m = n+2
+                #For December: end date is 1st January the following year                
+                if n == 11:
+                    y += 1
+                    m = 1
+                time_bnds[n,1] = date2num(datetime.datetime(y,m,1),time.units,calendar=in_calendar)
                 time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
 
         # commit changes
@@ -1532,7 +1548,7 @@ is here the time resolution of the input data in hours."
                     var_out.long_name = "pressure"
                     var_out.standard_name = "air_pressure"
                     var_out[0] = params[config.get_config_value('index','INDEX_VAL_PLEV')]
-                    f_var.coordinates = 'plev lat lon'
+                    coordinates = 'plev lat lon'
 
                 # model level variable
             elif params[config.get_config_value('index','INDEX_MODEL_LEVEL')] == config.get_config_value('settings','MModelType'):
@@ -1544,11 +1560,14 @@ is here the time resolution of the input data in hours."
                     var_out.long_name = "height"
                     var_out.standard_name = "height"
                     var_out[0] = params[config.get_config_value('index','INDEX_VAL_HEIGHT')]
-                    f_var.coordinates = 'height lat lon'
+                    coordinates = 'height lat lon'
             else:
                 log.warning("Column %s (Level) should bei either %s or %s! Got %s." % (config.get_config_value('index','INDEX_MODEL_LEVEL'),config.get_config_value('settings','PModelType'),config.get_config_value('settings','MModelType'),params[config.get_config_value('index','INDEX_MODEL_LEVEL')]))
         else:
-            f_var.coordinates = 'lat lon'
+            coordinates = 'lat lon'
+        
+        f_var.coordinates = coordinates
+        
         # copy variables lon,lat,rlon,rlat,rotated_pole from extra file if needed
         add_coordinates(f_out,logger=logger)
 
@@ -1574,12 +1593,22 @@ is here the time resolution of the input data in hours."
             log.info("Changing missing values to %s" % settings.netCDF_attributes['missing_value'])
             help_file = "%s/help-missing-%s-%s-%s.nc" % (settings.DirWork,year,var,str(uuid.uuid1()))
             cmd="cdo setmisstoc,%s %s %s" % (settings.netCDF_attributes['missing_value'],outpath,help_file)
-            shell(cmd)
-            cmd="ncks -h -A -v lon,lat %s %s" % (outpath,help_file)
-            shell(cmd)    
+            shell(cmd,logger=logger)
+            #add lon,lat,height,plev coordinates as they got lost by cdo command
+            add_vars='lon,lat'
+            if 'height' in coordinates:
+                add_vars += ',height'
+            elif 'plev' in coordinates:
+                add_vars += ',plev'
+            cmd="ncks -h -A -v %s %s %s" % (add_vars,outpath,help_file)
+            shell(cmd,logger=logger)    
+            
             os.remove(outpath)
             shell ("mv %s %s" % (help_file, outpath))
-            
+            #add coordinates attribute
+            cmd="ncatted -a coordinates,%s,o,c,'%s' %s" % (var,coordinates,outpath)
+            shell(cmd,logger=logger)    
+
         # ncopy file to correct output format
         if config.get_config_value('boolean','nc_compress') == True:
             compress_output(outpath,year,logger=logger)
