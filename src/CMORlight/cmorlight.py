@@ -66,7 +66,7 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
 
     if os.path.isdir(in_dir) == False:
         log.error("Input directory does not exist(0): %s \n \t Change base path in .ini file or create directory! " % in_dir)
-        return
+        return nfiles,currfile
 
     cores=config.get_config_value("integer","multi",exitprog=False)
     multilst=[]
@@ -122,13 +122,13 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
                 pool=Pool(processes=cores)
                 R=pool.map(process_file_unpack,multilst)
                 pool.terminate()
+                currfile += len(multilst)
                 #start new
                 multilst=[]
                 i=0
                 #change reslist
                 reslist=R[0]
                 #update currfile
-                currfile += len(multilst)
                 
             if  cores <= 1:
                 currfile += 1
@@ -261,7 +261,7 @@ def main():
     logext = datetime.datetime.now().strftime("%d-%m-%Y")+'.log'
 
     # get logger and assign logging filename (many loggers for multiprocessing)
-    if limit_range and options.multi > 1:
+    if limit_range and int(options.multi) > 1:
         #create logger for each processing year
         for y in range(config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end")+1):
             logfile=LOG_FILENAME+str(y)+'.'+logext
@@ -271,7 +271,7 @@ def main():
 
     log = init_log.setup_custom_logger("cmorlight",LOG_FILENAME+logext,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
 
-    if not limit_range and options.multi > 1:
+    if not limit_range and int(options.multi) > 1:
         print("To use multiprocessing you have to limit the time range by specifying this range over the command line (-s START, -e END)! Exiting...")
         log.error("To use multiprocessing you have to limit the time range by specifying this range over the command line (-s START, -e END)! Exiting...")
         sys.exit()
