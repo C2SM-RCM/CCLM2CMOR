@@ -166,21 +166,29 @@ fi
 YYEext=$(echo ${STOP_DATE} | cut -c1-4)
 
 #if no archives have been extracted in the beginning:
-if [ ! -d ${INDIR1}/*${YYA} ] && [ ${post_step} -ne 2 ] && ${batch}
+startex=${YYA}
+(( endex=YYA+num_extract-1 ))
+#limit to extraction to end year
+if [ ${endex} -gt ${YYEext} ]
 then
-    (( endex=YYA+num_extract-1 ))
-    #limit to extraction to end year
-    if [ ${endex} -gt ${YYEext} ]
-    then
-      endex=${YYEext}
-    fi
-    echon "Extracting years ${YYA} to ${endex} \n\n"
-    sbatch --job-name=CMOR_sh --error=${xfer}.${YYA}.err --output=${xfer}.${YYA}.out ${SRCDIR_POST}/xfer.sh -s ${YYA} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -x ${xfer}
-    #abort running job and restart it after extraction is done
-    sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${YYA} -F ${FIRST} 
-    exit
+  endex=${YYEext}
 fi
 
+if [ ${post_step} -ne 2 ] && ${batch}
+then
+  while [ ${startex} -le ${endex} ]
+  do
+    if [ ! -d ${INDIR1}/*${startex} ]
+    then
+      echon "Extracting years ${startex} to ${endex} \n\n"
+      sbatch --job-name=CMOR_sh --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -x ${xfer}
+      #abort running job and restart it after extraction is done
+      sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${YYA} -F ${FIRST} 
+      exit
+    fi
+    (( startex=startex+1))
+  done
+fi
 
 (( NEXTYEAR=YYA+1 ))
 
