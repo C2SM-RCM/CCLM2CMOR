@@ -1,14 +1,13 @@
 #!/bin/ksh
 #SBATCH --account=pr04
 #SBATCH --nodes=1
-##SBATCH --partition=prepost
 #SBATCH --time=4:00:00
-#SBATCH --constraint=gpu
+#SBATCH --constraint=mc
 #SBATCH --output=/users/mgoebel/CMOR/logs/cmorlight/CMOR_py_%j.out
 #SBATCH --error=/users/mgoebel/CMOR/logs/cmorlight/CMOR_py_%j.err
 #SBATCH --job-name="CMOR_py"
 
-cores=3
+cores=18
 script_folder="CMORlight"
 python_script="${script_folder}/cmorlight.py"
 
