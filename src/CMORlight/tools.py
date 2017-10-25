@@ -200,13 +200,12 @@ def compress_output(outpath,year=0,logger=log):
 
     if os.path.exists(outpath):
             ftmp_name = "%s/%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()))
-	    cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
-            retval=shell(cmd,logger=logger)
-	    # remove help file
+            cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
+            retval=shell(cmd,logger=logger) 
+            # remove help file
             os.remove(outpath)
             retval=shell("mv %s %s" % (ftmp_name,outpath),logger=logger)
         
-        #    logger.error("Error while compressing ouput file: (%s)" % outpath)
     else:
         logger.error("File does not exist: (%s)" % outpath)
 
@@ -1579,6 +1578,8 @@ is here the time resolution of the input data in hours."
 
        # commit changes
         f_out.sync()
+	
+        f_out.close()
 
         # remove help file
         os.remove(ftmp_name)
