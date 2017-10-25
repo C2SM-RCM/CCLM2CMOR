@@ -1160,7 +1160,6 @@ def process_file(params,in_file,var,reslist,year):
 
     # now get the 'new' time/date
     dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
-    dt_in_year = dt_in[0].year
 
     ## get start and stop date from in_file
 
@@ -1197,8 +1196,8 @@ def process_file(params,in_file,var,reslist,year):
     if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'i':
         end_date -= time_delta
     else:
-        start_date += time_delta * 0.5  
-        end_date -= time_delta * 0.5      
+        start_date += datetime.timedelta(seconds=time_delta.total_seconds()/2) 
+        end_date -= datetime.timedelta(seconds=time_delta.total_seconds()/2)     
     #convert to numbers
     start_num = date2num(start_date,time_in_units,calendar=in_calendar)   
     end_num = date2num(end_date, time_in_units, calendar=in_calendar)   
