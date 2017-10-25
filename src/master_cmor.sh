@@ -2,7 +2,7 @@
 #SBATCH --account=pr04
 #SBATCH --nodes=1
 #SBATCH --time=4:00:00
-#SBATCH --constraint=mc
+#SBATCH --constraint=gpu
 #SBATCH --output=/users/mgoebel/CMOR/logs/cmorlight/CMOR_py_%j.out
 #SBATCH --error=/users/mgoebel/CMOR/logs/cmorlight/CMOR_py_%j.err
 #SBATCH --job-name="CMOR_py"
