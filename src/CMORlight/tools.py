@@ -1212,6 +1212,8 @@ is here the time resolution of the input data in hours."
         
     # for mrso and mrfso sum up desired soil levels
     if var in ['mrso','mrfso']:
+        f_in.close()
+
         # use start soil layer 1 
         idx_from = 1
         # take stop soil layer from table
@@ -1235,7 +1237,8 @@ is here the time resolution of the input data in hours."
             
         # switch from original in_file to the new in_file
         in_file = f_hlp.name
-
+        f_in = Dataset(in_file,"r")
+    
     new_reslist=list(reslist) #remove resolutions from this list that are higher than the input data resolution
     # process all requested resolutions
     
@@ -1321,20 +1324,20 @@ is here the time resolution of the input data in hours."
             cm = cm[:3]
         
         if res_hr < 24:
-            selhour = str(list(np.arange(0,24,res_hr)))[1:-1].replace(" ","")
+            selhour = str(list(np.arange(0,24,int(res_hr))))[1:-1].replace(" ","")
             nstep = res_hr / input_res_hr
             if cm == 'point':
-                cmd = "cdo -f %s -s selhour,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),selhour,cmd_mul,in_file,ftmp_name)
+                cmd = "cdo -L -f %s -s selhour,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),selhour,cmd_mul,in_file,ftmp_name)
             else:
-                cmd = "cdo -f %s -s timsel%s,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,int(nstep),cmd_mul,in_file,ftmp_name)
+                cmd = "cdo -L -f %s -s timsel%s,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,int(nstep),cmd_mul,in_file,ftmp_name)
         
         # For monthly resolution daily processing is sometimes necessary first
         elif res == 'day' or 'within days time' in cm_type:
-            cmd = "cdo -f %s -s day%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,cmd_mul,in_file,ftmp_name)
+            cmd = "cdo -L -f %s -s day%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,cmd_mul,in_file,ftmp_name)
         
         #monthy resolution
         else:
-            cmd = "cdo -f %s -s mon%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,cmd_mul,in_file,ftmp_name)
+            cmd = "cdo -L -f %s -s mon%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,cmd_mul,in_file,ftmp_name)
 
         retval = shell(cmd,logger=logger)
         
