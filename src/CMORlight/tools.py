@@ -52,7 +52,6 @@ def shell(cmd,logger=log):
 
     return prc.communicate()[0]
 
-
 # -----------------------------------------------------------------------------
 def get_input_path(derotated=False):
     ''' Read input path from settings, take derotated one if needed'''
@@ -200,15 +199,14 @@ def compress_output(outpath,year=0,logger=log):
     ''' Compress files with nccopy'''
 
     if os.path.exists(outpath):
-        try:
             ftmp_name = "%s/%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()))
-            cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
+	    cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
             retval=shell(cmd,logger=logger)
-            # remove help file
+	    # remove help file
             os.remove(outpath)
             retval=shell("mv %s %s" % (ftmp_name,outpath),logger=logger)
-        except:
-            logger.error("Error while compressing ouput file: (%s)" % outpath)
+        
+        #    logger.error("Error while compressing ouput file: (%s)" % outpath)
     else:
         logger.error("File does not exist: (%s)" % outpath)
 
