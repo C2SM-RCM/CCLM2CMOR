@@ -1177,7 +1177,7 @@ def process_file(params,in_file,var,reslist,year):
     #input time resolution in hours
     input_res_hr = time_delta.total_seconds() / 3600. 
 
-    log.info("First time step in input file: %s" % (str(a)))
+    logger.info("First time step in input file: %s" % (str(a)))
     if input_res_hr not in [1.,3.,6.,12.,24]:
         cmd = "Time resolution of input data must be 1,3,6,12 or 24 hours, found %s hours!" % (input_res_hr)
         logger.error(cmd)
@@ -1222,7 +1222,7 @@ is here the time resolution of the input data in hours."
         for i in range(idx_from,idx_to+1):
             f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
             arr[i] = f_hlp.name
-            retval = shell("cdo -f %s sellevidx,%d %s %s" %(config.get_config_value('settings', 'cdo_nctype'),i,in_file,arr[i]))
+            retval = shell("cdo -f %s sellevidx,%d %s %s" %(config.get_config_value('settings', 'cdo_nctype'),i,in_file,arr[i]),logger=logger)
 
         # now calculate the sum
         f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
@@ -1561,7 +1561,7 @@ is here the time resolution of the input data in hours."
                     var_out[0] = params[config.get_config_value('index','INDEX_VAL_HEIGHT')]
                     coordinates = 'height lat lon'
             else:
-                log.warning("Column %s (Level) should bei either %s or %s! Got %s." % (config.get_config_value('index','INDEX_MODEL_LEVEL'),config.get_config_value('settings','PModelType'),config.get_config_value('settings','MModelType'),params[config.get_config_value('index','INDEX_MODEL_LEVEL')]))
+                logger.warning("Column %s (Level) should bei either %s or %s! Got %s." % (config.get_config_value('index','INDEX_MODEL_LEVEL'),config.get_config_value('settings','PModelType'),config.get_config_value('settings','MModelType'),params[config.get_config_value('index','INDEX_MODEL_LEVEL')]))
         else:
             coordinates = 'lat lon'
         
@@ -1591,7 +1591,7 @@ is here the time resolution of the input data in hours."
        # change fillvalue in file (not just attribute) if necessary
         if change_fill:
             #use help file as -O option for cdo does not seem to work here
-            log.info("Changing missing values to %s" % settings.netCDF_attributes['missing_value'])
+            logger.info("Changing missing values to %s" % settings.netCDF_attributes['missing_value'])
             help_file = "%s/help-missing-%s-%s-%s.nc" % (settings.DirWork,year,var,str(uuid.uuid1()))
             cmd="cdo setmisstoc,%s %s %s" % (settings.netCDF_attributes['missing_value'],outpath,help_file)
             shell(cmd,logger=logger)
@@ -1605,7 +1605,7 @@ is here the time resolution of the input data in hours."
             shell(cmd,logger=logger)    
             
             os.remove(outpath)
-            shell ("mv %s %s" % (help_file, outpath))
+            shell ("mv %s %s" % (help_file, outpath),logger=logger)
             #add coordinates attribute
             cmd="ncatted -a coordinates,%s,o,c,'%s' %s" % (var,coordinates,outpath)
             shell(cmd,logger=logger)    
