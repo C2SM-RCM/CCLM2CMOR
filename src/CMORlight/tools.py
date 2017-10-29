@@ -919,11 +919,26 @@ def proc_seasonal_mean(params,year):
                     # get December of previous year
                     f_hlp12 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     f_prev = "%s/%s" % (dirpath,f_lst[i-1])
-                    if config.get_config_value("integer","multi") > 1:
-                        timepkg.sleep(5) #wait for previous year to definitely finish when using multiprocessing
-                    cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
-                    retval = shell(cmd,logger=logger)
 
+                    cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
+                    
+                    if config.get_config_value("integer","multi") > 1:
+                        i=1
+                        while True:
+                            try:
+                                shell(cmd,logger=logger)
+                                i=0
+                                break
+                            except:
+                                timepkg.sleep(5) #wait for previous year to definitely finish when using multiprocessing
+                            finally:
+                                i+=1
+                                if i==10:
+                                   shell(cmd,logger=logger) 
+                                   break
+                    else:
+                        shell(cmd,logger=logger)
+                        
                     # get months 1 to 11 of actual year
                     f_hlp1_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     cmd = "cdo -f %s selmonth,1/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f,f_hlp1_11.name)
