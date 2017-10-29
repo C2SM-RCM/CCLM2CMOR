@@ -34,8 +34,13 @@ log = logging.getLogger("cmorlight")
 # -----------------------------------------------------------------------------
 def process_file_unpack(args):
     '''Helper function for multiprocessing to unpack arguments before using pool.map'''
-
+    
     return tools.process_file(*args)
+
+def proc_seasonal_unpack(args):
+    '''Helper function for multiprocessing to unpack arguments before using pool.map (seasonal processing)'''    
+
+    tools.proc_seasonal(*args)
 
 def process_resolution(params,reslist,nvar,nfiles,currfile):
     '''
@@ -54,7 +59,14 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
     currfile : int
         Currently already processed number of files
     '''
-
+  
+    #Do seasonal resolution=
+    if "sem" in reslist:
+        seasonal = True
+        reslist.remove("sem")
+    else:
+        seasonal = False
+        
     log = logging.getLogger("cmorlight")
 
     # get cdf variable name
@@ -70,7 +82,7 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
 
     cores=config.get_config_value("integer","multi",exitprog=False)
     multilst=[]
-
+    seaslst=[]
     log.info("Used dir: %s" % (in_dir))
     for dirpath,dirnames,filenames in os.walk(in_dir, followlinks=True):
         if not nfiles:
@@ -104,27 +116,35 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
                 else:
                     if var in settings.var_list_fixed:
                         tools.process_file_fix(params,in_file)
-
+                        
                     else:
                         if cores > 1:
                             multilst.append([params,in_file,var,reslist,year])
+                            seaslst.append([params,year])
 
                         else:
                             reslist=tools.process_file(params,in_file,var,reslist,year)
-
+                            tools.proc_seasonal_mean(params,year)
             else:
                 log.warning("File %s does match the file name conventions for this variable. File not processed...")
 
             i=i+1
 
             #process as many files simultaneously as there are cores specified
-            if cores >1 and i==cores and multilst!=[]:
+            if i==cores and multilst!=[]:
                 pool=Pool(processes=cores)
                 R=pool.map(process_file_unpack,multilst)
-                pool.terminate()
+                pool.terminate()     
+                #seasonal processing:
+                if seasonal:
+                    pool=Pool(processes=cores)
+                    pool.map(proc_seasonal_unpack,seaslst)
+                    pool.terminate()
+                
                 currfile += len(multilst)
                 #start new
                 multilst=[]
+                seaslst=[]
                 i=0
                 #change reslist
                 reslist=R[0]
@@ -142,6 +162,12 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
         pool=Pool(processes=cores)
         R=pool.map(process_file_unpack,multilst)
         pool.terminate()
+        #seasonal processing:
+        if seasonal:
+            pool=Pool(processes=cores)
+            pool.map(proc_seasonal_unpack,seaslst)
+            pool.terminate()
+        
         #update currfile
         currfile += len(multilst)
         tools.print_progress(currfile,nfiles)

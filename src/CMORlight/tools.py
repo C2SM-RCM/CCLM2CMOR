@@ -113,6 +113,7 @@ def print_progress(currfile,nfiles):
     sys.stdout.flush() 
 # -----------------------------------------------------------------------------
 def create_outpath(res,var):
+
     '''
     Create and return the output path string from global attributes and dependent on resolution res and variable var
     '''
@@ -199,13 +200,13 @@ def compress_output(outpath,year=0,logger=log):
     ''' Compress files with nccopy'''
 
     if os.path.exists(outpath):
-            ftmp_name = "%s/%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()))
-            cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
-            retval=shell(cmd,logger=logger) 
-            # remove help file
-            os.remove(outpath)
-            retval=shell("mv %s %s" % (ftmp_name,outpath),logger=logger)
-        
+        ftmp_name = "%s/%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()))
+        cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
+        retval=shell(cmd,logger=logger) 
+        # remove help file
+        os.remove(outpath)
+        retval=shell("mv %s %s" % (ftmp_name,outpath),logger=logger)
+    
     else:
         logger.error("File does not exist: (%s)" % outpath)
 
@@ -837,7 +838,7 @@ def process_file_fix(params,in_file):
 
 
 # -----------------------------------------------------------------------------
-def proc_seasonal_mean(params,year):
+def proc_seasonal(params,year):
     ''' create seasonal mean for one variable and one year from daily data '''
 
     if config.get_config_value("integer","multi") > 1:
@@ -847,11 +848,9 @@ def proc_seasonal_mean(params,year):
 
     # get cdf variable name
     var = params[config.get_config_value('index','INDEX_VAR')]
-    # first get daily data
-    res = "day"
-    cm_type = params[config.get_config_value('index','INDEX_VAR_CM_DAY')]
+    
     # get output directory of daily data: input for seasonal
-    indir = get_out_dir(var,res)
+    indir = get_out_dir(var,"day")
     logger.info("Inputdir: %s" % (indir))
 
     # seasonal mean
@@ -923,21 +922,9 @@ def proc_seasonal_mean(params,year):
                     cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
                     
                     if config.get_config_value("integer","multi") > 1:
-                        i=1
-                        while True:
-                            try:
-                                shell(cmd,logger=logger)
-                                i=0
-                                break
-                            except:
-                                timepkg.sleep(5) #wait for previous year to definitely finish when using multiprocessing
-                            finally:
-                                i+=1
-                                if i==10:
-                                   shell(cmd,logger=logger) 
-                                   break
-                    else:
-                        shell(cmd,logger=logger)
+                        timepkg.sleep(5) #wait for previous year to definitely finish when using multiprocessing
+                          
+                    shell(cmd,logger=logger)
                         
                     # get months 1 to 11 of actual year
                     f_hlp1_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
@@ -1267,9 +1254,6 @@ is here the time resolution of the input data in hours."
         elif res=="mon":
             res_hr= 28*24.  #minimum number of hours per month
             cm_type = params[config.get_config_value('index','INDEX_VAR_CM_MON')]
-        elif res=="sem":
-            res_hr= 28*24.*3  #minimum number of hours per season
-            cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SEM')]
 
         #check if requested time resolution is possible given the input time resolution
         if res_hr < input_res_hr:
@@ -1289,11 +1273,6 @@ is here the time resolution of the input data in hours."
         logger.log(35,"     resolution: '%s'" % res)
         logger.debug("cell method: '%s' " % (cm_type))
         logger.info("#########################")
-
-        #call method for seasonal mean
-        if res=="sem":
-            proc_seasonal_mean(params,year)
-            continue
 
         # output directory
         outdir = get_out_dir(var,res)
