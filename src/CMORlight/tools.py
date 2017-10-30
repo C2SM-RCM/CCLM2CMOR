@@ -1208,7 +1208,7 @@ def process_file(params,in_file,var,reslist,year):
     #correct time array
     time_range = np.arange(start_num ,end_num+time_delta_raw/2, time_delta_raw)
 
-    if any(np.round(np.array(time_in),2) != np.round(time_range,2)):
+    if np.array(time_in).shape != time_range.shape or any(np.round(np.array(time_in),2) != np.round(time_range,2)):
         cmd = "Time variable of input data is not correct! It has to start on January 1st and end on \
 December 30th/31st (depending on calendar) of the respective year. The first time step for \
 instantaneous and interval representing variables must be 0 UTC and (resolution * 0.5) UTC, respectively. \

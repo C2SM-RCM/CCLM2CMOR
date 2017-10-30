@@ -101,19 +101,19 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
             year=f.split("_")[-1][:4]
             #use other logger
             if cores > 1 and var not in settings.var_list_fixed :
-                log = logging.getLogger("cmorlight_"+year)
-                log.info("\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (var, varRCM))
-                log.info("Start processing at: "+str(datetime.datetime.now()))
+                logger = logging.getLogger("cmorlight_"+year)
+                logger.info("\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (var, varRCM))
+                logger.info("Start processing at: "+str(datetime.datetime.now()))
             #if limit_range is set: skip file if it is out of range
             if config.get_config_value('boolean','limit_range') and var not in settings.var_list_fixed:
                 if int(year) < config.get_config_value('integer','proc_start') or int(year) > config.get_config_value('integer','proc_end'):
                     continue
-            log.info("\n###########################################################")
+            logger.info("\n###########################################################")
             if f.find("%s_" % var) == 0 or f.find("%s.nc" % var) == 0 or f.find("%s_" % varRCM) == 0 or f.find("%s.nc" % varRCM) == 0 or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
                 in_file = "%s/%s" % (dirpath,f)
-                log.log(35,"Input from: %s" % (in_file))
+                logger.log(35,"Input from: %s" % (in_file))
                 if os.access(in_file, os.R_OK) == False:
-                    log.error("Could not read file '%s', no permission!" % in_file)
+                    logger.error("Could not read file '%s', no permission!" % in_file)
                 else:
                     if var in settings.var_list_fixed:
                         tools.process_file_fix(params,in_file)
@@ -127,13 +127,13 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
                             reslist=tools.process_file(params,in_file,var,reslist,year)
                             tools.proc_seasonal(params,year)
             else:
-                log.warning("File %s does match the file name conventions for this variable. File not processed...")
+                logger.warning("File %s does match the file name conventions for this variable. File not processed...")
 
             i=i+1
 
             #process as many files simultaneously as there are cores specified
             if i==cores and multilst!=[]:
-                log.info("Processing years %s to %s simultaneously" %(seaslist[0][1],seaslist[-1][1]))
+                log.info("Processing years %s to %s simultaneously" %(seaslst[0][1],seaslst[-1][1]))
                 pool=Pool(processes=cores)
                 R=pool.map(process_file_unpack,multilst)
                 pool.terminate()     
@@ -161,6 +161,7 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
     
     #process remaining files
     if len(multilst)!=0:
+        log.info("Processing years %s to %s simultaneously" %(seaslst[0][1],seaslst[-1][1]))
         pool=Pool(processes=cores)
         R=pool.map(process_file_unpack,multilst)
         pool.terminate()
