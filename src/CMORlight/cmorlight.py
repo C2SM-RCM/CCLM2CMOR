@@ -96,6 +96,8 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
 
         i=0
         for f in sorted(filenames):
+            if f[-3:] != ".nc":
+                continue
 
             year=f.split("_")[-1][:4]
             #use other logger
@@ -392,15 +394,6 @@ if __name__ == "__main__":
 
     # call main function
     main()
-
-    #clean up temp files
-    shutil.rmtree(settings.DirWork)
-  #  Clean up .tmp files in output directory (if on last run program crashed while writing a file)
-    for root, dirs, files in os.walk(settings.DirOut):
-        for file in files:
-            if file[-4:]==".tmp":
-                os.remove(os.path.join(root, file))
-
 
     time2=datetime.datetime.now()
     log = logging.getLogger('cmorlight')
