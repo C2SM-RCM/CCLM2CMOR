@@ -29,7 +29,6 @@ import tools
 import init_log
 
 import logging
-log = logging.getLogger("cmorlight")
 
 # -----------------------------------------------------------------------------
 def process_file_unpack(args):
@@ -126,7 +125,7 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
 
                         else:
                             reslist=tools.process_file(params,in_file,var,reslist,year)
-                            tools.proc_seasonal_mean(params,year)
+                            tools.proc_seasonal(params,year)
             else:
                 log.warning("File %s does match the file name conventions for this variable. File not processed...")
 
@@ -269,10 +268,10 @@ def main():
 
     #Extend input path if respective option is set:
     if config.get_config_value('boolean','extend_DirIn')==True:
-      DirIn=config.get_config_value('settings','DirIn')+'/'+ config.get_sim_value('driving_model_id')+'/'+ config.get_sim_value('driving_experiment_name')
-      config.set_config_value('settings','DirIn',DirIn)
-      DirDerotated=config.get_config_value('settings','DirDerotated')+'/'+ config.get_sim_value('driving_model_id')+'/'+ config.get_sim_value('driving_experiment_name')
-      config.set_config_value('settings','DirDerotated',DirDerotated)
+        DirIn=config.get_config_value('settings','DirIn')+'/'+ config.get_sim_value('driving_model_id')+'/'+ config.get_sim_value('driving_experiment_name')
+        config.set_config_value('settings','DirIn',DirIn)
+        DirDerotated=config.get_config_value('settings','DirDerotated')+'/'+ config.get_sim_value('driving_model_id')+'/'+ config.get_sim_value('driving_experiment_name')
+        config.set_config_value('settings','DirDerotated',DirDerotated)
 
     # now read vartable for all variables for this RCM
 
@@ -388,7 +387,7 @@ def main():
 #########################################################
 if __name__ == "__main__":
     ''' main program '''
-
+    
     #start timing
     time1=datetime.datetime.now()
 
