@@ -858,6 +858,11 @@ def proc_seasonal(params,year):
     # get cell method
     cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SEM')]
 
+    logger.info("#########################")
+    logger.log(35,"     resolution: '%s'" % res)
+    logger.debug("cell method: '%s' " % (cm_type))
+    logger.info("#########################")
+
     #create possible filenames and check their existence -> skip or overwrite file
     outdir = get_out_dir(var,res)
     outfile1 = create_filename(var,res,year+"03",year+"11",logger=logger)
@@ -1201,8 +1206,8 @@ def process_file(params,in_file,var,reslist,year):
     start_num = date2num(start_date,time_in_units,calendar=in_calendar)   
     end_num = date2num(end_date, time_in_units, calendar=in_calendar)   
     #correct time array
-    time_range = np.arange(start_num ,end_num+time_delta_raw, time_delta_raw)
-    
+    time_range = np.arange(start_num ,end_num+time_delta_raw/2, time_delta_raw)
+
     if any(np.round(np.array(time_in),2) != np.round(time_range,2)):
         cmd = "Time variable of input data is not correct! It has to start on January 1st and end on \
 December 30th/31st (depending on calendar) of the respective year. The first time step for \

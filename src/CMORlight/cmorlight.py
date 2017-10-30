@@ -133,6 +133,7 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
 
             #process as many files simultaneously as there are cores specified
             if i==cores and multilst!=[]:
+                log.info("Processing years %s to %s simultaneously" %(seaslist[0][1],seaslist[-1][1]))
                 pool=Pool(processes=cores)
                 R=pool.map(process_file_unpack,multilst)
                 pool.terminate()     
