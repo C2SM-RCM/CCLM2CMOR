@@ -104,6 +104,9 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
                 logger = logging.getLogger("cmorlight_"+year)
                 logger.info("\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (var, varRCM))
                 logger.info("Start processing at: "+str(datetime.datetime.now()))
+            else:
+                logger = logging.getLogger("cmorlight")
+
             #if limit_range is set: skip file if it is out of range
             if config.get_config_value('boolean','limit_range') and var not in settings.var_list_fixed:
                 if int(year) < config.get_config_value('integer','proc_start') or int(year) > config.get_config_value('integer','proc_end'):

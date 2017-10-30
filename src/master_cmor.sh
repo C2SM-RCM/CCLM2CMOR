@@ -66,6 +66,10 @@ fi
 if [ ${START_NEW} -le ${STOP} ] && ${batch}
 then
   (( STOP_NEW=START_NEW+cores-1 )) #STOP year for this batch
+  if [ ${STOP_NEW} -gt ${STOP} ]
+  then
+    STOP_NEW=${STOP}
+  fi
   sbatch --job-name=master_py --error=${dirlog}_${START_NEW}_${STOP_NEW}.err --output=${dirlog}_${START_NEW}_${STOP_NEW}.out master_cmor.sh ${args} -b -s ${START_NEW} -e ${STOP}
   (( STOP=START+cores-1 )) #STOP year for this batch
 fi
