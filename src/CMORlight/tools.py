@@ -230,7 +230,7 @@ def set_attributes_create(outpath,res=None,year=0,logger=log):
         # set new tracking_id
         tracking_id=str(uuid.uuid1())
         f_out.setncattr("tracking_id",tracking_id)
-        logger.info("Set tracking_id: "+tracking_id)
+        logger.debug("Set tracking_id: "+tracking_id)
         # set new creation_date
         f_out.setncattr("creation_date",datetime.datetime.now().strftime(settings.FMT))
 
