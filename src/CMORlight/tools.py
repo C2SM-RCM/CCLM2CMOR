@@ -1005,7 +1005,7 @@ def proc_seasonal(params,year):
                 retval = shell("mv %s %s" % (ftmp_name,outpath))
 
                 # set attributes
-                set_attributes_create(outpath,res,year)
+                set_attributes_create(outpath,res,year,logger=logger)
                 
                 # compress output
                 if config.get_config_value('boolean','nc_compress') == True:
