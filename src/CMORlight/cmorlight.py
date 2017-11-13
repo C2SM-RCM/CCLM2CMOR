@@ -165,7 +165,7 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
     #process remaining files
     if len(multilst)!=0:
         log.info("Processing years %s to %s simultaneously" %(seaslst[0][1],seaslst[-1][1]))
-        pool=Pool(processes=cores)
+        pool=Pool(processes=len(multilst))
         R=pool.map(process_file_unpack,multilst)
         pool.terminate()
         #seasonal processing:
