@@ -128,7 +128,8 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
 
                         else:
                             reslist=tools.process_file(params,in_file,var,reslist,year)
-                            tools.proc_seasonal(params,year)
+                            if seasonal:
+                                tools.proc_seasonal(params,year)
             else:
                 logger.warning("File %s does match the file name conventions for this variable. File not processed...")
 
