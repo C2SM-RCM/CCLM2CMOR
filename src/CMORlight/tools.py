@@ -308,7 +308,7 @@ def new_dataset_version():
 
 
 # -----------------------------------------------------------------------------
-def get_out_dir(var,res):
+def get_out_dir(var,res,createdir=True):
     '''
     Create and return the complete output path string using the resolution res and the variable var
     and make the corresponding directory
@@ -317,10 +317,11 @@ def get_out_dir(var,res):
     outpath = create_outpath(res,var)
     outpath = "%s/%s" % (settings.DirOut,outpath)
     #try to make directory
-    try:
-        os.makedirs(outpath)
-    except:
-        pass
+    if createdir:
+        try:
+            os.makedirs(outpath)
+        except:
+            pass
     return outpath
 
 # -----------------------------------------------------------------------------
@@ -344,17 +345,23 @@ def proc_chunking(params,reslist):
             cmd = "Resolution (%s) is not supported in chunking, keep it as it is." % res
             log.debug(cmd)
             continue
-        log.log(35,"resolution: %s " % (res))
-        indir = get_out_dir(var,res)
+        log.log(35,"\nresolution: %s " % (res))
+        indir = get_out_dir(var,res,False)
+        if not os.path.isdir(indir):
+            log.info("Input directory %s does not exist!" % indir)
+            continue
         outdir = indir
         #extra directory to put chunked files into
         if config.get_config_value('settings','chunk_into',exitprog=False)!="":
             outdir=outdir+"/"+config.get_config_value('settings','chunk_into',exitprog=False)
 
-        log.info("Output directory: %s" % outdir)
+        log.debug("Output directory: %s" % outdir)
         for dirpath,dirnames,filenames in os.walk(indir):
             f_list = []
             start_date = 0
+            if len(filenames) == 0:
+                log.warning("Directory is empty: %s" % indir)
+            
             for f in sorted(filenames):
                 if f[-3:] != ".nc": #skip unsuitable files
                     continue
@@ -394,36 +401,34 @@ def do_chunking(f_list,var,res,start_date, stop_date, outdir):
     """  Execute actual chunking of files in f_list """
 
     flist=""
-    if len(f_list) > 1:
+    # generate complete output path with output filename
+    outfile = create_filename(var,res,str(start_date),str(stop_date))
+    # generate outpath with outfile and outdir
 
-        # generate complete output path with output filename
-        outfile = create_filename(var,res,str(start_date),str(stop_date))
-        # generate outpath with outfile and outdir
+    if not os.path.isdir(outdir):
+        os.makedirs(outdir)
+    outpath = "%s/%s" % (outdir,outfile)
 
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
-        outpath = "%s/%s" % (outdir,outfile)
-
-        # generate input filelist
-        for y in f_list:
-            flist = ("%s %s " % (flist,y))
-        # cat files to aggregation file
-        # skip if exist
-        if (not os.path.isfile(outpath)) or config.get_config_value('boolean','overwrite'):
-            if os.path.isfile(outpath):
-                log.info("Output file exists: %s, overwriting..." % (outfile))
-            else:
-                log.info("Concatenating files to %s" % (outfile))
-            retval=shell("ncrcat -h -O %s %s " % (flist,outpath))
-
-            # set attributes
-            set_attributes_create(outpath,res)
+    # generate input filelist
+    for y in f_list:
+        flist = ("%s %s " % (flist,y))
+    # cat files to aggregation file
+    # skip if exist
+    if (not os.path.isfile(outpath)) or config.get_config_value('boolean','overwrite'):
+        if os.path.isfile(outpath):
+            log.info("Output file exists: %s, overwriting..." % (outfile))
         else:
-            log.info("Output file exist: %s, skipping!" % (outfile))
-        # remove source files
-        if config.get_config_value('boolean','remove_src'):
-            log.info("Removing yearly input files")
-            retval=shell("rm -f %s " % (flist))
+            log.info("Concatenating files to %s" % (outfile))
+        retval=shell("ncrcat -h -O %s %s " % (flist,outpath))
+
+        # set attributes
+        set_attributes_create(outpath,res)
+    else:
+        log.info("Output file exist: %s, skipping!" % (outfile))
+    # remove source files
+    if config.get_config_value('boolean','remove_src'):
+        log.info("Removing yearly input files")
+        retval=shell("rm -f %s " % (flist))
 
 # -----------------------------------------------------------------------------
 def leap_year(year, calendar='standard'):
