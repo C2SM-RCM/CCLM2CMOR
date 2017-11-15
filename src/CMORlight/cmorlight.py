@@ -365,26 +365,25 @@ def main():
             log.debug("Variable was found in var_skip_list. Skip this variables")
             continue
         log.log(35,"\n\n\n###########################################################\n# Var in work: %s / %s\n###########################################################" % (varCMOR, varRCM))
-
-        reslist_act=list(reslist) #new copy of reslist
-        if (varRCM not in settings.var_list_fixed) and (varCMOR not in settings.var_list_fixed):
-            for res in reslist:
-                if tools.check_resolution(params,res,options.process_table_only) == False:
-                    reslist_act.remove(res) #remove resolution from list (for this variable) if it is not in table or if it is not supported
-
-        if reslist_act==[]:
-            log.warning("None of the given resolutions appears in the table! Skipping variable...")
-            continue
-
+     
         # set global attributes in the dictionary
         tools.set_attributes(params)
         # skip fixed fields from chunking, makes no sense to chunk
         if options.chunk_var == True and not var in settings.var_list_fixed:
             log.log(35, "Chunking files \n #######################")
-            tools.proc_chunking(params,reslist_act)
-
-        # process all vars from varlist with all output resolutions from reslist
+            tools.proc_chunking(params,reslist)
         else:
+            reslist_act=list(reslist) #new copy of reslist
+            if (varRCM not in settings.var_list_fixed) and (varCMOR not in settings.var_list_fixed):
+                for res in reslist:
+                    if tools.check_resolution(params,res,options.process_table_only) == False:
+                        reslist_act.remove(res) #remove resolution from list (for this variable) if it is not in table or if it is not supported
+    
+            if reslist_act==[]:
+                log.warning("None of the given resolutions appears in the table! Skipping variable...")
+                continue
+    
+            # process all vars from varlist with all output resolutions from reslist
             nfiles, currfile = process_resolution(params,reslist_act,len(varlist),nfiles,currfile)
 
 
