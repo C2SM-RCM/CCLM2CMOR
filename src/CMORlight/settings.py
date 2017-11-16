@@ -43,7 +43,7 @@ def init(vartable):
     global_attr_list = config.get_config_value('settings','global_attr_list').split(',')
 
     global global_attr_file
-    global_attr_file = config.get_config_value('settings','global_attr_file').split(',')
+    global_attr_file = config.get_config_value('settings','global_attr_file',exitprog=False).split(',')
 
     global varlist_reject
     varlist_reject =  config.get_config_value('settings', 'varlist_reject').split(',')
