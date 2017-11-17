@@ -1450,8 +1450,11 @@ is here the time resolution of the input data in hours."
                 # create output variable
                 var_out = f_out.createVariable(var_name,datatype="d",dimensions=var_in.dimensions)
                 # create attribute list
-                att_lst = get_attr_list(var_name)
-
+                if var_name in ['lat','lon','rlat','rlon']:
+                    att_lst = get_attr_list(var_name)
+                elif var_name == 'rotated_pole':
+                    att_lst = get_attr_list(var_name,[var_in.grid_north_pole_latitude,var_in.grid_north_pole_longitude])
+              
                 var_out.setncatts(att_lst)
                 # copy content to new datatype
                 var_out[:] = var_in[:]
