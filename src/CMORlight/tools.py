@@ -1434,7 +1434,8 @@ is here the time resolution of the input data in hours."
 
             # copy content to new datatype
             logger.debug("Copy data from tmp file: %s" % (var_out.name))
-            var_out[:] = var_in[:]
+            if var_name not in ['rotated_latitude_longitude','rotated_pole']:
+                var_out[:] = var_in[:]
 
 
         # copy lon/lat and rlon/rlat from input if needed:
@@ -1457,7 +1458,9 @@ is here the time resolution of the input data in hours."
               
                 var_out.setncatts(att_lst)
                 # copy content to new datatype
-                var_out[:] = var_in[:]
+                if var_name not in ['rotated_latitude_longitude','rotated_pole']:
+                    var_out[:] = var_in[:]
+
                 logger.debug("Copy from input: %s" % (var_out.name))
 
         ##############################
