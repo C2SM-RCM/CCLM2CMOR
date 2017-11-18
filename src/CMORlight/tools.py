@@ -5,7 +5,7 @@ Contains all the functions for processing the files
 """
 import os
 import sys
-
+import ipdb
 from netCDF4 import Dataset
 from netCDF4 import num2date
 from netCDF4 import date2num
@@ -1456,8 +1456,8 @@ is here the time resolution of the input data in hours."
                     att_lst = get_attr_list(var_name,[var_in.grid_north_pole_latitude,var_in.grid_north_pole_longitude])
               
                 var_out.setncatts(att_lst)
-                # copy content to new datatype
-                var_out[:] = var_in[:]
+                if var_name != 'rotated_pole':
+                    var_out[:] = var_in[:]
                 logger.debug("Copy from input: %s" % (var_out.name))
 
         ##############################
