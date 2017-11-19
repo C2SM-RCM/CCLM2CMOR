@@ -923,7 +923,7 @@ def proc_seasonal(params,year):
                 # for season the last month from the previous year is needed
                 if i == 0:
                     #for first file: from March to November
-                    cmd = "cdo -f %s -seas%s -selmonth,3/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f,ftmp_name)
+                    cmd = "cdo -f %s -seas%s -selmon,3/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f,ftmp_name)
                     retval=shell(cmd,logger=logger)
 
                 else:
