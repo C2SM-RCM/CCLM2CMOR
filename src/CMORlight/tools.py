@@ -931,7 +931,7 @@ def proc_seasonal(params,year):
                     f_hlp12 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     f_prev = "%s/%s" % (dirpath,f_lst[i-1])
 
-                    cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
+                    cmd = "cdo -f %s selmon,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
                     
                     if config.get_config_value("integer","multi") > 1:
                         timepkg.sleep(5) #wait for previous year to definitely finish when using multiprocessing
@@ -940,7 +940,7 @@ def proc_seasonal(params,year):
                         
                     # get months 1 to 11 of actual year
                     f_hlp1_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
-                    cmd = "cdo -f %s selmonth,1/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f,f_hlp1_11.name)
+                    cmd = "cdo -f %s selmon,1/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f,f_hlp1_11.name)
                     retval = shell(cmd,logger=logger)
 
                     # now concatenate all 12 montha
