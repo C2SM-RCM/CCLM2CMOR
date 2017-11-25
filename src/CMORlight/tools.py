@@ -1166,8 +1166,11 @@ def process_file(params,in_file,var,reslist,year):
         in_calendar = config.get_sim_value("calendar",exitprog = False)
         if in_calendar=="":
             raise Exception("Calendar attribute not found in input file! Specify calendar in simulation settings section of configuration file instead!")
-
-    time_in_units = time_in.units
+    
+    if config.get_config_value('boolean','use_alt_units'): #if units attribute is wrong -> take frm config file
+        time_in_units = config.get_config_value("settings","alt_units")
+    else:
+        time_in_units = time_in.units
 
     # now get the 'new' time/date
     dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
