@@ -1178,16 +1178,6 @@ def process_file(params,in_file,var,reslist,year):
     # now get the 'new' time/date
     dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
 
-    ## get start and stop date from in_file
-
-    # start date for file names
-    dt_start_in = str(dt_in[0])
-    dt_start_in = dt_start_in[:dt_start_in.index(' ')].replace('-','')
-
-    # stop date for file names
-    dt_stop_in = str(dt_in[-1])
-    dt_stop_in = dt_stop_in[:dt_stop_in.index(' ')].replace('-','')
-        
     # calculate time difference between first two time steps (in hours)
     a = datetime.datetime.strptime(str(dt_in[0]), settings.FMT)
     b = datetime.datetime.strptime(str(dt_in[1]), settings.FMT)
@@ -1231,8 +1221,20 @@ is here the time resolution of the input data in hours."
         raise Exception(cmd) 
     
     #Define time steps which to take from input
-    start_in,end_in = np.where(time_in_arr==time_range[0])[0][0]+1, np.where(time_in_arr==time_range[-1])[0][0]+1
-    tsteps = "%s/%s" %(start_in,end_in)
+    start_in,end_in = np.where(time_in_arr==time_range[0])[0][0], np.where(time_in_arr==time_range[-1])[0][0]
+    tsteps = "%s/%s" %(start_in+1,end_in+1)
+    
+    #change time array
+    dt_in = dt_in[start_in:end_in]
+
+    # start date for file names
+    dt_start_in = str(dt_in[0])
+    dt_start_in = dt_start_in[:dt_start_in.index(' ')].replace('-','')
+
+    # stop date for file names
+    dt_stop_in = str(dt_in[-1])
+    dt_stop_in = dt_stop_in[:dt_stop_in.index(' ')].replace('-','')
+        
     
     # for mrso and mrfso sum up desired soil levels
     if var in ['mrso','mrfso']:
