@@ -17,8 +17,12 @@ def init(vartable):
     # base path for all other path
     global BasePath
     BasePath = config.get_config_value('settings', 'BasePath',exitprog=False)
+    if BasePath[-1]=="/":
+        BasePath = BasePath[:-1]
     global DataPath
     DataPath = config.get_config_value('settings', 'DataPath',exitprog=False)
+    if DataPath[-1]=="/":
+        DataPath = DataPath[:-1]
 
 
     global DirIn

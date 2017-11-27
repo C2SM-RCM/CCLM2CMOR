@@ -907,8 +907,11 @@ def proc_seasonal(params,year):
             f_lst = sorted(filenames)
             i = 0
             for f in f_lst:
-                year_act=f.split("_")[-1][:4]
-                if year_act != year: #only process file if the year is correct
+
+                year1=f.split("_")[-2][:4]
+                year2=f.split("_")[-1][:4]
+
+                if year1 != year or int(year2)>int(year1)+1: #only process file if the year is correct and if it is not a chunked file
                     i=i+1
 
                     continue
@@ -923,7 +926,7 @@ def proc_seasonal(params,year):
                 # for season the last month from the previous year is needed
                 if i == 0:
                     #for first file: from March to November
-                    cmd = "cdo -f %s -seas%s -selmonth,3/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f,ftmp_name)
+                    cmd = "cdo -f %s -seas%s -selmon,3/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f,ftmp_name)
                     retval=shell(cmd,logger=logger)
 
                 else:
@@ -931,7 +934,7 @@ def proc_seasonal(params,year):
                     f_hlp12 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     f_prev = "%s/%s" % (dirpath,f_lst[i-1])
 
-                    cmd = "cdo -f %s selmonth,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
+                    cmd = "cdo -f %s selmon,12 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f_prev,f_hlp12.name)
                     
                     if config.get_config_value("integer","multi") > 1:
                         timepkg.sleep(5) #wait for previous year to definitely finish when using multiprocessing
@@ -940,7 +943,7 @@ def proc_seasonal(params,year):
                         
                     # get months 1 to 11 of actual year
                     f_hlp1_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
-                    cmd = "cdo -f %s selmonth,1/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f,f_hlp1_11.name)
+                    cmd = "cdo -f %s selmon,1/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f,f_hlp1_11.name)
                     retval = shell(cmd,logger=logger)
 
                     # now concatenate all 12 montha
@@ -1166,8 +1169,11 @@ def process_file(params,in_file,var,reslist,year):
         in_calendar = config.get_sim_value("calendar",exitprog = False)
         if in_calendar=="":
             raise Exception("Calendar attribute not found in input file! Specify calendar in simulation settings section of configuration file instead!")
-
-    time_in_units = time_in.units
+    
+    if config.get_config_value('boolean','use_alt_units'): #if units attribute is wrong -> take frm config file
+        time_in_units = config.get_config_value("settings","alt_units")
+    else:
+        time_in_units = time_in.units
 
     # now get the 'new' time/date
     dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
@@ -1213,17 +1219,21 @@ def process_file(params,in_file,var,reslist,year):
     start_num = date2num(start_date,time_in_units,calendar=in_calendar)   
     end_num = date2num(end_date, time_in_units, calendar=in_calendar)   
     #correct time array
-    time_range = np.arange(start_num ,end_num+time_delta_raw/2, time_delta_raw)
-
-    if np.array(time_in).shape != time_range.shape or any(np.round(np.array(time_in),2) != np.round(time_range,2)):
-        cmd = "Time variable of input data is not correct! It has to start on January 1st and end on \
+    time_range = np.round(np.arange(start_num ,end_num+time_delta_raw/2, time_delta_raw),8)
+    time_in_arr=np.round(np.array(time_in),8)
+    if not (set(time_in_arr) <=  set(time_range)):
+        cmd = "Time variable of input data is not correct! It has to contain all required time steps between January 1st and \
 December 30th/31st (depending on calendar) of the respective year. The first time step for \
 instantaneous and interval representing variables must be 0 UTC and (resolution * 0.5) UTC, respectively. \
 The last time step must be (24 - resolution) UTC and (24 - resolution * 0.5) UTC, respectively. 'resolution' \
 is here the time resolution of the input data in hours."
         logger.error(cmd)
         raise Exception(cmd) 
-        
+    
+    #Define time steps which to take from input
+    start_in,end_in = np.where(time_in_arr==time_range[0])[0][0]+1, np.where(time_in_arr==time_range[-1])[0][0]+1
+    tsteps = "%s/%s" %(start_in,end_in)
+    
     # for mrso and mrfso sum up desired soil levels
     if var in ['mrso','mrfso']:
         f_in.close()
@@ -1333,9 +1343,9 @@ is here the time resolution of the input data in hours."
             selhour = str(list(np.arange(0,24,int(res_hr))))[1:-1].replace(" ","")
             nstep = res_hr / input_res_hr
             if cm == 'point':
-                cmd = "cdo -L -f %s -s selhour,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),selhour,cmd_mul,in_file,ftmp_name)
+                cmd = "cdo -L -f %s -s -selhour,%s -seltimestep,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),selhour,tsteps,cmd_mul,in_file,ftmp_name)
             else:
-                cmd = "cdo -L -f %s -s timsel%s,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,int(nstep),cmd_mul,in_file,ftmp_name)
+                cmd = "cdo -L -f %s -s -timsel%s,%s -seltimestep,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,int(nstep),tsteps,cmd_mul,in_file,ftmp_name)
         
         # For monthly resolution daily processing is sometimes necessary first
         elif res == 'day' or 'within days time' in cm_type:
@@ -1343,14 +1353,14 @@ is here the time resolution of the input data in hours."
         
         #monthy resolution
         else:
-            cmd = "cdo -L -f %s -s mon%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,cmd_mul,in_file,ftmp_name)
+            cmd = "cdo -L -f %s -s -mon%s -seltimestep,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,tsteps,cmd_mul,in_file,ftmp_name)
 
         retval = shell(cmd,logger=logger)
         
         #now do mean over days for each month
         if 'within days time' in cm_type:
             ftmp_name2 = "%s/%s-%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()),var)
-            cmd = "cdo -f %s -s monmean %s %s" % (config.get_config_value('settings', 'cdo_nctype'),ftmp_name,ftmp_name2)
+            cmd = "cdo -f %s -s -monmean -seltimestep,%s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),tsteps,ftmp_name,ftmp_name2)
             retval = shell(cmd,logger=logger)
             ftmp_name = ftmp_name2
             
@@ -1434,7 +1444,8 @@ is here the time resolution of the input data in hours."
 
             # copy content to new datatype
             logger.debug("Copy data from tmp file: %s" % (var_out.name))
-            var_out[:] = var_in[:]
+            if var_name not in ['rotated_latitude_longitude','rotated_pole']:
+                var_out[:] = var_in[:]
 
 
         # copy lon/lat and rlon/rlat from input if needed:
@@ -1456,8 +1467,10 @@ is here the time resolution of the input data in hours."
                     att_lst = get_attr_list(var_name,[var_in.grid_north_pole_latitude,var_in.grid_north_pole_longitude])
               
                 var_out.setncatts(att_lst)
-                if var_name != 'rotated_pole':
+                # copy content to new datatype
+                if var_name not in ['rotated_latitude_longitude','rotated_pole']:
                     var_out[:] = var_in[:]
+
                 logger.debug("Copy from input: %s" % (var_out.name))
 
         ##############################
