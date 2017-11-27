@@ -590,6 +590,12 @@ def copy_var(f_in,f_out,var_name,logger=log):
     '''
     if var_name in f_in.variables and var_name not in f_out.variables:
         var_in = f_in.variables[var_name]
+        j = 0
+        for var_dim in var_in.dimensions:
+            if var_dim not in f_out.dimensions:
+                f_out.createDimension(var_dim,size=var_in.shape[j])
+            j = j+1
+
         if var_name in ['rlat','rlon','lat','lon','time','time_bnds']:
             new_datatype = 'd'
         elif var_name in ['rotated_latitude_longitude','rotated_pole']:
@@ -907,9 +913,8 @@ def proc_seasonal(params,year):
             f_lst = sorted(filenames)
             i = 0
             for f in f_lst:
-
-                year1=f.split("_")[-2][:4]
-                year2=f.split("_")[-1][:4]
+                year1=f.split("_")[-1][:4]
+                year2=f.split("-")[-1][:4]
 
                 if year1 != year or int(year2)>int(year1)+1: #only process file if the year is correct and if it is not a chunked file
                     i=i+1
@@ -972,7 +977,8 @@ def proc_seasonal(params,year):
                 f_var = f_tmp.variables[var]
 
                 # copy variables from input file if they got lost in cdo commands
-                for var_name in ['lat','lon','rotated_pole','plev','height']:
+                var_in = f_in.variables[var]
+                for var_name in ['rlon','rlat','lat','lon','rotated_pole','plev','height']:
                     copy_var(f_in,f_tmp,var_name,logger=logger)
                 f_var.setncattr('grid_mapping','rotated_pole')
                 f_var.cell_methods = "time: %s" % (cm_type)
@@ -1225,7 +1231,8 @@ is here the time resolution of the input data in hours."
     tsteps = "%s/%s" %(start_in+1,end_in+1)
     
     #change time array
-    dt_in = dt_in[start_in:end_in]
+    dt_in = dt_in[start_in:end_in+1]
+    time_in = time_in[start_in:end_in+1]
 
     # start date for file names
     dt_start_in = str(dt_in[0])
@@ -1234,7 +1241,6 @@ is here the time resolution of the input data in hours."
     # stop date for file names
     dt_stop_in = str(dt_in[-1])
     dt_stop_in = dt_stop_in[:dt_stop_in.index(' ')].replace('-','')
-        
     
     # for mrso and mrfso sum up desired soil levels
     if var in ['mrso','mrfso']:
@@ -1351,7 +1357,7 @@ is here the time resolution of the input data in hours."
         
         # For monthly resolution daily processing is sometimes necessary first
         elif res == 'day' or 'within days time' in cm_type:
-            cmd = "cdo -L -f %s -s day%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,cmd_mul,in_file,ftmp_name)
+            cmd = "cdo -L -f %s -s day%s -seltimestep,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,tsteps,cmd_mul,in_file,ftmp_name)
         
         #monthy resolution
         else:
