@@ -907,8 +907,11 @@ def proc_seasonal(params,year):
             f_lst = sorted(filenames)
             i = 0
             for f in f_lst:
-                year_act=f.split("_")[-1][:4]
-                if year_act != year: #only process file if the year is correct
+
+                year1=f.split("_")[-2][:4]
+                year2=f.split("_")[-1][:4]
+
+                if year1 != year or int(year2)>int(year1)+1: #only process file if the year is correct and if it is not a chunked file
                     i=i+1
 
                     continue
