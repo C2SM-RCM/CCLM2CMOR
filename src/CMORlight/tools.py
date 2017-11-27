@@ -1219,17 +1219,21 @@ def process_file(params,in_file,var,reslist,year):
     start_num = date2num(start_date,time_in_units,calendar=in_calendar)   
     end_num = date2num(end_date, time_in_units, calendar=in_calendar)   
     #correct time array
-    time_range = np.arange(start_num ,end_num+time_delta_raw/2, time_delta_raw)
-
-    if np.array(time_in).shape != time_range.shape or any(np.round(np.array(time_in),2) != np.round(time_range,2)):
-        cmd = "Time variable of input data is not correct! It has to start on January 1st and end on \
+    time_range = np.round(np.arange(start_num ,end_num+time_delta_raw/2, time_delta_raw),8)
+    time_in_arr=np.round(np.array(time_in),8)
+    if not (set(time_in_arr) <=  set(time_range)):
+        cmd = "Time variable of input data is not correct! It has to contain all required time steps between January 1st and \
 December 30th/31st (depending on calendar) of the respective year. The first time step for \
 instantaneous and interval representing variables must be 0 UTC and (resolution * 0.5) UTC, respectively. \
 The last time step must be (24 - resolution) UTC and (24 - resolution * 0.5) UTC, respectively. 'resolution' \
 is here the time resolution of the input data in hours."
         logger.error(cmd)
         raise Exception(cmd) 
-        
+    
+    #Define time steps which to take from input
+    start_in,end_in = np.where(time_in_arr==time_range[0])[0][0]+1, np.where(time_in_arr==time_range[-1])[0][0]+1
+    tsteps = "%s/%s" %(start_in,end_in)
+    
     # for mrso and mrfso sum up desired soil levels
     if var in ['mrso','mrfso']:
         f_in.close()
@@ -1339,9 +1343,9 @@ is here the time resolution of the input data in hours."
             selhour = str(list(np.arange(0,24,int(res_hr))))[1:-1].replace(" ","")
             nstep = res_hr / input_res_hr
             if cm == 'point':
-                cmd = "cdo -L -f %s -s selhour,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),selhour,cmd_mul,in_file,ftmp_name)
+                cmd = "cdo -L -f %s -s -selhour,%s -seltimestep,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),selhour,tsteps,cmd_mul,in_file,ftmp_name)
             else:
-                cmd = "cdo -L -f %s -s timsel%s,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,int(nstep),cmd_mul,in_file,ftmp_name)
+                cmd = "cdo -L -f %s -s -timsel%s,%s -seltimestep,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,int(nstep),tsteps,cmd_mul,in_file,ftmp_name)
         
         # For monthly resolution daily processing is sometimes necessary first
         elif res == 'day' or 'within days time' in cm_type:
@@ -1349,14 +1353,14 @@ is here the time resolution of the input data in hours."
         
         #monthy resolution
         else:
-            cmd = "cdo -L -f %s -s mon%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,cmd_mul,in_file,ftmp_name)
+            cmd = "cdo -L -f %s -s -mon%s -seltimestep,%s %s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,tsteps,cmd_mul,in_file,ftmp_name)
 
         retval = shell(cmd,logger=logger)
         
         #now do mean over days for each month
         if 'within days time' in cm_type:
             ftmp_name2 = "%s/%s-%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()),var)
-            cmd = "cdo -f %s -s monmean %s %s" % (config.get_config_value('settings', 'cdo_nctype'),ftmp_name,ftmp_name2)
+            cmd = "cdo -f %s -s -monmean -seltimestep,%s %s %s" % (config.get_config_value('settings', 'cdo_nctype'),tsteps,ftmp_name,ftmp_name2)
             retval = shell(cmd,logger=logger)
             ftmp_name = ftmp_name2
             
