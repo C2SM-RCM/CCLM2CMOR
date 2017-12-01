@@ -5,7 +5,7 @@ Contains all the functions for processing the files
 """
 import os
 import sys
-import ipdb
+#import ipdb
 from netCDF4 import Dataset
 from netCDF4 import num2date
 from netCDF4 import date2num
@@ -1209,8 +1209,15 @@ def process_file(params,in_file,var,reslist,year):
     #check if time variable is correct
   
     #correct start and end date for averaged and instantaneous varoables
-    start_date =  num2date(0,"seconds since %i-01-01" % int(year),calendar=in_calendar)
-    end_date = num2date(0,"seconds since %i-01-01" % (int(year)+1),calendar=in_calendar)
+    start_date =  num2date(0,"seconds since {}-{:02d}-01".format(int(year),config.get_config_value('integer','first_month')),calendar=in_calendar)
+    if config.get_config_value('integer','last_month')==12:
+        endyear = int(year)+1
+        endmonth = 1
+    else:
+        endyear=int(year)
+        endmonth = config.get_config_value('integer','last_month')+1
+        
+    end_date = num2date(0,"seconds since {}-{:02d}-01".format(endyear,endmonth),calendar=in_calendar)
     if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'i':
         end_date -= time_delta
     else:

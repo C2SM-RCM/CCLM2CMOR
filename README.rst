@@ -283,6 +283,15 @@ delete original files afterwards
 
 In the following some more advanced options are described:
 
+-  If your data starts in a different month than January in the first year
+   or ends in a different month than December in the last year, 
+   you have to change the ``first_month`` or the `last_month`` entry in
+   the integer section of the configuration file to avoid errors
+   
+-  If the units attribute of the time variable in your input data is not
+   correct, you have to provide the correct time unit in the entry ``alt_units`` 
+   in the configuration file and set ``use_alt_units`` to ``True`` there.
+   
 -  You can create several configuration
    files and choose the one you want to use with the ``--ini`` option when
    running the main script *cmorlight.py*.
