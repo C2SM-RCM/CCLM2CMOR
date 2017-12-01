@@ -1159,27 +1159,32 @@ def process_file(params,in_file,var,reslist,year):
             in_file = in_file_v
         logger.info("Changed input file to derotated file: %s" % in_file)
 
-    # create object from netcdf file to access all parameters and attributes
+    if config.get_config_value('boolean','use_alt_units'): #if units attribute is wrong -> take frm config file
+        temp_name = "%s/%s-%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()),var)
+        cmd = 'ncatted -a units,time,o,c,"%s" %s %s' % (config.get_config_value("settings","alt_units"),in_file,temp_name)
+        logger.info("Changing units attribute of input")
+        shell(cmd,logger=logger)
+        in_file = temp_name
+ 
+   # create object from netcdf file to access all parameters and attributes
     f_in = Dataset(in_file,"r")
-
+    
     for name in f_in.ncattrs():
         if name in settings.global_attr_file: #only take attribute from file if in this list
             settings.Global_attributes[name] = str(f_in.getncattr(name))
 
+
     # get time variable from input
     time_in = f_in.variables['time']
     
-    if 'calendar' in time_in.ncattrs():
-        in_calendar = str(time_in.calendar)
-    else:
-        in_calendar = config.get_sim_value("calendar",exitprog = False)
-        if in_calendar=="":
-            raise Exception("Calendar attribute not found in input file! Specify calendar in simulation settings section of configuration file instead!")
-    
-    if config.get_config_value('boolean','use_alt_units'): #if units attribute is wrong -> take frm config file
-        time_in_units = config.get_config_value("settings","alt_units")
-    else:
-        time_in_units = time_in.units
+   # if 'calendar' in time_in.ncattrs():
+    in_calendar = str(time_in.calendar)
+    #else:
+     #   in_calendar = config.get_sim_value("calendar",exitprog = False)
+      #  if in_calendar=="":
+       #     raise Exception("Calendar attribute not found in input file! Specify calendar in simulation settings section of configuration file instead!")
+  
+    time_in_units = time_in.units
 
     # now get the 'new' time/date
     dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
@@ -1215,8 +1220,8 @@ def process_file(params,in_file,var,reslist,year):
     start_num = date2num(start_date,time_in_units,calendar=in_calendar)   
     end_num = date2num(end_date, time_in_units, calendar=in_calendar)   
     #correct time array
-    time_range = np.round(np.arange(start_num ,end_num+time_delta_raw/2, time_delta_raw),8)
-    time_in_arr=np.round(np.array(time_in),8)
+    time_range = np.round(np.arange(start_num ,end_num+time_delta_raw/2, time_delta_raw),5)
+    time_in_arr=np.round(np.array(time_in),5)
     if not (set(time_range) <=  set(time_in_arr)):
         cmd = "Time variable of input data is not correct! It has to contain all required time steps between January 1st and \
 December 30th/31st (depending on calendar) of the respective year. The first time step for \
@@ -1651,6 +1656,8 @@ is here the time resolution of the input data in hours."
     if var in ['mrso','mrfso'] and os.path.isfile(f_hlp.name):
         os.remove(f_hlp.name)
 
+    if config.get_config_value('boolean','use_alt_units'): 
+        os.remove(temp_name)
     # close input file
     f_in.close()
     
