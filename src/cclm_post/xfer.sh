@@ -12,6 +12,16 @@ while [[ $# -gt 0 ]]
 do
   key="$1"
   case $key in
+      -g|--gcm)
+      GCM=$2
+      args="${args} -g $2"
+      shift
+      ;;
+      -x|--exp)
+      EXP=$2
+      args="${args} -x $2"
+      shift
+      ;;
       -s|--start)
       startyear=$2
       shift
@@ -31,7 +41,7 @@ do
       args="${args} -a $2"
       shift
       ;;
-      -x|--xfer)
+      -l|--log)
       xfer=$2
       args="${args} -x $2"
       shift

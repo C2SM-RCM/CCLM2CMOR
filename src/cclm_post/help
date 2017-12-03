@@ -15,7 +15,6 @@ echo "The script master_post.sh allows the following options:
 -V, --verbose                 Increase printing
 -O, --overwrite               Overwrite existing output
 --no_batch                    Years are processed sequentially instead of continously starting one-year jobs with sbatch 
---clean                       Remove working directory at the end"
 
 
 

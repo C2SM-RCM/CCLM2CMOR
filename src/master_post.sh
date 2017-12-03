@@ -5,7 +5,7 @@
 #SBATCH --constraint=gpu
 #SBATCH --output=/users/mgoebel/CMOR/logs/shell/CMOR_sh_%j.out
 #SBATCH --error=/users/mgoebel/CMOR/logs/shell/CMOR_sh_%j.err
-#SBATCH --job-name="CMOR_sh"
+#SBATCH --job-name=CMOR_sh_%j
 
 
 #Check if all functions are available
@@ -28,11 +28,9 @@ source ./settings.sh
 overwrite=false #overwrite output if it exists
 n=true #normal printing mode
 v=false #verbose printing mode
-clean=false #clean  files in WORKDIR  
 batch=true #create batch jobs continously always for one year
 
 args=""
-concat=false
 while [[ $# -gt 0 ]]
 do
   key="$1"
@@ -87,10 +85,6 @@ do
       --no_batch)
       batch=false
       args="${args} --no_batch"
-      ;;
-      --clean)
-      clean=true
-      args="${args} --clean"
       ;;
       *)
       echo "unknown option!"
@@ -180,9 +174,9 @@ then
     if [ ! -d ${INDIR1}/*${startex} && -d ${ARCHDIR}/*${startex}*] 
     then
       echon "Extracting years ${startex} to ${endex} \n\n"
-      sbatch --job-name=CMOR_sh --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -x ${xfer}
+      sbatch --job-name=CMOR_sh_${GCM}_${EXP} --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -l ${xfer} -g ${GCM} -x ${EXP}
       #abort running job and restart it after extraction is done
-      sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${YYA} -F ${FIRST} 
+      sbatch --dependency=singleton --job-name=CMOR_sh_${GCM}_${EXP} --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${YYA} -F ${FIRST} 
       exit
     fi
     (( startex=startex+1))
@@ -206,25 +200,19 @@ then
     then
       endex=${YYEext}
     fi
-    if [ ${startex} -le ${YYEext} ]
+    if [ ${startex} -le ${YYEext} && -d ${ARCHDIR}/*${startex}* ]
     then
       echon "Extracting years from ${startex} to  ${endex} \n\n"
-      sbatch  --job-name=CMOR_sh --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -x ${xfer}
+      sbatch  --job-name=CMOR_sh_${GCM}_${EXP} --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST}  -l ${xfer} -g ${GCM} -x ${EXP}
        #Submit job for the following year when all other jobs (to wait for extraction) are finished
-      sbatch --dependency=singleton --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
+      sbatch --dependency=singleton --job-name=CMOR_sh_${GCM}_${EXP} --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
     else
       #Submit job for the following year without waiting
-      sbatch --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
+      sbatch --job-name=CMOR_sh_${GCM}_${EXP} --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
     fi
   else
     #Submit job for the following year without waiting
-    sbatch --job-name=CMOR_sh --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
-  fi
-  
-  #at end concatenate all log files
-  if [ ${YYA} -eq ${YYE} ]
-  then
-    concat=true
+    sbatch --job-name=CMOR_sh_${GCM}_${EXP} --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
   fi
   
   #Set stop years to start years to process only one year per job
@@ -280,23 +268,3 @@ TIME2=$(date +%s)
 SEC_TOTAL=$(python -c "print(${TIME2}-${TIME1})")
 echo "total time for postprocessing: ${SEC_TOTAL} s"
 
-
-#at end concatenate all log files
-if ${concat}
-then
-  year=${FIRST}
-  echo "Concatenate all log files"
-  while [ ${year} -le ${YYE} ]
-  do
-    echo "CMOR STEP 1 \n GCM: ${GCM} \n Experiment: ${GCM} \n Years: ${FIRST} - ${YYE} ######################################################" >> ${CMOR}.log
-    cat ${xfer}.${year}.out >> ${CMOR}.log
-    cat ${CMOR}.${year}.out >> ${CMOR}.log
-    echo "######################################################\n\n"
-    (( year=year+1 ))
-  done 
-  
-  if ${clean}
-  then
-    rm -r ${WORKDIR}
-  fi
-fi
