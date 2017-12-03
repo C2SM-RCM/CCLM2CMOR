@@ -171,7 +171,7 @@ if [ ${post_step} -ne 2 ] && ${batch}
 then
   while [ ${startex} -le ${endex} ]
   do
-    if [ ! -d ${INDIR1}/*${startex} && -d ${ARCHDIR}/*${startex}*] 
+    if [ ! -d ${INDIR1}/*${startex} && -f ${ARCHDIR}/*${startex}*] 
     then
       echon "Extracting years ${startex} to ${endex} \n\n"
       sbatch --job-name=CMOR_sh_${GCM}_${EXP} --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -l ${xfer} -g ${GCM} -x ${EXP}

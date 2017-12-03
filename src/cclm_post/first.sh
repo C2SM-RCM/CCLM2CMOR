@@ -27,7 +27,13 @@ function timeseries {  # building a time series for a given quantity
   elif [ ! -f ${OUTDIR1}/${YYYY_MM}/$1_ts.nc ] ||  ${overwrite}
   then
     echon "Building time series for variable $1"
-    ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v $1 lffd${CURRENT_DATE}*[!cpz].nc ${OUTDIR1}/${YYYY_MM}/$1_ts.nc
+    FILES="$(ls lffd${CURRENT_DATE}*[!cpz].nc )"
+    
+    if [ ${MM} -eq 01 ]
+    then  
+      FILES="$(echo ${FILES}) $(ls lffd${NEXT_DATE}0100.nc )"
+    fi
+    ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v $1 ${FILES} ${OUTDIR1}/${YYYY_MM}/$1_ts.nc
     ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INDIR1}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100.nc ${OUTDIR1}/${YYYY_MM}/$1_ts.nc
   else
     echov "Time series for variable $1 already exists. Skipping..."
@@ -46,11 +52,16 @@ function timeseriesp {  # building a time series for a given quantity on pressur
   do
     PASCAL=$(python -c "print(${PLEVS[$NPLEV]} * 100.)")
     PLEV=$(python -c "print(int(${PLEVS[$NPLEV]}))")
+    FILES="$(ls lffd${CURRENT_DATE}*p.nc )"
+    if [ ${MM} -eq 01 ]
+    then  
+      FILES="$(echo ${FILES}) $(ls lffd${NEXT_DATE}0100p.nc )"
+    fi
 
     if [ ! -f ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc ] ||  ${overwrite}
     then
       echon "Building time series at pressure level ${PLEV} hPa for variable $1"
-      ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d pressure,${PASCAL},${PASCAL} -v $1 lffd${CURRENT_DATE}*p.nc ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc
+      ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d pressure,${PASCAL},${PASCAL} -v $1 ${FILES} ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc
       ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INDIR1}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100p.nc ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc
     else
       echov "Time series for variable $1 at pressure level ${PLEV}  already exists. Skipping..."
@@ -73,11 +84,16 @@ function timeseriesz {
   while [ ${NZLEV} -le ${#ZLEVS[@]} ]
   do
     ZLEV=$(python -c "print(int(${ZLEVS[$NZLEV]}))")
+    FILES="$(ls lffd${CURRENT_DATE}*z.nc )"
+    if [ ${MM} -eq 01 ]
+    then  
+      FILES="$(echo ${FILES}) $(ls lffd${NEXT_DATE}0100z.nc )"
+    fi
 
     if [ ! -f ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc ] ||  ${overwrite}
     then
       echon "Building time series at height level ${ZLEV} m for variable $1"
-      ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d altitude,${ZLEV}.,${ZLEV}. -v $1 lffd${CURRENT_DATE}*z.nc ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
+      ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d altitude,${ZLEV}.,${ZLEV}. -v $1 ${FILES} ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
       ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INDIR1}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100z.nc ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
     else
       echov "Time series for variable $1 at height level ${ZLEV} m  already exists. Skipping..."
@@ -182,15 +198,6 @@ do
   constVar HSURF
   constDone=true
 
-  # --- build time series for selected variables
-  source ${SRCDIR_POST}/timeseries.sh
-
-  #stop timing and print information
-  DATE2=$(date +%s)
-  SEC_TOTAL=$(python -c "print(${DATE2}-${DATE_START})")
-  echon "Time for postprocessing: ${SEC_TOTAL} s"
-  
-  fi
   # step ahead in time
   MMint=$(python -c "print(int("${MMint}")+1)")
   if [ ${MMint} -ge 13 ]
@@ -206,7 +213,17 @@ do
     MM=${MMint}
   fi
 
-  CURRENT_DATE=${YYYY}${MM}
+  NEXT_DATE=${YYYY}${MM}
+  # --- build time series for selected variables
+  source ${SRCDIR_POST}/timeseries.sh
+
+  #stop timing and print information
+  DATE2=$(date +%s)
+  SEC_TOTAL=$(python -c "print(${DATE2}-${DATE_START})")
+  echon "Time for postprocessing: ${SEC_TOTAL} s"
+  
+  fi
+  CURRENT_DATE=${NEXT_DATE}
   if [ ! "$(ls -A ${OUTDIR1}/${YYYY_MM})" ] 
   then
     rmdir ${OUTDIR1}/${YYYY_MM}
