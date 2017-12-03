@@ -126,12 +126,13 @@ do
   echon "# Processing time ${YYYY_MM}"
   echon "################################"
 
+  skip=false
   if [ ! -d ${INDIR1}/${YYYY} ]
   then
     if ${batch}
     then
-      echo "Cannot find input directory for year ${YYYY}. Skipping..."
-      exit
+      echo "Cannot find input directory for year ${YYYY} in ${INDIR1}. Skipping..."
+      skip=true
     else
       echo "Cannot find input directory for year ${YYYY}. Transfering from ${ARCHDIR}..."
       if [ -d ${ARCHDIR}/*${YYYY} ] 
@@ -142,10 +143,13 @@ do
         tar -xf ${ARCHDIR}/*${YYYY}.tar -C ${INDIR1}
       else
         echo "Cannot find .tar file or extracted archive in archive directory! Exiting..."
-        exit 
+        skip=true 
       fi      
     fi
   fi
+  
+  if ! ${skip}
+  then
 
   if [ ! -d ${OUTDIR1}/${YYYY_MM} ]
   then
@@ -186,7 +190,7 @@ do
   SEC_TOTAL=$(python -c "print(${DATE2}-${DATE_START})")
   echon "Time for postprocessing: ${SEC_TOTAL} s"
   
-
+  fi
   # step ahead in time
   MMint=$(python -c "print(int("${MMint}")+1)")
   if [ ${MMint} -ge 13 ]

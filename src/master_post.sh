@@ -5,7 +5,7 @@
 #SBATCH --constraint=gpu
 #SBATCH --output=/users/mgoebel/CMOR/logs/shell/CMOR_sh_%j.out
 #SBATCH --error=/users/mgoebel/CMOR/logs/shell/CMOR_sh_%j.err
-#SBATCH --job-name=CMOR_sh_%j
+#SBATCH --job-name=CMOR_sh
 
 
 #Check if all functions are available

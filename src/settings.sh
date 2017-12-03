@@ -12,7 +12,7 @@ post_step=0 #to limit post processing to step 1 or 2, for all other values both 
 
 #Simulation details used for creating a directory structure 
 
-GCM=EC-EARTH #driving GCM
+GCM=ICHEC-EC-EARTH #driving GCM
 EXP=RCP85      #driving experiment name
 
 #-------------------------------------------
@@ -21,8 +21,8 @@ EXP=RCP85      #driving experiment name
 SIM_START=1949120100 # start date of simulation YYYYMMDDHH[mmss]: needed for constant file
 
 #processing range for step 1:
-START_DATE=200601      #Start year and month for processing (if not given in command line YYYYMM
-STOP_DATE=209912    #End year and month for processing (if not given in command line  YYYYMM
+START_DATE=2006      #Start year and month for processing (if not given in command line YYYYMM
+STOP_DATE=2100    #End year and month for processing (if not given in command line  YYYYMM
 
 #for step 2 (if different from step 1:
 YYA=  #Start year for processing YYYY

@@ -188,6 +188,15 @@ def main():
     ''' main program, first read command line parameter '''
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("-X", "--EXP",
+                            action="store", dest="exp", default = "",
+                            help="Driving experiment (e.g. historical or rcp85)")
+    parser.add_argument("-G", "--GCM",
+                            action="store", dest="gcm", default = "",
+                            help="Driving GCM")
+    parser.add_argument("-E", "--ENS",
+                            action="store", dest="ens", default = "",
+                            help="Ensemble member of the driving GCM")
     parser.add_argument("-r", "--resolution",
                             action="store", dest = "reslist", default = "",
                             help = "list of desired output resolutions, comma-separated (supported: 1hr (1-hourly), 3hr (3-hourly),6hr (6-hourly),day (daily),mon (monthly) ,sem (seasonal),fx (for time invariant variables)")
@@ -261,10 +270,22 @@ def main():
         config.set_config_value('integer',"proc_end",options.proc_end)
     if options.varlist != "":
         config.set_config_value('settings','varlist',options.varlist)
-
-
-
-
+    
+    change_driv_exp = False 
+    if options.gcm != "":
+        config.set_model_value('driving_model_id',options.gcm)
+        change_driv_exp = True 
+    if options.ens != "":
+        config.set_model_value('driving_model_ensemble_member',options.ens)
+        change_driv_exp = True 
+    if options.exp != "":
+        config.set_model_value('driving_experiment_name',options.exp)
+        config.set_model_value('experiment_id',options.exp)
+        change_driv_exp = True 
+  
+    if change_driv_exp:
+        config.set_model_value('driving_experiment',"%s, %s, %s" % (config.get_sim_value('driving_model_id'),config.get_sim_value('experiment_id'),config.get_sim_value('driving_model_ensemble_member'))
+        
     config.set_config_value('boolean','overwrite',options.overwrite)
     config.set_config_value('boolean','limit_range',limit_range)
     config.set_config_value('boolean','remove_src',options.remove_src)

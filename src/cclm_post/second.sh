@@ -87,7 +87,6 @@ do
     fi
     (( MM=MM+1 ))
   done
-  echo $MMA $MME
   if ! ${proc_all} 
   then
     FILES=${proc_list} 

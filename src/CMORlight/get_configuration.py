@@ -98,6 +98,25 @@ def get_sim_value(option, exitprog = True):
     simulation = get_config_value('settings','simulation')
     return get_config_value("settings_%s" % (simulation), option, exitprog)
 
+## -----------------------------------------------------------------------------
+def set_model_value(option, value):
+    """
+    Set value in simulation section.
+
+    Parameters
+    ----------
+
+    option : str
+        option in the simulation section
+
+    value : str
+        value to be set
+    """
+
+    ''' '''
+    model = get_config_value('init','model')
+    set_config_value("settings_%s" % (model), option,value)
+
 
 # -----------------------------------------------------------------------------
 def set_config_value(section, option, value):
