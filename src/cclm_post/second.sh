@@ -65,6 +65,29 @@ do
   echo "####################"
   DATE1=$(date +%s)
 	
+    #check if directories for all months exist
+  MM=${MMA}
+  start=true
+  endmonth=${MME}
+  while [[ ${MM} -le ${endmonth} ]] 
+  do 
+    if [[ ! -d ${INDIR2}/${YY}_${MM} ]] 
+    then
+      echo "Directory ${INDIR2}/${YY}_${MM} does not exist!"
+      if ${start}
+      then
+        (( MMA=MMA+1))
+      # (( YY=YY+1 ))
+     # continue 2
+      else
+        (( MME=MMA-1))
+      fi
+    else
+      start=false
+    fi
+    (( MM=MM+1 ))
+  done
+  echo $MMA $MME
   if ! ${proc_all} 
   then
     FILES=${proc_list} 
@@ -72,20 +95,7 @@ do
     FILES=$(ls ${INDIR2}/${YY}_${MMA}/*_ts.nc)
   fi
   
-  #check if directories for all months exist
-  MM=${MMA}
-  while [[ ${MM} -le ${MME} ]] 
-  do 
-    if [[ ! -d ${INDIR2}/${YY}_${MM} ]] 
-    then
-      echo "Directory ${INDIR2}/${YY}_${MM} does not exist! Skipping this year..."
-      (( YY=YY+1 ))
-      continue 2
-    fi
-    (( MM=MM+1 ))
-  done
 
-  #
   if [[ ${LFILE} -ne 2 ]] 
   then
   # concatenate monthly files to annual file
@@ -163,8 +173,8 @@ do
       do 
         if [[ ! -f ${INDIR2}/${YY}_${MM}/${FILEOUT}_ts.nc ]] 
         then
-          echo "File ${INDIR2}/${YY}_${MM}/${FILEOUT}_ts.nc does not exist! Skipping this variable..."
-          continue 2
+          echo "WARNING: File ${INDIR2}/${YY}_${MM}/${FILEOUT}_ts.nc does not exist! Continue anyway..."
+          #continue 2
         fi
         FILELIST="$(echo ${FILELIST}) $(ls ${INDIR2}/${YY}_${MM}/${FILEOUT}_ts.nc)"
         (( MM=MM+1 ))

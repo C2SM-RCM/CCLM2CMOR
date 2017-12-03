@@ -21,7 +21,10 @@ function constVar {
 #... functions for building time series
 function timeseries {  # building a time series for a given quantity
   cd ${INDIR1}/${CURRDIR}/$2
-  if [ ! -f ${OUTDIR1}/${YYYY_MM}/$1_ts.nc ] ||  ${overwrite}
+  if [ ! -f lffd${CURRENT_DATE}*[!cpz].nc ]
+  then
+    echo "No files for current month found. Skipping month..."
+  elif [ ! -f ${OUTDIR1}/${YYYY_MM}/$1_ts.nc ] ||  ${overwrite}
   then
     echon "Building time series for variable $1"
     ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v $1 lffd${CURRENT_DATE}*[!cpz].nc ${OUTDIR1}/${YYYY_MM}/$1_ts.nc
@@ -34,12 +37,15 @@ function timeseries {  # building a time series for a given quantity
 
 function timeseriesp {  # building a time series for a given quantity on pressure levels
   NPLEV=0
-
+  cd ${INDIR1}/${CURRDIR}/$2
+  if [ ! -f lffd${CURRENT_DATE}*p.nc ]
+  then
+    echo "No files for current month found. Skipping month..."
+  else
   while [ ${NPLEV} -lt ${#PLEVS[@]} ]
   do
     PASCAL=$(python -c "print(${PLEVS[$NPLEV]} * 100.)")
     PLEV=$(python -c "print(int(${PLEVS[$NPLEV]}))")
-    cd ${INDIR1}/${CURRDIR}/$2
 
     if [ ! -f ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc ] ||  ${overwrite}
     then
@@ -52,15 +58,21 @@ function timeseriesp {  # building a time series for a given quantity on pressur
     let "NPLEV = NPLEV + 1"
 
   done
+  fi
   }
 
 
 function timeseriesz {
   NZLEV=1
+  cd ${INDIR1}/${CURRDIR}/$2
+  if [ ! -f lffd${CURRENT_DATE}*z.nc ]
+  then
+    echo "No files for current month found. Skipping month..."
+  else
+  
   while [ ${NZLEV} -le ${#ZLEVS[@]} ]
   do
     ZLEV=$(python -c "print(int(${ZLEVS[$NZLEV]}))")
-    cd ${INDIR1}/${CURRDIR}/$2
 
     if [ ! -f ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc ] ||  ${overwrite}
     then
@@ -72,6 +84,7 @@ function timeseriesz {
     fi
     let "NZLEV = NZLEV + 1"
   done
+  fi
   }
 
 ###################################################
@@ -190,5 +203,9 @@ do
   fi
 
   CURRENT_DATE=${YYYY}${MM}
+  if [ ! "$(ls -A ${OUTDIR1}/${YYYY_MM})" ] 
+  then
+    rmdir ${OUTDIR1}/${YYYY_MM}
+  fi
 
 done

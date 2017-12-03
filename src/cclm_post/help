@@ -9,8 +9,6 @@ echo "The script master_post.sh allows the following options:
 -x EXP, --exp EXP             Specify the driving experiment name
 -s START, --start START       Specify the start for post-processing (format YYYY[MM])
 -e END, --end END             Specify the end for post-processing (format YYYY[MM])
---num_extract NUM             Number of years to extract simultaneously    
---no_extract                  No extraction is carried out     
 --first                       Execute only first script. Second script is skipped.
 --second                      Execute only second script. First script is skipped.
 -S, --silent                  Reduce printing
