@@ -23,13 +23,13 @@ function timeseries {  # building a time series for a given quantity
   cd ${INDIR1}/${CURRDIR}/$2
   if [ ! -f lffd${CURRENT_DATE}*[!cpz].nc ]
   then
-    echo "No files for current month found. Skipping month..."
+    echo "No files found for variable $1 for current month in  ${INDIR1}/${CURRDIR}/$2. Skipping month..." 
   elif [ ! -f ${OUTDIR1}/${YYYY_MM}/$1_ts.nc ] ||  ${overwrite}
   then
     echon "Building time series for variable $1"
     FILES="$(ls lffd${CURRENT_DATE}*[!cpz].nc )"
     
-    if [ ${MM} -eq 01 ]
+    if [ ${MM} -eq 12 ]
     then  
       FILES="$(echo ${FILES}) $(ls lffd${NEXT_DATE}0100.nc )"
     fi
@@ -46,14 +46,14 @@ function timeseriesp {  # building a time series for a given quantity on pressur
   cd ${INDIR1}/${CURRDIR}/$2
   if [ ! -f lffd${CURRENT_DATE}*p.nc ]
   then
-    echo "No files for current month found. Skipping month..."
+    echo "No files found for variable $1 for current month in  ${INDIR1}/${CURRDIR}/$2. Skipping month..."
   else
   while [ ${NPLEV} -lt ${#PLEVS[@]} ]
   do
     PASCAL=$(python -c "print(${PLEVS[$NPLEV]} * 100.)")
     PLEV=$(python -c "print(int(${PLEVS[$NPLEV]}))")
     FILES="$(ls lffd${CURRENT_DATE}*p.nc )"
-    if [ ${MM} -eq 01 ]
+    if [ ${MM} -eq 12 ]
     then  
       FILES="$(echo ${FILES}) $(ls lffd${NEXT_DATE}0100p.nc )"
     fi
@@ -85,7 +85,7 @@ function timeseriesz {
   do
     ZLEV=$(python -c "print(int(${ZLEVS[$NZLEV]}))")
     FILES="$(ls lffd${CURRENT_DATE}*z.nc )"
-    if [ ${MM} -eq 01 ]
+    if [ ${MM} -eq 12 ]
     then  
       FILES="$(echo ${FILES}) $(ls lffd${NEXT_DATE}0100z.nc )"
     fi
@@ -163,7 +163,24 @@ do
       fi      
     fi
   fi
-  
+  # step ahead in time
+  MMint=$(python -c "print(int("${MMint}")+1)")
+  if [ ${MMint} -ge 13 ]
+  then
+    MMint=1
+    YYYY_next=$(python -c "print(int("${YYYY}")+1)")
+  fi
+
+  if [ ${MMint} -le 9 ]
+  then
+    MM_next=0${MMint}
+  else
+    MM_next=${MMint}
+  fi
+
+  NEXT_DATE=${YYYY_next}${MM_next}
+  NEXT_DATE2=${YYYY_next}_${MM_next}
+
   if ! ${skip}
   then
 
@@ -198,23 +215,7 @@ do
   constVar HSURF
   constDone=true
 
-  # step ahead in time
-  MMint=$(python -c "print(int("${MMint}")+1)")
-  if [ ${MMint} -ge 13 ]
-  then
-    MMint=1
-    YYYY=$(python -c "print(int("${YYYY}")+1)")
-  fi
-
-  if [ ${MMint} -le 9 ]
-  then
-    MM=0${MMint}
-  else
-    MM=${MMint}
-  fi
-
-  NEXT_DATE=${YYYY}${MM}
-  # --- build time series for selected variables
+    # --- build time series for selected variables
   source ${SRCDIR_POST}/timeseries.sh
 
   #stop timing and print information
@@ -223,10 +224,14 @@ do
   echon "Time for postprocessing: ${SEC_TOTAL} s"
   
   fi
-  CURRENT_DATE=${NEXT_DATE}
+
   if [ ! "$(ls -A ${OUTDIR1}/${YYYY_MM})" ] 
   then
     rmdir ${OUTDIR1}/${YYYY_MM}
   fi
 
+  CURRENT_DATE=${NEXT_DATE}
+  YYYY=${YYYY_next}
+  MM=${MM_next}
+  echo NEXT: ${CURRENT_DATE}
 done

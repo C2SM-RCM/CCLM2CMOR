@@ -114,8 +114,8 @@ def set_model_value(option, value):
     """
 
     ''' '''
-    model = get_config_value('init','model')
-    set_config_value("settings_%s" % (model), option,value)
+    simulation = get_config_value('settings','simulation')
+    set_config_value("settings_%s" % (simulation), option,value)
 
 
 # -----------------------------------------------------------------------------

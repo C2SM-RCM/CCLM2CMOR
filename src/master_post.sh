@@ -29,7 +29,8 @@ overwrite=false #overwrite output if it exists
 n=true #normal printing mode
 v=false #verbose printing mode
 batch=true #create batch jobs continously always for one year
-
+stopex=false
+overwrite_arch=false
 args=""
 while [[ $# -gt 0 ]]
 do
@@ -85,6 +86,13 @@ do
       --no_batch)
       batch=false
       args="${args} --no_batch"
+      ;;
+      --stopex)
+      stopex=true
+      ;;
+      --overwrite_arch)
+      overwrite_arch=true
+      args="${args} --overwrite_arch"
       ;;
       *)
       echo "unknown option!"
@@ -167,22 +175,22 @@ then
   endex=${YYEext}
 fi
 
-if [ ${post_step} -ne 2 ] && ${batch}
+if [ ${post_step} -ne 2 ] && ${batch} && ! ${stop}
 then
   while [ ${startex} -le ${endex} ]
   do
-    if [ ! -d ${INDIR1}/*${startex} && -f ${ARCHDIR}/*${startex}*] 
+    echo "${ARCHDIR}/*${startex}.tar"
+    if [ ! -d ${INDIR1}/${startex} ] || ${overwrite_arch}
     then
       echon "Extracting years ${startex} to ${endex} \n\n"
       sbatch --job-name=CMOR_sh_${GCM}_${EXP} --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -l ${xfer} -g ${GCM} -x ${EXP}
       #abort running job and restart it after extraction is done
-      sbatch --dependency=singleton --job-name=CMOR_sh_${GCM}_${EXP} --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${YYA} -F ${FIRST} 
+      sbatch --dependency=singleton --job-name=CMOR_sh_${GCM}_${EXP} --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${YYA} -F ${FIRST} --stopex 
       exit
     fi
     (( startex=startex+1))
   done
 fi
-
 (( NEXTYEAR=YYA+1 ))
 
 #for batch processing: process only one year per job
@@ -200,7 +208,7 @@ then
     then
       endex=${YYEext}
     fi
-    if [ ${startex} -le ${YYEext} && -d ${ARCHDIR}/*${startex}* ]
+    if [ ${startex} -le ${YYEext} ] 
     then
       echon "Extracting years from ${startex} to  ${endex} \n\n"
       sbatch  --job-name=CMOR_sh_${GCM}_${EXP} --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST}  -l ${xfer} -g ${GCM} -x ${EXP}
@@ -217,8 +225,8 @@ then
   
   #Set stop years to start years to process only one year per job
   YYE=${YYA}
-  ((STOP_DATE=START_DATE+100 )) #increase by one year (months are also in there)
-  
+  STOP_DATE=${NEXTYEAR}01
+  echo ${STOP_DATE} 
 fi
 
 

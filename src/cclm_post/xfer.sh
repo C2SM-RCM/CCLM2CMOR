@@ -7,6 +7,7 @@
 #SBATCH --error=logs/xfer_%j.err
 #SBATCH --job-name="xfer_sh"
 
+overwrite_arch=false
 args=""
 while [[ $# -gt 0 ]]
 do
@@ -43,13 +44,17 @@ do
       ;;
       -l|--log)
       xfer=$2
-      args="${args} -x $2"
+      args="${args} -l $2"
       shift
       ;;
       -S|--src)
       SRCDIR=$2
       args="${args} -S $2"
       shift
+      ;;
+      --overwrite_arch)
+      overwrite_arch=true
+      args="${args} --overwrite_arch"
       ;;
       *)
       echo "unknown option!"
@@ -80,11 +85,11 @@ done
 
 if [ ${NEXT_YEAR} -le ${endyear} ]
 then
-  sbatch  --job-name=CMOR_sh --error=${xfer}.${NEXT_YEAR}.err --output=${xfer}.${NEXT_YEAR}.out ${SRCDIR}/xfer.sh -s ${NEXT_YEAR} ${args}
+  sbatch  --job-name=CMOR_sh_${GCM}_${EXP} --error=${xfer}.${NEXT_YEAR}.err --output=${xfer}.${NEXT_YEAR}.out ${SRCDIR}/xfer.sh -s ${NEXT_YEAR} ${args}
 fi
 
 
-if [ ! -d ${OUTDIR}/*${startyear} ]
+if [ ! -d ${OUTDIR}/*${startyear} ] || ${overwrite_arch}
 then
   if [ -d ${ARCHDIR}/*${startyear} ] 
   then

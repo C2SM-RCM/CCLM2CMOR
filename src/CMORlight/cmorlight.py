@@ -284,8 +284,7 @@ def main():
         change_driv_exp = True 
   
     if change_driv_exp:
-        config.set_model_value('driving_experiment',"%s, %s, %s" % (config.get_sim_value('driving_model_id'),config.get_sim_value('experiment_id'),config.get_sim_value('driving_model_ensemble_member'))
-        
+        config.set_model_value('driving_experiment',"%s, %s, %s" % (config.get_sim_value('driving_model_id'),config.get_sim_value('experiment_id'),config.get_sim_value('driving_model_ensemble_member')))        
     config.set_config_value('boolean','overwrite',options.overwrite)
     config.set_config_value('boolean','limit_range',limit_range)
     config.set_config_value('boolean','remove_src',options.remove_src)
