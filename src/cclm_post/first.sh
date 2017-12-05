@@ -169,6 +169,8 @@ do
   then
     MMint=1
     YYYY_next=$(python -c "print(int("${YYYY}")+1)")
+  else
+    YYYY_next=${YYYY}
   fi
 
   if [ ${MMint} -le 9 ]
@@ -233,5 +235,4 @@ do
   CURRENT_DATE=${NEXT_DATE}
   YYYY=${YYYY_next}
   MM=${MM_next}
-  echo NEXT: ${CURRENT_DATE}
 done

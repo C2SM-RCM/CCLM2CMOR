@@ -41,7 +41,7 @@ done
 
 while [ ${startyear} -le ${endyear} ]
 do
-  if -d ${INPDIR}/${startyear} 
+  if [ -d ${INPDIR}/${startyear} ]
   then
     echo "Deleting ${INPDIR}/${startyear}" 
     rm -r  ${INPDIR}/${startyear} 

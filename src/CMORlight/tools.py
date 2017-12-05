@@ -932,8 +932,11 @@ def proc_seasonal(params,year):
                 if i == 0:
                     #for first file: from March to November
                     cmd = "cdo -f %s -seas%s -selmon,3/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),cm,f,ftmp_name)
-                    retval=shell(cmd,logger=logger)
-
+                    try:
+                        retval=shell(cmd,logger=logger)
+                    except: 
+                       logger.warning("Year does probably not contain all months from March to November! Skipping this year...")
+                       break  
                 else:
                     # get December of previous year
                     f_hlp12 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
@@ -1138,7 +1141,7 @@ def derotate_uv(params,in_file,var,logger=log):
 
     return out_file_u, out_file_v
 # -----------------------------------------------------------------------------
-def process_file(params,in_file,var,reslist,year):
+def process_file(params,in_file,var,reslist,year,firstlast):
     '''
     Main function for time-dependent variables: process input_file at resolutions defined in reslist
 
@@ -1208,14 +1211,14 @@ def process_file(params,in_file,var,reslist,year):
   
     #check if time variable is correct
   
-    #correct start and end date for averaged and instantaneous varoables
-    start_date =  num2date(0,"seconds since {}-{:02d}-01".format(int(year),config.get_config_value('integer','first_month')),calendar=in_calendar)
-    if config.get_config_value('integer','last_month')==12:
-        endyear = int(year)+1
+    #correct start and end date for averaged and instantaneous variables
+    start_date =  num2date(0,"seconds since {}-{:02d}-01".format(int(year),firstlast[0]),calendar=in_calendar)
+    endyear = int(year)
+    if firstlast[1]==12:
+        endyear += 1
         endmonth = 1
     else:
-        endyear=int(year)
-        endmonth = config.get_config_value('integer','last_month')+1
+        endmonth = firstlast[1]+1
         
     end_date = num2date(0,"seconds since {}-{:02d}-01".format(endyear,endmonth),calendar=in_calendar)
     if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'i':

@@ -99,6 +99,15 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
                 continue
 
             year=f.split("_")[-1][:4]
+            #Define first and last month of file
+            if config.get_config_value('integer',"proc_start") == int(year):
+                firstlast=[config.get_config_value('integer',"first_month"),12] 
+            elif config.get_config_value('integer',"proc_end") == int(year):
+                firstlast=[1,config.get_config_value('integer',"last_month")] 
+            else:
+                firstlast=[1,12]
+
+
             #use other logger
             if cores > 1 and var not in settings.var_list_fixed :
                 logger = logging.getLogger("cmorlight_"+year)
@@ -123,11 +132,11 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
                         
                     else:
                         if cores > 1:
-                            multilst.append([params,in_file,var,reslist,year])
+                            multilst.append([params,in_file,var,reslist,year,firstlast])
                             seaslst.append([params,year])
 
                         else:
-                            reslist=tools.process_file(params,in_file,var,reslist,year)
+                            reslist=tools.process_file(params,in_file,var,reslist,year,firstlast)
                             if seasonal:
                                 tools.proc_seasonal(params,year)
             else:

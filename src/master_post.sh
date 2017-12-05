@@ -156,12 +156,18 @@ fi
 if [ ${#START_DATE} -eq 4 ]
 then
   START_DATE="${START_DATE}01"
+else
+  START_DATE=$(echo ${START_DATE} | cut -c1-6)
+fi
+
+if [ ${#STOP_DATE} -eq 4 ]
+then
   (( STOP_DATE=STOP_DATE+1 ))
   STOP_DATE="${STOP_DATE}01"
 else
-  START_DATE=$(echo ${START_DATE} | cut -c1-6)
   STOP_DATE=$(echo ${STOP_DATE} | cut -c1-6)
 fi
+
 
 #end year for extracting
 YYEext=$(echo ${STOP_DATE} | cut -c1-4)
@@ -175,7 +181,7 @@ then
   endex=${YYEext}
 fi
 
-if [ ${post_step} -ne 2 ] && ${batch} && ! ${stop}
+if [ ${post_step} -ne 2 ] && ${batch} && ! ${stopex}
 then
   while [ ${startex} -le ${endex} ]
   do
@@ -185,7 +191,7 @@ then
       echon "Extracting years ${startex} to ${endex} \n\n"
       sbatch --job-name=CMOR_sh_${GCM}_${EXP} --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST} -l ${xfer} -g ${GCM} -x ${EXP}
       #abort running job and restart it after extraction is done
-      sbatch --dependency=singleton --job-name=CMOR_sh_${GCM}_${EXP} --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${YYA} -F ${FIRST} --stopex 
+      sbatch --dependency=singleton --job-name=CMOR_sh_${GCM}_${EXP} --error=${CMOR}.${YYA}.err --output=${CMOR}.${YYA}.out master_post.sh ${args} -s ${START_DATE} -F ${FIRST} --stopex 
       exit
     fi
     (( startex=startex+1))
@@ -226,7 +232,6 @@ then
   #Set stop years to start years to process only one year per job
   YYE=${YYA}
   STOP_DATE=${NEXTYEAR}01
-  echo ${STOP_DATE} 
 fi
 
 
