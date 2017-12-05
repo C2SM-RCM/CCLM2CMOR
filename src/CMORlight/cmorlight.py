@@ -98,14 +98,15 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
             if f[-3:] != ".nc":
                 continue
 
-            year=f.split("_")[-1][:4]
-            #Define first and last month of file
-            if config.get_config_value('integer',"proc_start") == int(year):
-                firstlast=[config.get_config_value('integer',"first_month"),12] 
-            elif config.get_config_value('integer',"proc_end") == int(year):
-                firstlast=[1,config.get_config_value('integer',"last_month")] 
-            else:
-                firstlast=[1,12]
+            if var not in settings.var_list_fixed:
+                year=f.split("_")[-1][:4]
+                #Define first and last month of file
+                if config.get_config_value('integer',"proc_start") == int(year):
+                    firstlast=[config.get_config_value('integer',"first_month"),12] 
+                elif config.get_config_value('integer',"proc_end") == int(year):
+                    firstlast=[1,config.get_config_value('integer',"last_month")] 
+                else:
+                    firstlast=[1,12]
 
 
             #use other logger
