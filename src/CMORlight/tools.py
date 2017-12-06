@@ -5,7 +5,6 @@ Contains all the functions for processing the files
 """
 import os
 import sys
-#import ipdb
 from netCDF4 import Dataset
 from netCDF4 import num2date
 from netCDF4 import date2num
@@ -19,7 +18,7 @@ import datetime
 
 import uuid
 import time as timepkg
-
+#import ipdb
 # global variables
 import settings
 # configuration
@@ -1240,7 +1239,6 @@ The last time step must be (24 - resolution) UTC and (24 - resolution * 0.5) UTC
 is here the time resolution of the input data in hours."
         logger.error(cmd)
         raise Exception(cmd) 
-    
     #Define time steps which to take from input
     start_in,end_in = np.where(time_in_arr==time_range[0])[0][0], np.where(time_in_arr==time_range[-1])[0][0]
     tsteps = "%s/%s" %(start_in+1,end_in+1)

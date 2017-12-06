@@ -13,8 +13,6 @@ typeset -Z4 YY YYA YYE YP
 
 
 #---------------------------------------------------------------------
-MMA=01 #first month of each yearly time-series
-MME=12 #last month of each yearly time-series
 PERM=755 #Permission settings for output files
 
 #variables
@@ -66,6 +64,8 @@ do
   DATE1=$(date +%s)
 	
     #check if directories for all months exist
+  MMA=01 #first month of each yearly time-series
+  MME=12 #last month of each yearly time-series
   MM=${MMA}
   start=true
   endmonth=${MME}
@@ -77,8 +77,6 @@ do
       if ${start}
       then
         (( MMA=MMA+1))
-      # (( YY=YY+1 ))
-     # continue 2
       else
         (( MME=MMA-1))
       fi
@@ -168,6 +166,7 @@ do
       MA=${MMA}
       ME=${MME}
       MM=${MA}
+       
       while [[ ${MM} -le ${ME} ]] 
       do 
         if [[ ! -f ${INDIR2}/${YY}_${MM}/${FILEOUT}_ts.nc ]] 
@@ -178,7 +177,6 @@ do
         FILELIST="$(echo ${FILELIST}) $(ls ${INDIR2}/${YY}_${MM}/${FILEOUT}_ts.nc)"
         (( MM=MM+1 ))
       done
-      
       echon "Concatenate files"
       echov "${FILELIST}"
       # concatenate monthly files to yearly file
@@ -299,7 +297,7 @@ do
           continue       
         fi
         ENDFILE=${OUTDIR2}/${FILEOUT}/${FILEOUT}_${TYA}${TMA}${TDA}00-${YY}${ME}${TDE}${EHH}.nc
-  #     transfer time from seconds in days and remove time_bnds from instantaneous fields
+ #     transfer time from seconds in days and remove time_bnds from instantaneous fields
         echov "Modifying time values and attributes"
         ncap2 -O -h  -s "time=time/86400" ${FILEOUT}_tmp3_${YY}.nc ${ENDFILE}
         ncks -O -C -h -x -v time_bnds ${ENDFILE} ${ENDFILE}
@@ -307,6 +305,7 @@ do
       fi
 
 
+      echov "Output to $ENDFILE"
   #   change permission of final file
       chmod ${PERM} ${ENDFILE}
   #

@@ -230,10 +230,10 @@ def main():
                             help="Remove source files after chunking")
     parser.add_argument("-s", "--start",
                             action="store", dest="proc_start", default = "",
-                            help="Start year for processing if --limit is set.")
+                            help="Start year (and start month if not January) for processing. Format: YYYY[MM] ")
     parser.add_argument("-e", "--end",
                             action="store", dest="proc_end", default = "",
-                            help="End year for processing if --limit is set.")
+                            help="End year (and end month if not December) for processing. Format: YYYY[MM]")
     parser.add_argument("-P", "--propagate",
                             action="store_true", dest="propagate", default = False,
                             help="Propagate log to standard output.")
@@ -275,9 +275,17 @@ def main():
 
    #store parsed arguments in config
     if options.proc_start != "":
-        config.set_config_value('integer',"proc_start",options.proc_start)
+        config.set_config_value('integer',"proc_start",options.proc_start[:4])
+        if len(options.proc_start)==6:
+            config.set_config_value('integer',"first_month",options.proc_start[4:])
+        else:
+            config.set_config_value('integer',"first_month","1")
     if options.proc_end != "":
-        config.set_config_value('integer',"proc_end",options.proc_end)
+        config.set_config_value('integer',"proc_end",options.proc_end[:4])
+        if len(options.proc_end)==6:
+            config.set_config_value('integer',"last_month",options.proc_end[4:])
+        else:
+            config.set_config_value('integer',"last_month","12")
     if options.varlist != "":
         config.set_config_value('settings','varlist',options.varlist)
     
@@ -320,7 +328,7 @@ def main():
         print("Create logging directory: %s" % LOG_BASE)
         if not os.path.isdir(LOG_BASE):
             os.makedirs(LOG_BASE)
-    LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')
+    LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')+config.get_sim_value('driving_model_id')+"_"+config.get_sim_value('experiment_id')+"."
     logext = datetime.datetime.now().strftime("%d-%m-%Y")+'.log'
 
     # get logger and assign logging filename (many loggers for multiprocessing)
