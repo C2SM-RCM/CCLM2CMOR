@@ -15,10 +15,9 @@ import tempfile
 import subprocess
 import numpy as np
 import datetime
-
+#import ipdb
 import uuid
 import time as timepkg
-#import ipdb
 # global variables
 import settings
 # configuration
@@ -365,22 +364,15 @@ def proc_chunking(params,reslist):
                 if f[-3:] != ".nc": #skip unsuitable files
                     continue
                 idx = f.index("%s_" % res)
+                dates=f.split("_")[-1][:-3].split("-")
                 if start_date == 0:
-                    if res == 'day':
-                        start_date = int(f[idx+len("%s_" % res):f.index(".nc")][:8])
-                    elif res == 'mon' or res == 'sem':
-                        start_date = int(f[idx+len("%s_" % res):f.index(".nc")][:6])
-
-                start_yr=int(f[idx+len("%s_" % res):f.index(".nc")][:4])
-                idx = f.rindex("-")
-                if res == 'day':
-                    stop_date = int(f[idx+1:f.index(".nc")][:8])
-                elif res == 'mon' or res == 'sem':
-                    stop_date = int(f[idx+1:f.index(".nc")][:6])
-
+                    start_date=dates[0]
+                start_yr=int(dates[0][:4])
+                stop_date=dates[1]
+                stop_yr=int(stop_date[:4])
+                trange=np.round(stop_yr+int(stop_date[4:6])/12-start_yr-(int(dates[0][4:6])-1)/12,5)              
                 # if there is more than one year between start and stop year: skip file
-                stop_yr = int(f[idx+1:f.index(".nc")][:4])
-                if stop_yr > start_yr + 1:
+                if trange > 1:
                     log.debug("%s is not a yearly file. Skipping..." % f)
                     continue
 
@@ -399,9 +391,8 @@ def proc_chunking(params,reslist):
 def do_chunking(f_list,var,res,start_date, stop_date, outdir):
     """  Execute actual chunking of files in f_list """
 
-    flist=""
     # generate complete output path with output filename
-    outfile = create_filename(var,res,str(start_date),str(stop_date))
+    outfile = create_filename(var,res,start_date,stop_date)
     # generate outpath with outfile and outdir
 
     if not os.path.isdir(outdir):
@@ -409,8 +400,7 @@ def do_chunking(f_list,var,res,start_date, stop_date, outdir):
     outpath = "%s/%s" % (outdir,outfile)
 
     # generate input filelist
-    for y in f_list:
-        flist = ("%s %s " % (flist,y))
+    flist = " ".join(f_list)
     # cat files to aggregation file
     # skip if exist
     if (not os.path.isfile(outpath)) or config.get_config_value('boolean','overwrite'):
@@ -425,7 +415,12 @@ def do_chunking(f_list,var,res,start_date, stop_date, outdir):
     else:
         log.info("Output file exist: %s, skipping!" % (outfile))
     # remove source files
-    if config.get_config_value('boolean','remove_src'):
+    if outpath in f_list:
+        f_list.remove(outpath)
+        flist = " ".join(f_list)
+    for l in f_list:
+        log.info(l.split("/")[-1])
+    if config.get_config_value('boolean','remove_src') and len(f_list)!=0:
         log.info("Removing yearly input files")
         retval=shell("rm -f %s " % (flist))
 

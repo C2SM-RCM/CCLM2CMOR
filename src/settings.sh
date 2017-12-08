@@ -18,8 +18,6 @@ EXP=RCP85      #driving experiment name
 #-------------------------------------------
 # time settings
 
-SIM_START=1949120100 # start date of simulation YYYYMMDDHH[mmss]: needed for constant file
-
 #processing range for step 1:
 START_DATE=2006      #Start year and month for processing (if not given in command line YYYYMM
 STOP_DATE=2100    #End year and month for processing (if not given in command line  YYYYMM

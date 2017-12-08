@@ -7,9 +7,7 @@ Main script of the second CMOR step. Calls all other Python functions.
 import os
 import sys
 import shutil
-
 import datetime
-
 #for multiprocessing
 from multiprocessing import Pool
 

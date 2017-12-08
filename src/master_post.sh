@@ -185,7 +185,6 @@ if [ ${post_step} -ne 2 ] && ${batch} && ! ${stopex}
 then
   while [ ${startex} -le ${endex} ]
   do
-    echo "${ARCHDIR}/*${startex}.tar"
     if [ ! -d ${INDIR1}/${startex} ] || ${overwrite_arch}
     then
       echon "Extracting years ${startex} to ${endex} \n\n"

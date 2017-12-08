@@ -206,7 +206,7 @@ do
   if [ ! -f ${WORKDIR}/${EXPPATH}/cclm_const.nc ]
   then
     echon "Copy constant file"
-    ncks -h -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} ${INDIR1}/${YYYY}/output/out01/lffd${SIM_START}c.nc ${WORKDIR}/${EXPPATH}/cclm_const.nc
+    ncks -h -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} ${INDIR1}/${YYYY}/output/out01/lffd*c.nc ${WORKDIR}/${EXPPATH}/cclm_const.nc
   fi
   
   #start timing
