@@ -215,12 +215,21 @@ then
     fi
     if [ ${startex} -le ${YYEext} ] 
     then
-      echon "Extracting years from ${startex} to  ${endex} \n\n"
-      sbatch  --job-name=CMOR_sh_${GCM}_${EXP} --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST}  -l ${xfer} -g ${GCM} -x ${EXP}
-       #Submit job for the following year when all other jobs (to wait for extraction) are finished
-      sbatch --dependency=singleton --job-name=CMOR_sh_${GCM}_${EXP} --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
+      while [ ${startex} -le ${endex} ]
+      do
+        if [ ! -d ${INDIR1}/${startex} ] || ${overwrite_arch}
+        then
+  
+          echon "Extracting years from ${startex} to  ${endex} \n\n"
+          sbatch  --job-name=CMOR_sh_${GCM}_${EXP} --error=${xfer}.${startex}.err --output=${xfer}.${startex}.out ${SRCDIR_POST}/xfer.sh -s ${startex} -e ${endex} -o ${INDIR1} -a ${ARCHDIR} -S ${SRCDIR_POST}  -l ${xfer} -g ${GCM} -x ${EXP}
+          #Submit job for the following year when all other jobs (to wait for extraction) are finished
+          sbatch --dependency=singleton --job-name=CMOR_sh_${GCM}_${EXP} --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
+          (( startex=endex+1))
+        fi
+        (( startex=startex+1))
+      done
     else
-      #Submit job for the following year without waiting
+       #Submit job for the following year without waiting
       sbatch --job-name=CMOR_sh_${GCM}_${EXP} --error=${CMOR}.${NEXTYEAR}.err --output=${CMOR}.${NEXTYEAR}.out master_post.sh ${args} -s ${NEXTYEAR} -F ${FIRST} 
     fi
   else
