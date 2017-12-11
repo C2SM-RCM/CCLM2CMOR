@@ -10,7 +10,6 @@ import shutil
 import datetime
 #for multiprocessing
 from multiprocessing import Pool
-import ipdb
 # command line parser
 import argparse
 
