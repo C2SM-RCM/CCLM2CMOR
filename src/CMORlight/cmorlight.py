@@ -10,7 +10,7 @@ import shutil
 import datetime
 #for multiprocessing
 from multiprocessing import Pool
-
+import ipdb
 # command line parser
 import argparse
 
@@ -210,7 +210,7 @@ def main():
                             help = "list of desired output resolutions, comma-separated (supported: 1hr (1-hourly), 3hr (3-hourly),6hr (6-hourly),day (daily),mon (monthly) ,sem (seasonal),fx (for time invariant variables)")
     parser.add_argument("-v", "--varlist",
                             action="store", dest = "varlist", default = "",
-                            help = "comma-separated list of variables (RCM or CORDEX name)  to be processed")
+                            help = "comma-separated list of variables (RCM or CORDEX name)  to be processed. If combined with --all: start with variable and process all remaining variables from the alphabetic order (ordered by RCM name) [until end variable, if given].")
     parser.add_argument("-a", "--all",
                             action="store_true", dest = "all_vars", default = False,
                             help = "process all available variables")
@@ -358,16 +358,37 @@ def main():
 
     if config.get_config_value('boolean','add_version_to_outpath') or options.use_version != tools.new_dataset_version():
         settings.use_version = options.use_version
-
+    varlist = settings.varlist
     if options.all_vars == False:
-        varlist = settings.varlist
         if varlist==[] or varlist==[''] :
-            raise Exception("No variables set for processing! Set with -v or in configuration file.")
-
+            raise Exception("No variables set for processing! Set with -v or -a or in configuration file.")
     else:
-        varlist = [] #config.varlist['3hr'] + config.varlist['6hr']
-        varlist.extend(tools.get_var_lists())
+        varlist_all = [] #config.varlist['3hr'] + config.varlist['6hr']
+        varlist_all.extend(tools.get_var_lists())
+        if ( len(varlist)==1 or len(varlist)==2) and varlist!=['']: #start from given variable
+            try:
+                varstart = settings.param[varlist[0]][config.get_config_value('index','INDEX_VAR')]
+            except:
+                cmd="Variable %s not found in list of all variables! Cannot start processing from this variable" % varlist[0]
+                log.error(cmd)
+                raise Exception(cmd)
+            try:
+                if len(varlist)==2:
+                    varend = settings.param[varlist[1]][config.get_config_value('index','INDEX_VAR')]
+                    varlist=varlist_all[varlist_all.index(varstart):varlist_all.index(varend)+1]
+                else:
+                    varlist=varlist_all[varlist_all.index(varstart):]
+            except:
+                cmd="Variable %s not found in list of all variables! Cannot stop processing at this variable" % varlist[1]
+                log.error(cmd)
+                raise Exception(cmd)
 
+        elif len(varlist)>2:
+            cmd="Option --all contradicts giving a variable list with more than two variables!"
+            log.error(cmd)
+            raise Exception(cmd)
+        else:
+            varlist = varlist_all            
     if options.reslist=="": #if output resolutions not given in command -> take from inifile
         reslist=config.get_config_value('settings','reslist').replace(" ",",") #to allow for space as delimiter
         reslist=list(filter(None,reslist.split(','))) #split string and remove empty strings
