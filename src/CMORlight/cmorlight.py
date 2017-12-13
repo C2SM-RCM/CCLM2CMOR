@@ -18,7 +18,6 @@ import get_configuration as config
 
 # global settings
 import settings
-
 # tools library
 import tools
 
@@ -97,13 +96,6 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
 
             if var not in settings.var_list_fixed:
                 year=f.split("_")[-1][:4]
-                #Define first and last month of file
-                if config.get_config_value('integer',"proc_start") == int(year):
-                    firstlast=[config.get_config_value('integer',"first_month"),12] 
-                elif config.get_config_value('integer',"proc_end") == int(year):
-                    firstlast=[1,config.get_config_value('integer',"last_month")] 
-                else:
-                    firstlast=[1,12]
 
 
             #use other logger
@@ -118,6 +110,17 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
             if config.get_config_value('boolean','limit_range') and var not in settings.var_list_fixed:
                 if int(year) < config.get_config_value('integer','proc_start') or int(year) > config.get_config_value('integer','proc_end'):
                     continue
+                #Define first and last month of file
+                if config.get_config_value('integer',"proc_start") == int(year):
+                    firstlast=[config.get_config_value('integer',"first_month"),12] 
+                elif config.get_config_value('integer',"proc_end") == int(year):
+                    firstlast=[1,config.get_config_value('integer',"last_month")] 
+                else:
+                    firstlast=[1,12]
+
+            else:
+                firstlast=[1,12] 
+                    
             logger.info("\n###########################################################")
             if f.find("%s_" % var) == 0 or f.find("%s.nc" % var) == 0 or f.find("%s_" % varRCM) == 0 or f.find("%s.nc" % varRCM) == 0 or f.find("%s_" % varRCM[:varRCM.find('p')]) == 0:
                 in_file = "%s/%s" % (dirpath,f)

@@ -15,7 +15,6 @@ import tempfile
 import subprocess
 import numpy as np
 import datetime
-#import ipdb
 import uuid
 import time as timepkg
 # global variables
@@ -1492,7 +1491,6 @@ is here the time resolution of the input data in hours."
         ##############################
         # now correct time,time_bnds #
         ##############################
-
         # get time variable from output
         time = f_out.variables['time']
         # create time_bnds for averaged variables
@@ -1535,15 +1533,15 @@ is here the time resolution of the input data in hours."
 
         elif res == 'mon':
             y = int(year)
-            for n in range(12):
-                time_bnds[n,0] = date2num(datetime.datetime(y,n+1,1),time.units,calendar=in_calendar)
-                m = n+2
+            for num,n in enumerate(np.arange(firstlast[0],firstlast[1]+1)):
+                time_bnds[num,0] = date2num(datetime.datetime(y,n,1),time.units,calendar=in_calendar)
+                m = n+1
                 #For December: end date is 1st January the following year                
-                if n == 11:
+                if n == 12:
                     y += 1
                     m = 1
-                time_bnds[n,1] = date2num(datetime.datetime(y,m,1),time.units,calendar=in_calendar)
-                time[n] = (time_bnds[n,0] + time_bnds[n,1]) / 2.0
+                time_bnds[num,1] = date2num(datetime.datetime(y,m,1),time.units,calendar=in_calendar)
+                time[num] = (time_bnds[num,0] + time_bnds[num,1]) / 2.0
 
         # commit changes
         f_out.sync()

@@ -1,7 +1,7 @@
 #!/bin/ksh
 #SBATCH --account=pr04
 #SBATCH --nodes=1
-#SBATCH --time=4:00:00
+#SBATCH --time=08:00:00
 #SBATCH --constraint=gpu
 #SBATCH --output=/users/mgoebel/CMOR/logs/cmorlight/master_py_%j.out
 #SBATCH --error=/users/mgoebel/CMOR/logs/cmorlight/master_py_%j.err
