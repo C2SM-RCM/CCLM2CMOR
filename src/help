@@ -7,14 +7,14 @@ echo "The script master_post.sh allows the following options:
 -h, --help                    Show this help and exit
 -g GCM, --gcm GCM             Specify the driving GCM
 -x EXP, --exp EXP             Specify the driving experiment name
--s START, --start START       Specify the start for post-processing (format YYYY[MM])
--e END, --end END             Specify the end for post-processing (format YYYY[MM])
+-s START, --start START       Specify the start date for post-processing (format YYYY[MM])
+-e END, --end END             Specify the end date for post-processing (format YYYY[MM])
 --first                       Execute only first script. Second script is skipped.
 --second                      Execute only second script. First script is skipped.
--S, --silent                  Reduce printing
--V, --verbose                 Increase printing
+-S, --silent                  Reduce log output
+-V, --verbose                 Increase log output
 -O, --overwrite               Overwrite existing output
---no_batch                    Years are processed sequentially instead of continously starting one-year jobs with sbatch 
-
+--no_batch                    Years are processed sequentially instead of continously starting one-year jobs with batch command  
+--overwrite_arch              Overwrite existing raw data (from archives)" 
 
 

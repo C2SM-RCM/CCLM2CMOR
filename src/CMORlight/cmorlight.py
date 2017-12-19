@@ -358,7 +358,7 @@ def main():
         if not os.path.isdir(settings.DirOut):
             os.makedirs(settings.DirOut)
 
-    if config.get_config_value('boolean','add_version_to_outpath') or options.use_version != tools.new_dataset_version():
+    if config.get_config_value('boolean','add_version_to_outpath'):
         settings.use_version = options.use_version
     varlist = settings.varlist
     if options.all_vars == False:

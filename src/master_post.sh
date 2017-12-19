@@ -37,7 +37,7 @@ do
   key="$1"
   case $key in
       -h|--help)
-      source ${SRCDIR_POST}/help 
+      source ./help 
       exit
       ;;    
       -g|--gcm)

@@ -301,7 +301,7 @@ def new_dataset_version():
     this will be inserted in the output directory structure
     if add_version_to_outpath=True in configuration file
     '''
-    return datetime.datetime.now().strftime("%Y%m%d")
+    return "v%s" % datetime.datetime.now().strftime("%Y%m%d")
 
 
 # -----------------------------------------------------------------------------
