@@ -405,8 +405,8 @@ or create an issue yourself if you found one.
 Contact
 =======
 
-Currently the tool is administrated by Matthias Göbel. You can contact him at:
-matthias-goebel@freenet.de
+Currently the tool is administrated by Silje Sørland (ETH Zürich). You can contact her at:
+silje.soerland@env.ethz.ch
 
 Involved people
 ===============
@@ -414,8 +414,8 @@ Involved people
 In the development of this tool a number of people from different
 institutions were involved:
 
-- Matthias Göbel (Swiss Federal Institute of Technology (ETH), Zürich,Switzerland)
-- Hans Ramthun (German Climate Computing Center(DKRZ), Hamburg,Germany)
+- Matthias Göbel (Swiss Federal Institute of Technology (ETH), Zürich, Switzerland)
+- Hans Ramthun (German Climate Computing Center(DKRZ), Hamburg, Germany)
 - Hans-Jürgen Panitz (Karlsruhe Institute of Technology (KIT),Karlsruhe, Germany)
 - Klaus Keuler (Brandenburgische Technische Universität Cottbus-Senftenberg (BTU), Cottbus, Germany)
 - Christian Steger (Deutscher Wetterdienst (DWD), Offenbach, Germany)
