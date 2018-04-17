@@ -3,12 +3,13 @@
 #SBATCH --nodes=1
 #SBATCH --partition=xfer
 #SBATCH --time=4:00:00
-#SBATCH --output=logs/xfer_%j.out
-#SBATCH --error=logs/xfer_%j.err
+#SBATCH --output=/users/${USER}/CCLM2CMOR/logs/shell/xfer_%j.out
+#SBATCH --error=/users/${USER}/CCLM2CMOR/logs/shell/xfer_%j.err
 #SBATCH --job-name="xfer_sh"
 
 overwrite_arch=false
 args=""
+outstream='out01 out02 out03 out04 out05 out06 out07'
 while [[ $# -gt 0 ]]
 do
   key="$1"
@@ -99,7 +100,14 @@ then
   then
     echo "Extracting archive for year ${startyear} to ${OUTDIR}"
     mkdir ${OUTDIR}/${startyear}
-    tar -xf ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}/${startyear} --strip-components=1 ${startyear}/output 
+    mkdir ${OUTDIR}/${startyear}/output
+   
+    for stream in ${outstream}
+    do
+	mkdir  ${OUTDIR}/${startyear}/output/${stream}
+    tar -xf ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}/${startyear}/output/${stream} --strip-components=3 output/${stream}/${startyear} 
+   done
+#    tar -xf ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}  output/out??/${startyear} 
   else
     echo "Cannot find .tar file or extracted archive for year ${startyear} in archive directory ${ARCHDIR}! Skipping year..."
     exit 1

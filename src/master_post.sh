@@ -3,8 +3,8 @@
 #SBATCH --nodes=1
 #SBATCH --time=06:00:00
 #SBATCH --constraint=gpu
-#SBATCH --output=/users/mgoebel/CMOR/logs/shell/CMOR_sh_%j.out
-#SBATCH --error=/users/mgoebel/CMOR/logs/shell/CMOR_sh_%j.err
+#SBATCH --output=/users/${USER}/CCLM2CMOR/logs/shell/CMOR_sh_%j.out
+#SBATCH --error=/users/${USER}/CCLM2CMOR/logs/shell/CMOR_sh_%j.err
 #SBATCH --job-name=CMOR_sh
 
 
@@ -104,8 +104,11 @@ done
 EXPPATH=${GCM}/${EXP}
 
 #folders
-ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived
-ARCHDIR=${ARCH_BASE}/${ARCH_SUB} # join archive paths
+#ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived
+#ARCHDIR=${ARCH_BASE}/${ARCH_SUB} # join archive paths
+
+#ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived
+ARCHDIR=${ARCH_BASE} # join archive paths
 
 INDIR1=${INDIR_BASE1}/${EXPPATH}
 OUTDIR1=${OUTDIR_BASE1}/${EXPPATH}
