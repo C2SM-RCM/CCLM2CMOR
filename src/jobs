@@ -1,0 +1,45 @@
+*** list of commands for jobs to CMORize the data ***
+
+
+# these modules needs to be loaded:
+
+module load daint-gpu
+module load netCDF NCO CDO NCL ncview
+module load netcdf-python/1.2.9-CrayGNU-17.08-python-3
+
+##First step
+sbatch master_post.sh -x evaluation -g ECMWF-ERAINT -s 1979 -e 2010
+
+
+##Second step
+sbatch master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -M 24 -s 1979 -e 2010
+
+
+#chunking
+sbatch master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -c -s 1979 -e 2010
+
+
+
+
+
+
+
+
+
+
+
+
+
+#chunking with remove
+#sbatch master_cmor.sh -X historical -E r1i1p1 -G MIROC-MIROC5 --all --remove -c -s 194912 -e 2005
+
+
+
+
+
+
+
+
+
+
+
