@@ -3,8 +3,8 @@
 #SBATCH --nodes=1
 #SBATCH --partition=xfer
 #SBATCH --time=4:00:00
-#SBATCH --output=/users/${USER}/CCLM2CMOR/logs/delete_%j.out
-#SBATCH --error=/users/${USER}/CCLM2CMOR/logs/delete_%j.err
+#SBATCH --output=/users/ssilje/CCLM2CMOR/logs/delete_%j.out
+#SBATCH --error=/users/ssilje/CCLM2CMOR/logs/delete_%j.err
 #SBATCH --job-name="delete"
 
 

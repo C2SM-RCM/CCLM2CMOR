@@ -3,8 +3,8 @@
 #SBATCH --nodes=1
 #SBATCH --time=06:00:00
 #SBATCH --constraint=gpu
-#SBATCH --output=/users/${USER}/CCLM2CMOR/logs/shell/CMOR_sh_%j.out
-#SBATCH --error=/users/${USER}/CCLM2CMOR/logs/shell/CMOR_sh_%j.err
+#SBATCH --output=/users/ssilje/CCLM2CMOR/logs/shell/CMOR_sh_%j.out
+#SBATCH --error=/users/ssilje/CCLM2CMOR/logs/shell/CMOR_sh_%j.err
 #SBATCH --job-name=CMOR_sh
 
 
@@ -121,6 +121,17 @@ OUTDIR2=${OUTDIR_BASE2}/${EXPPATH}
 if [ ! -d ${LOGDIR} ]
 then
   mkdir -p ${LOGDIR}
+fi
+
+if [ ! -d ${BASEDIR}/logs ]
+then
+  mkdir -p ${BASEDIR}/logs
+fi
+
+
+if [ ! -d ${BASEDIR}/cmorlight ]
+then
+  mkdir -p ${BASEDIR}/cmorlight
 fi
 
 #log base names
