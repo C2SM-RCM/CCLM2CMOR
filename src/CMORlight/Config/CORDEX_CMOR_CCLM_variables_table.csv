@@ -61,7 +61,7 @@ FI200p;FI;zg200;;;PressureLevel;0.1019716213;point;mean;mean;mean;20000;m;4;i;1;
 ;;clh;;;ModelLevel;100;mean;mean;;;0;%;4;a;1;;;;;;;High Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
 ;;clm;;;ModelLevel;100;mean;mean;;;0;%;4;a;1;;;;;;;Mid Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
 ;;cll;;;ModelLevel;100;mean;mean;;;0;%;4;a;1;;;;;;;Low Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
-W_SNOW;W_SNOW;snc;Max(0.01,Min(1.,W_SNOW/0.015))*H(x);;ModelLevel;100;point;mean;mean;mean;0;%;4;i;1;4;1;m*4;1;s*4;;Snow Area Fraction;;surface_snow_area_fraction;;landIce land;
+FR_SNOW;FR_SNOW;snc;Max(0.01,Min(1.,W_SNOW/0.015))*H(x);;ModelLevel;100;point;mean;mean;mean;0;%;4;i;1;4;1;m*4;1;s*4;;Snow Area Fraction;;surface_snow_area_fraction;;landIce land;
 H_SNOW;H_SNOW;snd;;;ModelLevel;1;point;mean;mean;mean;0;m;4;i;1;4;1;m*4;1;s*4;;Snow Depth;;surface_snow_thickness;;landIce land;
 ;;sic;;;;;;;;;;%;;;1;;1;m;1;s;;Sea Ice Area Fraction;;sea_ice_area_fraction;;seaIce ocean;
 TOT_SNOW;TOT_SNOW;prsn;SNOW_GSP + SNOW_CON;;ModelLevel;0,000277778;;mean;;;0;kg m-2 s-1;;a;1;4;;;;;;Snowfall Flux;;snowfall_flux;;atmos;
