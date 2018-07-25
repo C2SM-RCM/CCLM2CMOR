@@ -248,7 +248,7 @@ optional arguments:
                         version to be added to directory structure
   -i INIFILE, --ini INIFILE
                         configuration file (.ini)
-  -d, --no_derotate     derotate all u and v avariables
+  -d, --no_derotate     no derotation of u and v variables
   -m SIMULATION, --simulation SIMULATION
                         which simulation specific settings to choose
 
