@@ -1183,7 +1183,10 @@ def process_file(params,in_file,var,reslist,year,firstlast):
     time_in_units = time_in.units
 
     # now get the 'new' time/date
-    dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
+    if in_calendar in ['standard','gregorian','proleptic_gregorian','julian']:
+       dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
+    else:
+       dt_in = num2date(time_in[:]+1.e-6,time_in_units,calendar=in_calendar) #to prevent roundoff error due to lack of precision
 
     # calculate time difference between first two time steps (in hours)
     a = datetime.datetime.strptime(str(dt_in[0]), settings.FMT)
