@@ -257,7 +257,7 @@ def main():
                             help = "configuration file (.ini)")
     parser.add_argument("-d", "--no_derotate",
                             action="store_false", dest = "derotate_uv", default=True,
-                            help = "derotate all u and v avariables")
+                            help = "no derotation of u and v variables")
     parser.add_argument("-m", "--simulation",
                            action="store", dest="simulation", default = '',
                           help="which simulation specific settings to choose")
