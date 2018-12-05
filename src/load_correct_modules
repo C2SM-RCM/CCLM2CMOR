@@ -1,0 +1,33 @@
+ module load daint-gpu
+ module load CDO/1.9.5-CrayGNU-18.08
+ module load netcdf-python/1.4.1-CrayGNU-18.08-python3
+ module load PyExtensions/3.6.5.1-CrayGNU-18.08
+ export PYTHONPATH=~/.local/lib/python3.6/site-packages/:$PYTHONPATH
+
+
+export IGNORE_ATT_COORDINATES=1
+python3 cmorlight.py -X historical -E r1i1p1 -G CNRM-CERFACS-CNRM-CM5 --all -s 1950 -e 1955
+
+
+
+*********************
+history friday 16 november
+
+module load daint-gpu
+module load CDO/1.9.5-CrayGNU-18.08
+module load NCO
+
+
+
+second step:
+
+module load daint-gpu
+module load CDO/1.9.5-CrayGNU-18.08
+module load netcdf-python/1.4.1-CrayGNU-18.08-python3
+module load NCO
+
+export IGNORE_ATT_COORDINATES=1
+
+
+
+sbatch master_cmor.sh -X historical -E r12i1p1 -G ICHEC-EC-EARTH --all -M 24 -s 194912 -e 2005

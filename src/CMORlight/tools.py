@@ -8,7 +8,9 @@ import sys
 from netCDF4 import Dataset
 from netCDF4 import num2date
 from netCDF4 import date2num
-from netCDF4 import netcdftime
+import netcdftime
+#from netCDF4 import netcdftime
+#from netCDF4 import cftime
 
 from collections import OrderedDict
 import tempfile
@@ -1181,9 +1183,16 @@ def process_file(params,in_file,var,reslist,year,firstlast):
        #     raise Exception("Calendar attribute not found in input file! Specify calendar in simulation settings section of configuration file instead!")
   
     time_in_units = time_in.units
-
+    print(time_in_units)
     # now get the 'new' time/date
-    dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
+    print(in_calendar)
+    # dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)    
+    if in_calendar in ['standard','gregorian','proleptic_gregorian','julian']:
+       dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
+    else:
+       dt_in = num2date(time_in[:]+1.e-6,time_in_units,calendar=in_calendar) #to prevent roundoff error due to lack of precision
+    print(dt_in)
+    
 
     # calculate time difference between first two time steps (in hours)
     a = datetime.datetime.strptime(str(dt_in[0]), settings.FMT)

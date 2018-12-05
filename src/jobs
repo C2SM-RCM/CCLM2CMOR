@@ -1,45 +1,76 @@
-*** list of commands for jobs to CMORize the data ***
-
-
-# these modules needs to be loaded:
-
 module load daint-gpu
 module load netCDF NCO CDO NCL ncview
 module load netcdf-python/1.2.9-CrayGNU-17.08-python-3
 
-##First step
-sbatch master_post.sh -x evaluation -g ECMWF-ERAINT -s 1979 -e 2010
 
 
-##Second step
-sbatch master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -M 24 -s 1979 -e 2010
+#First step
+sbatch master_post.sh -x historical -g MIROC-MIROC5 -s 194912 -e 2005
+sbatch master_post.sh -x historical -g MOHC-HadGEM2-ES -s 194912 -e 2005
+sbatch master_post.sh -x Historical -g ICHEC-EC-EARTH -s 194912 -e 2005
+sbatch master_post.sh -x historical -g CNRM-CERFACS-CNRM-CM5 -s 1950 -e 2005
+sbatch master_post.sh -x historical -g MPI-M-MPI-ESM-LR -s 194912 -e 2005
+
+sbatch master_post.sh -x rcp85 -g MIROC-MIROC5 -s 2006 -e 209912
+sbatch master_post.sh -x rcp85 -g MOHC-HadGEM2-ES -s 2006 -e 209912
+sbatch master_post.sh -x RCP85 -g ICHEC-EC-EARTH -s 2006 -e 209912
+sbatch master_post.sh -x rcp85 -g CNRM-CERFACS-CNRM-CM5 -s 2006 -e 209912
+sbatch master_post.sh -x rcp85 -g MPI-M-MPI-ESM-LR -s 2006 -e 209912
+
+#Second step
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MIROC-MIROC5 --all -M 24 -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MOHC-HadGEM2-ES --all -M 24 -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r12i1p1 -G ICHEC-EC-EARTH --all -M 24 -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G CNRM-CERFACS-CNRM-CM5 --all -M 24 -s 1950 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MPI-M-MPI-ESM-LR --all -M 24 -s 194912 -e 2005
+
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MIROC-MIROC5 --all -M 24 -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MOHC-HadGEM2-ES --all -M 24 -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r12i1p1 -G ICHEC-EC-EARTH --all -M 24 -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G CNRM-CERFACS-CNRM-CM5 --all -M 24 -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MPI-M-MPI-ESM-LR --all -M 24 -s 2006 -e 2099
+
+# 1hr pr
+
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MIROC-MIROC5 -v pr -r 1hr --force_proc -M 24 -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MOHC-HadGEM2-ES  -v pr -r 1hr --force_proc -M 24 -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r12i1p1 -G ICHEC-EC-EARTH  -v pr -r 1hr --force_proc -M 24 -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G CNRM-CERFACS-CNRM-CM5 -v pr -r 1hr --force_proc -M 24 -s 1950 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MPI-M-MPI-ESM-LR -v pr -r 1hr --force_proc -M 24 -s 194912 -e 2005
+
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MIROC-MIROC5 -v pr -r 1hr --force_proc -M 24 -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MOHC-HadGEM2-ES -v pr -r 1hr --force_proc -M 24 -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r12i1p1 -G ICHEC-EC-EARTH -v pr -r 1hr --force_proc -M 24 -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G CNRM-CERFACS-CNRM-CM5 -v pr -r 1hr --force_proc -M 24 -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MPI-M-MPI-ESM-LR -v pr -r 1hr --force_proc -M 24 -s 2006 -e 2099
+
 
 
 #chunking
-sbatch master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -c -s 1979 -e 2010
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MIROC-MIROC5 --all -c -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MOHC-HadGEM2-ES --all -c -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r12i1p1 -G ICHEC-EC-EARTH --all -c -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G CNRM-CERFACS-CNRM-CM5 --all -c -s 1950 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MPI-M-MPI-ESM-LR --all -c -s 194912 -e 2005
 
-
-
-
-
-
-
-
-
-
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MIROC-MIROC5 --all -c -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MOHC-HadGEM2-ES --all -c -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r12i1p1 -G ICHEC-EC-EARTH --all -c -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G CNRM-CERFACS-CNRM-CM5 --all -c -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MPI-M-MPI-ESM-LR --all -c -s 2006 -e 2099
 
 
 
 #chunking with remove
-#sbatch master_cmor.sh -X historical -E r1i1p1 -G MIROC-MIROC5 --all --remove -c -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MIROC-MIROC5 --all --remove -c -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MOHC-HadGEM2-ES --all --remove -c -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r12i1p1 -G ICHEC-EC-EARTH --all --remove -c -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G CNRM-CERFACS-CNRM-CM5 --all --remove -c -s 1950 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MPI-M-MPI-ESM-LR --all --remove -c -s 194912 -e 2005
 
-
-
-
-
-
-
-
-
-
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MIROC-MIROC5 --all --remove -c -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MOHC-HadGEM2-ES --all --remove -c -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r12i1p1 -G ICHEC-EC-EARTH --all --remove -c -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G CNRM-CERFACS-CNRM-CM5 --all --remove -c -s 2006 -e 2099
+sbatch master_cmor.sh -X rcp85 -E r1i1p1 -G MPI-M-MPI-ESM-LR --all --remove -c -s 2006 -e 2099
 

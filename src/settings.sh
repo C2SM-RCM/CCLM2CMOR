@@ -29,10 +29,12 @@ YYE= #End year for processing YYYY
 #-------------------------------------------
 # Directory path settings
 
-BASEDIR=/users/ssilje/CCLM2CMOR #Directory where the scripts are placed 
+BASEDIR=/scratch/snx3000/ssilje/CCLM2CMOR #Directory where the scripts are placed 
 DATADIR=${SCRATCH}/CMOR  #Directory where all the data will be placed (typically at /scratch/)
-ARCH_BASE=${PROJECT}/RUN_CCLM5.0_6_ERAI_EUR-44
+
 #ARCH_BASE=/store/archive/c2sm/pr04/cosmo_CORDEXruns # directory where the raw data of the simulations are archived
+#ARCH_BASE=/store/c2sm/ch4/ssilje/Archive_cosmo_runs/ # directory where the raw data of the simulations are archived
+ARCH_BASE=/scratch/snx3000/ssilje/CORDEX_SIMULATION/ # directory where the raw data of the simulations are archived
 SRCDIR=${BASEDIR}/src       # directory where the post processing scripts are stored
 SRCDIR_POST=${BASEDIR}/src/cclm_post    # directory where the subscripts are stored
 

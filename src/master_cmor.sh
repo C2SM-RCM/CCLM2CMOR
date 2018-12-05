@@ -3,11 +3,13 @@
 #SBATCH --nodes=1
 #SBATCH --time=08:00:00
 #SBATCH --constraint=gpu
-#SBATCH --output=/users/ssilje/CCLM2CMOR/logs/cmorlight/master_py_%j.out
-#SBATCH --error=/users/ssilje/CCLM2CMOR/logs/cmorlight/master_py_%j.err
+#SBATCH --output=/scratch/snx3000/ssilje/CCLM2CMOR/logs/shell/master_py_%j.out
+#SBATCH --error=/scratch/snx3000/ssilje/CCLM2CMOR/logs/shell/master_py_%j.err
 #SBATCH --job-name="master_py"
 
-script_folder="/users/${USER}/CCLM2CMOR/src/CMORlight"
+#script_folder="/users/${USER}/CCLM2CMOR/src/CMORlight"
+script_folder="/scratch/snx3000/ssilje/CCLM2CMOR/src/CMORlight"
+#script_folder="${SCRATCH}/CCLM2CMOR/src/CMORlight"
 python_script="${script_folder}/cmorlight.py"
 dirlog="../logs/cmorlight/master_py"
 python="python3" #python command (e.g. python or python3)
