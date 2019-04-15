@@ -1,10 +1,11 @@
-#!/bin/bash -l
+#!/bin/bash
+# add -l to /bin/bash (or --login) to execute commands from file /etc/profile
 #SBATCH --account=pr04
 #SBATCH --nodes=1
 #SBATCH --partition=xfer
 #SBATCH --time=4:00:00
-#SBATCH --output=/users/ssilje/CCLM2CMOR/logs/shell/xfer_%j.out
-#SBATCH --error=/users/ssilje/CCLM2CMOR/logs/shell/xfer_%j.err
+#SBATCH --output=${BASEDIR}/logs/shell/xfer_%j.out
+#SBATCH --error=${BASEDIR}/logs/shell/xfer_%j.err
 #SBATCH --job-name="xfer_sh"
 
 overwrite_arch=false
@@ -83,12 +84,10 @@ do
   (( NEXT_YEAR=NEXT_YEAR + 1 ))
 done
 
-
 if [ ${NEXT_YEAR} -le ${endyear} ]
 then
   sbatch  --job-name=CMOR_sh_${GCM}_${EXP} --error=${xfer}.${NEXT_YEAR}.err --output=${xfer}.${NEXT_YEAR}.out ${SRCDIR}/xfer.sh -s ${NEXT_YEAR} ${args}
 fi
-
 
 if [ ! -d ${OUTDIR}/*${startyear} ] || ${overwrite_arch}
 then
@@ -101,11 +100,10 @@ then
     echo "Extracting archive for year ${startyear} to ${OUTDIR}"
     mkdir ${OUTDIR}/${startyear}
     mkdir ${OUTDIR}/${startyear}/output
-   
     for stream in ${outstream}
     do
 	mkdir  ${OUTDIR}/${startyear}/output/${stream}
-    tar -xf ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}/${startyear}/output/${stream} --strip-components=3 output/${stream}/${startyear} 
+        tar -xf ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}/${startyear}/output/${stream} --strip-components=3 output/${stream}/${startyear} 
    done
 #    tar -xf ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}  output/out??/${startyear} 
   else
@@ -115,5 +113,3 @@ then
 else
   echo "Input files for year ${startyear} are already at ${OUTDIR}. Skipping..."
 fi
-
-
