@@ -185,45 +185,42 @@ do
 
   if ! ${skip}
   then
+    if [ ! -d ${OUTDIR1}/${YYYY_MM} ]
+    then
+      mkdir -p ${OUTDIR1}/${YYYY_MM}
+    fi
 
-  if [ ! -d ${OUTDIR1}/${YYYY_MM} ]
-  then
-    mkdir -p ${OUTDIR1}/${YYYY_MM}
-  fi
+    DATE_START=$(date +%s)
+    DATE1=${DATE_START}
 
-  DATE_START=$(date +%s)
-  DATE1=${DATE_START}
+    ##################################################################################################
+    # build time series
+    ##################################################################################################
 
-  ##################################################################################################
-  # build time series
-  ##################################################################################################
+    export IGNORE_ATT_COORDINATES=1  # setting for better rotated coordinate handling in CDO
 
-  export IGNORE_ATT_COORDINATES=1  # setting for better rotated coordinate handling in CDO
-
-
-
-  #... cut of the boundary lines from the constant data file and copy it
-  if [ ! -f ${WORKDIR}/${EXPPATH}/cclm_const.nc ]
-  then
-    echon "Copy constant file"
-    ncks -h -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} ${INDIR1}/${YYYY}/output/out01/lffd*c.nc ${WORKDIR}/${EXPPATH}/cclm_const.nc
-  fi
+    #... cut of the boundary lines from the constant data file and copy it
+    if [ ! -f ${WORKDIR}/${EXPPATH}/cclm_const.nc ]
+    then
+      echon "Copy constant file"
+      ncks -h -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} ${INDIR1}/${YYYY}/output/out01/lffd*c.nc ${WORKDIR}/${EXPPATH}/cclm_const.nc
+    fi
   
-  #start timing
-  DATE_START=$(date +%s)
+    #start timing
+    DATE_START=$(date +%s)
 
-  #process constant variables
-  constVar FR_LAND
-  constVar HSURF
-  constDone=true
+    #process constant variables
+    constVar FR_LAND
+    constVar HSURF
+    constDone=true
 
-    # --- build time series for selected variables
-  source ${SRCDIR_POST}/timeseries.sh
+    #build time series for selected variables
+    source ${SRCDIR_POST}/timeseries.sh
 
-  #stop timing and print information
-  DATE2=$(date +%s)
-  SEC_TOTAL=$(python -c "print(${DATE2}-${DATE_START})")
-  echon "Time for postprocessing: ${SEC_TOTAL} s"
+    #stop timing and print information
+    DATE2=$(date +%s)
+    SEC_TOTAL=$(python -c "print(${DATE2}-${DATE_START})")
+    echon "Time for postprocessing: ${SEC_TOTAL} s"
   
   fi
 
