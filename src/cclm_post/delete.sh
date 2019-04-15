@@ -1,10 +1,11 @@
-#!/bin/bash -l
+#!/bin/bash
+# add -l to /bin/bash (or --login) to execute commands from file /etc/profile
 #SBATCH --account=pr04
 #SBATCH --nodes=1
 #SBATCH --partition=xfer
 #SBATCH --time=4:00:00
-#SBATCH --output=/users/ssilje/CCLM2CMOR/logs/delete_%j.out
-#SBATCH --error=/users/ssilje/CCLM2CMOR/logs/delete_%j.err
+#SBATCH --output=${BASEDIR}/logs/delete_%j.out
+#SBATCH --error=${BASEDIR}/logs/delete_%j.err
 #SBATCH --job-name="delete"
 
 
