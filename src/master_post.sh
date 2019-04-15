@@ -3,8 +3,8 @@
 #SBATCH --nodes=1
 #SBATCH --time=06:00:00
 #SBATCH --constraint=gpu
-#SBATCH --output=/users/ssilje/CCLM2CMOR/logs/shell/CMOR_sh_%j.out
-#SBATCH --error=/users/ssilje/CCLM2CMOR/logs/shell/CMOR_sh_%j.err
+#SBATCH --output=../logs/shell/CMOR_sh_%j.out
+#SBATCH --error=../logs/shell/CMOR_sh_%j.err
 #SBATCH --job-name=CMOR_sh
 
 
@@ -104,11 +104,7 @@ done
 EXPPATH=${GCM}/${EXP}
 
 #folders
-#ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived
-#ARCHDIR=${ARCH_BASE}/${ARCH_SUB} # join archive paths
-
-#ARCH_SUB=${GCM}_Hist_RCP85/${EXP}  #subdirectory where data of this simulation are archived
-ARCHDIR=${ARCH_BASE} # join archive paths
+ARCHDIR=${ARCH_BASE}
 
 INDIR1=${INDIR_BASE1}/${EXPPATH}
 OUTDIR1=${OUTDIR_BASE1}/${EXPPATH}
@@ -116,22 +112,15 @@ OUTDIR1=${OUTDIR_BASE1}/${EXPPATH}
 INDIR2=${INDIR_BASE2}/${EXPPATH}
 OUTDIR2=${OUTDIR_BASE2}/${EXPPATH}
 
-
 #create logging directory
 if [ ! -d ${LOGDIR} ]
 then
   mkdir -p ${LOGDIR}
 fi
 
-if [ ! -d ${BASEDIR}/logs ]
+if [ ! -d ${BASEDIR}/logs/cmorlight ]
 then
-  mkdir -p ${BASEDIR}/logs
-fi
-
-
-if [ ! -d ${BASEDIR}/cmorlight ]
-then
-  mkdir -p ${BASEDIR}/cmorlight
+  mkdir -p ${BASEDIR}/logs/cmorlight
 fi
 
 #log base names
@@ -139,9 +128,7 @@ CMOR=${LOGDIR}/${GCM}_${EXP}_CMOR_sh
 xfer=${LOGDIR}/${GCM}_${EXP}_xfer
 delete=${LOGDIR}/${GCM}_${EXP}_delete
 
-
 #printing modes
-
 function echov {
   if ${v}
   then
