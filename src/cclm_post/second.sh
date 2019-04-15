@@ -183,7 +183,8 @@ do
       FILEIN=${FILEOUT}_${YY}${MA}-${YY}${ME}.nc
       ncrcat -O -h ${FILELIST} ${FILEIN}
       # extract attribute units from variable time -> REFTIME in seconds since XX-XX-XX ...
-      RT=$(ncks -m -v time ${FILEIN} | grep -E 'time '|grep -E 'seconds since' | cut -f 13- -d ' ')
+      #MED>>RT=$(ncks -m -v time ${FILEIN} | grep -E 'time '|grep -E 'seconds since' | cut -f 13- -d ' ')
+      RT=$(ncks -m -v time  ${FILEIN} | grep -E 'time:units' | cut -d '"' -f 2 | cut -d ' ' -f 3-4)
       REFTIME="days since "${RT}
       # extract number of timesteps and timestamps
       NT=$(cdo -s ntime ${FILEIN})
