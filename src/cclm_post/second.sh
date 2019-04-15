@@ -338,6 +338,10 @@ do
     elif [[ ${formula} == "add_sqr" ]]
     then
       formula="${name3}=sqrt(${name1}^2+${name2}^2)"
+    elif [[ ${formula} == "snow_case" ]]
+    then
+      #MED: FR_SNOW=Max(0.01,Min(1.,W_SNOW/0.015))*H(x) with H(x)=1 if W_SNOW>0.5E-06, else H(x)=0
+      formula="SNOW_flg=float($name1>0.0000005);SNOW=float($name1/0.015);where(SNOW>1.0)SNOW=1.0f;where(SNOW<0.01)SNOW=0.01f;$name3=float(SNOW*SNOW_flg)"
     else
       echo "Formula ${formula} not known! Skipping"
       return
@@ -346,13 +350,20 @@ do
     if [[ ${proc_list} =~ (^|[[:space:]])${name3}($|[[:space:]]) ]] || ${proc_all}
     then
       file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-      file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+      #MED: file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+      if [[ ${name2} == "" ]]
+      then
+        file2=""
+      else
+        file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+      fi
       echov "Input files and formula:"
       echov "$file1"
       echov "$file2"
       echov "$formula"
 
-      if [[ -f ${file1} && -f ${file2} ]] 
+      #MED: if [[ -f ${file1} && -f ${file2} ]] 
+      if [[ -f ${file1} ]]
       then
         ((c1 = ${#file1}-23 )) 
         ((c2 = ${#file1}-3 ))
@@ -363,9 +374,12 @@ do
           echon "Create ${name3}"
           [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
           cp ${file1} temp1_${YY}.nc
-          ncks -h -a -A -v ${name2} ${file2} temp1_${YY}.nc
+          if [[ -f ${file2} ]]
+          then
+            ncks -h --no_abc -A -v ${name2} ${file2} temp1_${YY}.nc
+          fi
           ncap2 -h -O -s ${formula} temp1_${YY}.nc temp1_${YY}.nc 
-          ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
+          ncks -h --no_abc -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
           ncatted -h -a long_name,${name3},d,, ${file3}
           ncatted -h -a standard_name,${name3},m,c,${standard_name} ${file3}
           chmod ${PERM} ${file3}
@@ -405,7 +419,9 @@ do
     
     # cloud condensed water content TQW
     create_add_vars "TQC" "TQI" "TQW" "add" "atmosphere_cloud_condensed_water_content"  
-  #
+
+    # Mean snow fraction: FR_SNOW
+    create_add_vars "W_SNOW" "" "FR_SNOW" "snow_case" "surface_snow_area_fraction" 
   fi
   
   (( YY=YY+1 ))
