@@ -3,13 +3,15 @@
 #SBATCH --nodes=1
 #SBATCH --time=08:00:00
 #SBATCH --constraint=gpu
-#SBATCH --output=/users/ssilje/CCLM2CMOR/logs/cmorlight/master_py_%j.out
-#SBATCH --error=/users/ssilje/CCLM2CMOR/logs/cmorlight/master_py_%j.err
+#SBATCH --output=../logs/cmorlight/master_py_%j.out
+#SBATCH --error=../logs/cmorlight/master_py_%j.err
 #SBATCH --job-name="master_py"
 
-script_folder="/users/${USER}/CCLM2CMOR/src/CMORlight"
+source ./settings.sh
+
+script_folder="${BASEDIR}/src/CMORlight"
 python_script="${script_folder}/cmorlight.py"
-dirlog="../logs/cmorlight/master_py"
+dirlog="${BASEDIR}/logs/cmorlight/master_py"
 python="python3" #python command (e.g. python or python3)
 
 #necessary for derotation
