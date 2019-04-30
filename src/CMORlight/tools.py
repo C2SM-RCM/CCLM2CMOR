@@ -8,7 +8,9 @@ import sys
 from netCDF4 import Dataset
 from netCDF4 import num2date
 from netCDF4 import date2num
-from netCDF4 import netcdftime
+#MED Apr 2019: netcdftime package no longer included in netCDF4, try 'import netcdftime' or use the package "utime" depending on your Python installation.
+import netcdftime
+#from cftime import utime
 
 from collections import OrderedDict
 import tempfile
