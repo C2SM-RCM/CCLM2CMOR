@@ -27,16 +27,12 @@ import get_configuration as config
 import logging
 log = logging.getLogger("cmorlight")
 
-
-
 # -----------------------------------------------------------------------------
 def shell(cmd,logger=log):
     '''
     Call a shell command
-
     Parameters
     ----------
-
     cmd : str
         Shell command to execute
     logger : logging.Logger
@@ -53,7 +49,9 @@ def shell(cmd,logger=log):
 
 # -----------------------------------------------------------------------------
 def get_input_path(derotated=False):
-    ''' Read input path from settings, take derotated one if needed'''
+    '''
+    Read input path from settings, take derotated one if needed
+    '''
     if derotated:
         retVal = settings.DirDerotated
     else:
@@ -73,22 +71,39 @@ def get_var_lists():
             lst.append(var)
     return sorted(lst)
 
-
 # -----------------------------------------------------------------------------
 def set_attributes(params):
     '''
-    fill dictionaries in settings with global attributes and additional netcdf attributes
+    Fill dictionaries in settings with global attributes and additional netcdf attributes
     '''
-    # get global attributes from file
+    # get global attributes from ini-file
     for name in settings.global_attr_list :
         try:
             settings.Global_attributes[name.strip()] = config.get_sim_value(name.strip())
         except:
             raise("Global attribute %s is in global_attr_list but is not defined in the configuration file!")
 
+    #HJP April 2019 Begin
+    # get global attributes for 2nd Nest from ini-file, if necessary
+    secondnestlist = settings.global_attr_list_2ndNest
+
+    if secondnestlist!=['None']:
+    # get global attributes from file
+        for name in settings.global_attr_list_2ndNest :
+            try:
+                settings.Global_attributes_2ndNest[name.strip()] = config.get_sim_value(name.strip())
+            except:
+                raise("Global attribute 2nd Nest %s is in global_attr_list_2ndNest but is not defined in the configuration file!")
+    #HJP April 2019 End 	
+
     #Invariant attributes
-    settings.Global_attributes['project_id']="CORDEX"
-    settings.Global_attributes['product']="output"
+    #HJP April 2019 Begin
+    #settings.Global_attributes['project_id']="CORDEX" #global attribute "project_id" should be variable, thus defined in the ini-file
+    if secondnestlist==['None']:
+        settings.Global_attributes['product']="output"
+    else:
+        settings.Global_attributes_2ndNest['product']="output"
+    #HJP April 2019 End  
 
     # set addtitional netcdf attributes
     settings.netCDF_attributes['RCM_NAME'] = params[config.get_config_value('index','INDEX_VAR')]
@@ -104,44 +119,62 @@ def print_progress(currfile,nfiles):
     '''
     Prints progress to standard output
     '''
-    
     percent = float(currfile) /float(nfiles)
     hashes = '#' * int(round(percent * 20))
     spaces = ' ' * (20 - len(hashes))
     sys.stdout.write('\r'+"[{0}] {1:.1f}%".format(hashes + spaces, percent * 100))
     sys.stdout.flush() 
+
 # -----------------------------------------------------------------------------
 def create_outpath(res,var):
-
     '''
     Create and return the output path string from global attributes and dependent on resolution res and variable var
     '''
-
-    result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
-                (settings.Global_attributes["project_id"],
-                 settings.Global_attributes["product"],
-                 settings.Global_attributes["CORDEX_domain"],
-                 settings.Global_attributes["institute_id"],
-                 settings.Global_attributes["driving_model_id"],
-                 settings.Global_attributes["experiment_id"],
-                 settings.Global_attributes["driving_model_ensemble_member"],
-                 settings.Global_attributes["model_id"],
-                 settings.Global_attributes["rcm_version_id"],
-                 res,
-                 var
-                )
+    #HJP March 2019 Begin
+    #put information of intermediate nest into the directory structure
+    secondnestlist = settings.global_attr_list_2ndNest
+    if secondnestlist==['None']:
+        result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
+                    (settings.Global_attributes["project_id"],
+                     settings.Global_attributes["product"],
+                     settings.Global_attributes["rcm_domain"],
+                     settings.Global_attributes["rcm_institute_id"],
+                     settings.Global_attributes["driving_model_id"],
+                     settings.Global_attributes["experiment_id"],
+                     settings.Global_attributes["driving_model_ensemble_member"],
+                     settings.Global_attributes["rcm_model_id"],
+                     settings.Global_attributes["rcm_version_id"],
+                     res,
+                     var
+                    )
+    else:
+        result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
+                    (settings.Global_attributes["project_id"],
+                     settings.Global_attributes_2ndNest["product"],
+                     settings.Global_attributes_2ndNest["cprcm_domain"],
+                     settings.Global_attributes["rcm_institute_id"],
+                     settings.Global_attributes["driving_model_id"],
+                     settings.Global_attributes["experiment_id"],
+                     settings.Global_attributes["driving_model_ensemble_member"],
+                     settings.Global_attributes["rcm_model_id"],
+                     settings.Global_attributes["rcm_domain"],
+                     settings.Global_attributes["rcm_version_id"],
+                     settings.Global_attributes_2ndNest["cprcm_model_id"],
+                     settings.Global_attributes_2ndNest["cprcm_nesting_information"],
+                     res,
+                     var
+                    )
+    #HJP March 2019 End
 
     if settings.use_version!="":
         result += "/" + settings.use_version
     return result
-
 
 # -----------------------------------------------------------------------------
 def create_filename(var,res,dt_start,dt_stop,logger=log):
     '''
     Create and return the filename string from global attributes and dependent on resolution res, variable var and time range dt_start to dt_stop
     '''
-
     #File naming different for instantaneous and interval representing (average,min,max) variables
     agg=settings.param[var][config.get_config_value('index','INDEX_FRE_AGG')] #subdaily aggregation method: average or instantaneous
 
@@ -181,23 +214,43 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
 
     logger.debug("Filename start/stop: %s, %s" % (dt_start,dt_stop))
 
-    result = "%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
-                    settings.Global_attributes["CORDEX_domain"],
-                    settings.Global_attributes["driving_model_id"],
-                    settings.Global_attributes["experiment_id"],
-                    settings.Global_attributes["driving_model_ensemble_member"],
-                    settings.Global_attributes["model_id"],
-                    settings.Global_attributes["rcm_version_id"],
-                    res,
-                    trange,
+    #HJP March 2019 Begin
+    #put information of intermediate nest into the filename structure
+    secondnestlist = settings.global_attr_list_2ndNest
+    if secondnestlist==['None']:
+        result = "%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
+                        settings.Global_attributes["rcm_domain"],
+                        settings.Global_attributes["driving_model_id"],
+                        settings.Global_attributes["experiment_id"],
+                        settings.Global_attributes["driving_model_ensemble_member"],
+                        settings.Global_attributes["rcm_model_id"],
+                        settings.Global_attributes["rcm_version_id"],
+                        res,
+                        trange,
                 )
-    return result
+    else:
+        result = "%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
+                        settings.Global_attributes_2ndNest["cprcm_domain"],
+                        settings.Global_attributes["driving_model_id"],
+                        settings.Global_attributes["experiment_id"],
+                        settings.Global_attributes["driving_model_ensemble_member"],
+                        settings.Global_attributes["rcm_model_id"],
+                        settings.Global_attributes["rcm_domain"],
+                        settings.Global_attributes["rcm_version_id"],
+                        settings.Global_attributes_2ndNest["cprcm_model_id"],
+                        settings.Global_attributes_2ndNest["cprcm_nesting_information"],
+                        res,
+                        trange,
+                )
+    #HJP March 2019 End  
 
+    return result
 
 # -----------------------------------------------------------------------------
 def compress_output(outpath,year=0,logger=log):
-    ''' Compress files with nccopy'''
-
+    '''
+    Compress files with nccopy
+    '''
     if os.path.exists(outpath):
         ftmp_name = "%s/%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()))
         cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
@@ -209,14 +262,13 @@ def compress_output(outpath,year=0,logger=log):
     else:
         logger.error("File does not exist: (%s)" % outpath)
 
-
 # -----------------------------------------------------------------------------
 def set_attributes_create(outpath,res=None,year=0,logger=log):
-    ''' Set and delete some (global) attributes'''
-
+    '''
+    Set and delete some (global) attributes
+    '''
     if os.path.exists(outpath):
         f_out = Dataset(outpath,'r+')
-        # set resolution if passed
         if res:
             f_out.setncattr("frequency",res)
 
@@ -243,21 +295,17 @@ def set_attributes_create(outpath,res=None,year=0,logger=log):
     else:
         logger.error("File does not exist: (%s)" % outpath)
 
-
 # -----------------------------------------------------------------------------
 def set_coord_attributes(f_var,f_out):
-    """
+    '''
     Set the attributes of the pressure or height variable and the coordinates attribute of the variable f_var
-
     Parameters
     ----------
-
     f_var : netCDF4._netCDF4.Variable
         Variable of netCDF Dataset being processed
     f_out : netCDF4._netCDF4.Dataset
         Input file opened as a netCDF Dataset
-    """
-
+    '''
     if not f_out:
         log.warning("No output object for setting coordinates value available!")
         return
@@ -305,13 +353,11 @@ def new_dataset_version():
     '''
     return "v%s" % datetime.datetime.now().strftime("%Y%m%d")
 
-
 # -----------------------------------------------------------------------------
 def get_out_dir(var,res,createdir=True):
     '''
     Create and return the complete output path string using the resolution res and the variable var
     and make the corresponding directory
-
     '''
     outpath = create_outpath(res,var)
     outpath = "%s/%s" % (settings.DirOut,outpath)
@@ -325,11 +371,10 @@ def get_out_dir(var,res,createdir=True):
 
 # -----------------------------------------------------------------------------
 def proc_chunking(params,reslist):
-    """
-    create AGG_DAY (daily), AGG_MON (monthly) and/or AGG_SEM (seasonal) years chunks of yearly input files
+    '''
+    Create AGG_DAY (daily), AGG_MON (monthly) and/or AGG_SEM (seasonal) years chunks of yearly input files
     (as defined in configuration file; default: 5,10 and 10, respectively) depending on resolutions in reslist
-    """
-
+    '''
     # get cdf variable name
     var = params[config.get_config_value('index','INDEX_VAR')]
 
@@ -390,8 +435,9 @@ def proc_chunking(params,reslist):
 
 # -----------------------------------------------------------------------------
 def do_chunking(f_list,var,res,start_date, stop_date, outdir):
-    """  Execute actual chunking of files in f_list """
-
+    '''
+    Execute actual chunking of files in f_list
+    '''
     # generate complete output path with output filename
     outfile = create_filename(var,res,start_date,stop_date)
     # generate outpath with outfile and outdir
@@ -427,7 +473,9 @@ def do_chunking(f_list,var,res,start_date, stop_date, outdir):
 
 # -----------------------------------------------------------------------------
 def leap_year(year, calendar='standard'):
-    """    Determine if year is a leap year    """
+    '''
+    Determine if year is a leap year
+    '''
     leap = False
     if ((calendar in ['standard','gregorian','proleptic_gregorian','julian']) and (year % 4 == 0)):
         leap = True
@@ -437,10 +485,11 @@ def leap_year(year, calendar='standard'):
             leap = False
     return leap
 
-
 # -----------------------------------------------------------------------------
 def add_vertices(f_out,logger=log):
-    """    add vertices to output file from vertices file    """
+    '''
+    Add vertices to output file from vertices file
+    '''
     # read vertices from file if exist
     if os.path.isfile(config.get_sim_value("vertices_file")):
         f_vert = Dataset(config.get_sim_value("vertices_file"),'r')
@@ -496,10 +545,11 @@ def add_vertices(f_out,logger=log):
 
     else:
         logger.error("Vertices file %s does not exist! No vertices added..." % config.get_sim_value("vertices_file") )
+
 # -----------------------------------------------------------------------------
 def check_resolution(params,res,process_table_only):
     '''
-    check whether resolution "res" is declared in specific row of variables table "param".
+    Check whether resolution "res" is declared in specific row of variables table "param".
     '''
     if res in ["1hr","3hr","6hr","12hr"]:
         res_hr=(float(res[:-2])) #extract time resolution in hours
@@ -528,12 +578,10 @@ def check_resolution(params,res,process_table_only):
     else:
         return True
 
-
 # -----------------------------------------------------------------------------
-
 def get_attr_list(var_name,args=[]):
     '''
-    set pre defined attributes for variables lon,lat
+    Set pre defined attributes for variables lon,lat
     '''
     att_lst = OrderedDict()
     if var_name == 'lon':
@@ -577,11 +625,10 @@ def get_attr_list(var_name,args=[]):
         
     return att_lst
 
-
 # -----------------------------------------------------------------------------
 def copy_var(f_in,f_out,var_name,logger=log):
     '''
-    copy variable with corresponding attributes from in_file to out_file if present there
+    Copy variable with corresponding attributes from in_file to out_file if present there
     '''
     if var_name in f_in.variables and var_name not in f_out.variables:
         var_in = f_in.variables[var_name]
@@ -617,12 +664,11 @@ def copy_var(f_in,f_out,var_name,logger=log):
             var_out[:] = var_in[:]
         logger.info("Variable %s added" % var_name)
 
-
 # -----------------------------------------------------------------------------
 def add_coordinates(f_out,logger=log):
-    """
-    add lat,lon and rotated_pole to output file from coordinates file if present there
-    """
+    '''
+    Add lat,lon and rotated_pole to output file from coordinates file if present there
+    '''
     if os.path.isfile(settings.coordinates_file):
         f_coor = Dataset(settings.coordinates_file,'r')
         try:
@@ -645,6 +691,7 @@ def add_coordinates(f_out,logger=log):
             raise IndexError("\n Coordinates file does not have the same resolution as the input data! Change it!")
     else:
         raise Exception("Coordinates file %s does not exist!" % settings.coordinates_file)
+
 # -----------------------------------------------------------------------------
 def get_derotate_vars():
     '''
@@ -658,7 +705,6 @@ def get_derotate_vars():
             if not var in lst:
                 lst.append(var)
     return lst
-
 
 # -----------------------------------------------------------------------------
 def process_file_fix(params,in_file):
@@ -694,7 +740,6 @@ def process_file_fix(params,in_file):
         else:
             log.info("Overwriting..")
     log.info("Output to: %s" % (outpath))
-    
     
     f_out = Dataset(outpath,'w')
 
@@ -844,11 +889,11 @@ def process_file_fix(params,in_file):
     # close input file
     f_in.close()
 
-
 # -----------------------------------------------------------------------------
 def proc_seasonal(params,year):
-    ''' create seasonal mean for one variable and one year from daily data '''
-
+    '''
+    Create seasonal mean for one variable and one year from daily data
+    '''
     if config.get_config_value("integer","multi") > 1:
         logger = logging.getLogger("cmorlight_"+year)
     else:
@@ -1034,12 +1079,11 @@ def proc_seasonal(params,year):
         else:
             logger.warning("No cell method set for this variable (%s) and time resolution (%s)." % (var,res))
 
-
 # -----------------------------------------------------------------------------
 def derotate_uv(params,in_file,var,logger=log):
-    """
-    derotate input file if this is declared for the variable in the variables table (generally for wind speed variables)
-    """
+    '''
+    Derotate input file if this is declared for the variable in the variables table (generally for wind speed variables)
+    '''
     logger.info("Derotating file")
     #set environment variable correct
 
@@ -1135,11 +1179,11 @@ def derotate_uv(params,in_file,var,logger=log):
             os.remove(out_file_derotate)
 
     return out_file_u, out_file_v
+
 # -----------------------------------------------------------------------------
 def process_file(params,in_file,var,reslist,year,firstlast):
     '''
     Main function for time-dependent variables: process input_file at resolutions defined in reslist
-
     '''
     #choose logger
     if config.get_config_value("integer","multi") > 1:
@@ -1157,7 +1201,7 @@ def process_file(params,in_file,var,reslist,year,firstlast):
             in_file = in_file_v
         logger.info("Changed input file to derotated file: %s" % in_file)
 
-    if config.get_config_value('boolean','use_alt_units'): #if units attribute is wrong -> take frm config file
+    if config.get_config_value('boolean','use_alt_units'): #if units attribute is wrong -> take from config file
         temp_name = "%s/%s-%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()),var)
         cmd = 'ncatted -a units,time,o,c,"%s" %s %s' % (config.get_config_value("settings","alt_units"),in_file,temp_name)
         logger.info("Changing units attribute of input")
@@ -1253,7 +1297,19 @@ is here the time resolution of the input data in hours."
     # stop date for file names
     dt_stop_in = str(dt_in[-1])
     dt_stop_in = dt_stop_in[:dt_stop_in.index(' ')].replace('-','')
-    
+
+    #HJP Mar 2019 Begin
+    # for mrso1: select only the first soil level
+    if var in ['mrso1']:
+        f_in.close()
+
+        f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
+        retval = shell("cdo -f %s sellevidx,1 %s %s" %(config.get_config_value('settings', 'cdo_nctype'),in_file,f_hlp.name),logger=logger)
+        in_file = f_hlp.name
+        f_in = Dataset(in_file,"r")
+        #os.remove(f_hlp.name)
+    #HJP Mar 2019 End 
+
     # for mrso and mrfso sum up desired soil levels
     if var in ['mrso','mrfso']:
         f_in.close()
@@ -1564,6 +1620,15 @@ is here the time resolution of the input data in hours."
             f_out.setncatts(settings.Global_attributes)
             logger.info("Global attributes set!")
 
+        #HJP April 2019 Begin
+        #set all predefined global attributes for 2nd Nest if necessary
+        if settings.Global_attributes_2ndNest=={}:
+            logger.error("List of global attributes for 2nd Nest is empty!")
+        else:
+            f_out.setncatts(settings.Global_attributes_2ndNest)
+            logger.info("Global attributes 2nd Nest set!")
+        #HJP April 2019 End   
+
         # commit changes
         f_out.sync()
 
@@ -1579,6 +1644,16 @@ is here the time resolution of the input data in hours."
         f_var.units = settings.netCDF_attributes['units']
         f_var.cell_methods = "time: %s" % (cm_type)
 
+        #HJP Mar 2019 Begin
+        #include variable's attribute "comment" if the corresponding entry in the ini-file is not empty
+        comment = params[config.get_config_value('index','INDEX_VAR_COMMENT')]
+        if comment !='':
+            settings.netCDF_attributes['comment'] = params[config.get_config_value('index','INDEX_VAR_COMMENT')]
+            f_var.comment = settings.netCDF_attributes['comment']
+        else:
+            logger.info("No comment attribute")
+        #HJP Mar 2019 End
+
         #create pressure/height variables for variables which are not at the surface
         if int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip()) > 0 and not var in ['mrfso','mrso']:
             if params[config.get_config_value('index','INDEX_MODEL_LEVEL')] == config.get_config_value('settings','PModelType'):
@@ -1592,7 +1667,7 @@ is here the time resolution of the input data in hours."
                     var_out[0] = params[config.get_config_value('index','INDEX_VAL_PLEV')]
                     coordinates = 'plev lat lon'
 
-                # model level variable
+            #model level variable
             elif params[config.get_config_value('index','INDEX_MODEL_LEVEL')] == config.get_config_value('settings','MModelType'):
                 if not 'height' in f_out.variables:
                     var_out = f_out.createVariable('height',datatype='d')
@@ -1603,9 +1678,22 @@ is here the time resolution of the input data in hours."
                     var_out.standard_name = "height"
                     var_out[0] = params[config.get_config_value('index','INDEX_VAL_HEIGHT')]
                     coordinates = 'height lat lon'
+	    #HJP Mar 2019 Begin
+            # z-level variable
+            elif params[config.get_config_value('index','INDEX_MODEL_LEVEL')] == config.get_config_value('settings','ZModelType'):
+                if not 'height' in f_out.variables:
+                    var_out = f_out.createVariable('height',datatype='d')
+                    var_out.units = "m"
+                    var_out.axis = "Z"
+                    var_out.positive = "up"
+                    var_out.long_name = "height"
+                    var_out.standard_name = "height"
+                    var_out[0] = params[config.get_config_value('index','INDEX_VAL_HEIGHT')]
+                    coordinates = 'height lat lon'
             else:
-                logger.warning("Column %s (Level) should bei either %s or %s! Got %s." % (config.get_config_value('index','INDEX_MODEL_LEVEL'),config.get_config_value('settings','PModelType'),config.get_config_value('settings','MModelType'),params[config.get_config_value('index','INDEX_MODEL_LEVEL')]))
-        else:
+                logger.warning("Column %s (Level) should be either %s or %s or %s! Got %s." % (config.get_config_value('index','INDEX_MODEL_LEVEL'),config.get_config_value('settings','PModelType'),config.get_config_value('settings','MModelType'),config.get_config_value('settings','ZModelType'),params[config.get_config_value('index','INDEX_MODEL_LEVEL')]))
+            #HJP Mar 2019 End
+	else:
             coordinates = 'lat lon'
         
         f_var.coordinates = coordinates
@@ -1671,4 +1759,3 @@ is here the time resolution of the input data in hours."
     
     #return updated reslist
     return new_reslist
-
