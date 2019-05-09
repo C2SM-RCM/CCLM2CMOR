@@ -17,8 +17,8 @@ EXP=RCP85          # driving experiment name
 # Time settings
 
 # processing range for step 1:
-START_DATE=2006 # Start year and month for processing (if not given in command line YYYYMM
-STOP_DATE=2100  # End year and month for processing (if not given in command line  YYYYMM
+START_DATE=2006 # Start year and month for processing (if not given in command line YYYYMM)
+STOP_DATE=2100  # End year and month for processing (if not given in command line YYYYMM)
 
 # for step 2 (if different from step 1:
 YYA= # Start year for processing YYYY
