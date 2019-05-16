@@ -1,5 +1,5 @@
 #!/bin/ksh
-#SBATCH --account=pr04
+#SBATCH --account=eth7
 #SBATCH --nodes=1
 #SBATCH --time=06:00:00
 #SBATCH --constraint=gpu
@@ -7,6 +7,12 @@
 #SBATCH --error=../logs/shell/CMOR_sh_%j.err
 #SBATCH --job-name=CMOR_sh
 
+#MED>>
+#Avoid getting pmi warning messages in the .err log file
+export PMI_NO_FORK=1
+export PMI_NO_PREINITIALIZE=1
+export PMI_MMAP_SYNC_WAIT_TIME=300
+#MED<<
 
 #Check if all functions are available
 funcs="ncrcat ncks ncap2 ncatted"
@@ -48,6 +54,11 @@ do
       -x|--exp)
       EXP=$2
       args="${args} -x $2"
+      shift
+      ;;
+      -a|--archdir)
+      ARCH_BASE=$2
+      args="${args} -a $2"
       shift
       ;;
        -s|--start)

@@ -1,45 +1,44 @@
-*** list of commands for jobs to CMORize the data ***
+*** Scripts to adapt before running CMOR ***
+
+settings.sh (BASEDIR, ARCH_BASE, DATADIR )
+cclm_post/timeseries.sh
+cclm_post/second.sh
+master_post.sh (ARCH_SUB)
+master_cmor.sh (script_folder)
+CMORlight/control_cmor.ini (DataPath, BasePath)
 
 
-# these modules needs to be loaded:
-
-module load daint-gpu
-module load netCDF NCO CDO NCL ncview
-module load netcdf-python/1.2.9-CrayGNU-17.08-python-3
+*** how to submit jobs to CMORize the data (example here for CSCS Piz Daint) ***
 
 ##First step
-sbatch master_post.sh -x evaluation -g ECMWF-ERAINT -s 1979 -e 2010
+##----------
+module load daint-gpu CDO/1.9.5-CrayGNU-18.08 NCO
 
+sbatch master_post.sh -x evaluation -g ECMWF-ERAINT -s 1979 -e 2010
+sbatch master_post.sh -x evaluation -g ECMWF-ERAINT -s 1979 -e 2010 -V -O #for verbose mode and overwrite
+sbatch master_post.sh -x historical -g MOHC-HadGEM2-ES -s 194912 -e 2005
+sbatch master_post.sh -x historical -g ICHEC-EC-EARTH -s 1950 -e 2005
+
+#This first step prepares the files for the CMORization and stores them in:
+#${DATADIR}/work/input_CMORlight/${GCM}/${EXP}
 
 ##Second step
+##-----------
+module load daint-gpu CDO/1.9.5-CrayGNU-18.08 netcdf-python/1.4.1-CrayGNU-18.08-python3 NCO
+export IGNORE_ATT_COORDINATES=1
+
+#to test submission, do: ksh master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -M 24 -s 1979 -e 1979
 sbatch master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -M 24 -s 1979 -e 2010
+sbatch master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -M 24 -s 1979 -e 2010 -V -O #for verbose mode and overwrite
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MOHC-HadGEM2-ES --all -M 24 -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r12i1p1 -G ICHEC-EC-EARTH --all -M 24 -s 1950 -e 2005 
 
+#This second step CMORizes the data and creates one file per variable per year => need to chunk the data
 
-#chunking
+#chunking (to get 5-year files instead of annual):
 sbatch master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -c -s 1979 -e 2010
 
-
-
-
-
-
-
-
-
-
-
-
-
-#chunking with remove
-#sbatch master_cmor.sh -X historical -E r1i1p1 -G MIROC-MIROC5 --all --remove -c -s 194912 -e 2005
-
-
-
-
-
-
-
-
-
-
-
+#chunking with '--remove' to remove the annual files:
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MOHC-HadGEM2-ES --all --remove -c -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r12i1p1 -G ICHEC-EC-EARTH --all --remove -c -s 194912 -e 2005
+sbatch master_cmor.sh -X historical -E r1i1p1 -G MIROC-MIROC5 --all --remove -c -s 194912 -e 2005

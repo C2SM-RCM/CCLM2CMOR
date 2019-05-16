@@ -1,6 +1,6 @@
 #!/bin/bash
 # add -l to /bin/bash (or --login) to execute commands from file /etc/profile
-#SBATCH --account=pr04
+#SBATCH --account=eth7
 #SBATCH --nodes=1
 #SBATCH --partition=xfer
 #SBATCH --time=4:00:00
@@ -10,7 +10,7 @@
 
 overwrite_arch=false
 args=""
-outstream='out01 out02 out03 out04 out05 out06 out07'
+outstream='out01 out02 out03 out04 out05 out06 out07 out08'
 while [[ $# -gt 0 ]]
 do
   key="$1"
@@ -91,10 +91,24 @@ fi
 
 if [ ! -d ${OUTDIR}/*${startyear} ] || ${overwrite_arch}
 then
-  if [ -d ${ARCHDIR}/*${startyear} ] 
+  #MED>>if [ -d ${ARCHDIR}/*${startyear} ] 
+  if [ -d ${ARCHDIR}/${startyear} ] 
   then
     echo "Moving input directory for year ${startyear} to ${OUTDIR} "
-    mv ${ARCHDIR}/*${startyear} ${OUTDIR}
+    #MED>>mv ${ARCHDIR}/*${startyear} ${OUTDIR}
+    mv ${ARCHDIR}/${startyear} ${OUTDIR}
+  #MED>>
+  elif [ -d ${ARCHDIR}/output ]
+  then
+    echo "Reorganise the data for year ${startyear} into ${OUTDIR}"
+    mkdir ${OUTDIR}/${startyear}
+    mkdir ${OUTDIR}/${startyear}/output
+    for stream in ${outstream}
+    do
+	mkdir ${OUTDIR}/${startyear}/output/${stream}
+        ln -s ${ARCHDIR}/output/${stream}/${startyear}/* ${OUTDIR}/${startyear}/output/${stream}/.
+    done
+  #MED<<
   elif [ -f ${ARCHDIR}/*${startyear}.tar ]
   then
     echo "Extracting archive for year ${startyear} to ${OUTDIR}"

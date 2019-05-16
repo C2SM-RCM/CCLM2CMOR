@@ -1,5 +1,5 @@
 #!/bin/ksh
-#SBATCH --account=pr04
+#SBATCH --account=eth7
 #SBATCH --nodes=1
 #SBATCH --time=08:00:00
 #SBATCH --constraint=gpu
