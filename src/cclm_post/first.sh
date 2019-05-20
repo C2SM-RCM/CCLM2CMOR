@@ -74,14 +74,14 @@ function timeseriesp {  # building a time series for a given quantity on pressur
 
 
 function timeseriesz {
-  NZLEV=1
+  NZLEV=0
   cd ${INDIR1}/${CURRDIR}/$2
   if [ ! -f lffd${CURRENT_DATE}*z.nc ]
   then
     echo "No files for current month found. Skipping month..."
   else
   
-  while [ ${NZLEV} -le ${#ZLEVS[@]} ]
+  while [ ${NZLEV} -lt ${#ZLEVS[@]} ]
   do
     ZLEV=$(python -c "print(int(${ZLEVS[$NZLEV]}))")
     FILES="$(ls lffd${CURRENT_DATE}*z.nc )"
@@ -93,7 +93,7 @@ function timeseriesz {
     if [ ! -f ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc ] ||  ${overwrite}
     then
       echon "Building time series at height level ${ZLEV} m for variable $1"
-      ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d altitude,${ZLEV}.,${ZLEV}. -v $1 ${FILES} ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
+      ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d height,${ZLEV}.,${ZLEV}. -v $1 ${FILES} ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
       ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INDIR1}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100z.nc ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
     else
       echov "Time series for variable $1 at height level ${ZLEV} m  already exists. Skipping..."
