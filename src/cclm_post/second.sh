@@ -117,6 +117,15 @@ do
         varname=${FILEOUT}
       fi
 
+      #cut off height level information from FILEOUT to find it in acc_list or inst_list
+      if [[ "${FILEOUT: -1}" == "z" ]] 
+      then
+        (( c2 = ${#FILEOUT}-4 ))
+        varname=$(echo ${FILEOUT} | cut -c1-${c2})
+      else
+        varname=${FILEOUT}
+      fi
+
       #process variable if in proc_list or if proc_all is set
       if [[ ${proc_list} =~ (^|[[:space:]])${varname}($|[[:space:]]) ]] || ${proc_all}
       then
