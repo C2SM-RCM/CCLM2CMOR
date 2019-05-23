@@ -38,13 +38,18 @@ timeseries  TMAX_2M    out07
 timeseries  VMAX_10M   out07
 timeseries  VABSMX_10M out07
 #
-PLEVS=(850. 500. 200.) 
+PLEVS=(925. 850. 700. 600. 500. 400. 300. 200. 100.) 
 timeseriesp U          out06 
-PLEVS=(500. 200.) 
+PLEVS=(925. 850. 700. 600. 500. 400. 300. 200. 100.) 
 timeseriesp FI         out06 
-PLEVS=(850. 500. 200.) 
+PLEVS=(925. 850. 700. 600. 500. 400. 300. 200. 100.) 
 timeseriesp V          out06 
-PLEVS=(850.) 
+PLEVS=(925. 850. 700. 600. 500. 400. 300. 200. 100.) 
 timeseriesp QV         out06 
-PLEVS=(850. 500. 200.) 
-timeseriesp T          out06 
+PLEVS=(925. 850. 700. 600. 500. 400. 300. 200. 100.) 
+timeseriesp T         out06  
+#
+ZLEVS=(100.) 
+timeseriesz U          out08
+ZLEVS=(100.) 
+timeseriesz V          out08
