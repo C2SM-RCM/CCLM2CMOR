@@ -95,7 +95,7 @@ def init(vartable):
 
     global param
     param = {}
-    with open(DirConfig+"/"+vartable,'rt') as csvfile:
+    with open(DirConfig+"/"+vartable,'rt',encoding="utf-8") as csvfile:
         reader = csv.reader(csvfile,delimiter=';')
         for i,row in enumerate(reader):
             if i==0: # skip header
