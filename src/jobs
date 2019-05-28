@@ -1,7 +1,7 @@
 *** Scripts to adapt before running CMOR ***
 
 settings.sh (BASEDIR, ARCH_BASE, DATADIR )
-cclm_post/timeseries.sh
+cclm_post/timeseries.sh (for CORDEX_CORE, look at example in timeseries_cosmo-crclim.sh)
 cclm_post/second.sh
 master_post.sh (ARCH_SUB)
 master_cmor.sh (script_folder)
