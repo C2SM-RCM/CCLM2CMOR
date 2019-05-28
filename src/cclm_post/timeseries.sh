@@ -47,7 +47,7 @@ timeseriesp V          out06
 PLEVS=(925. 850. 700. 600. 500. 400. 300. 200. 100.) 
 timeseriesp QV         out06 
 PLEVS=(925. 850. 700. 600. 500. 400. 300. 200. 100.) 
-timeseriesp T         out06  
+timeseriesp T          out06 
 #
 ZLEVS=(100.) 
 timeseriesz U          out08
