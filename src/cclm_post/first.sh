@@ -48,32 +48,31 @@ function timeseriesp {  # building a time series for a given quantity on pressur
   then
     echo "No files found for variable $1 for current month in  ${INDIR1}/${CURRDIR}/$2. Skipping month..."
   else
-  while [ ${NPLEV} -lt ${#PLEVS[@]} ]
-  do
-    PASCAL=$(python -c "print(${PLEVS[$NPLEV]} * 100.)")
-    PLEV=$(python -c "print(int(${PLEVS[$NPLEV]}))")
-    FILES="$(ls lffd${CURRENT_DATE}*p.nc )"
-    if [ ${MM} -eq 12 ]
-    then  
-      FILES="$(echo ${FILES}) $(ls lffd${NEXT_DATE}0100p.nc )"
-    fi
-
-    if [ ! -f ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc ] ||  ${overwrite}
-    then
-      echon "Building time series at pressure level ${PLEV} hPa for variable $1"
-      ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d pressure,${PASCAL},${PASCAL} -v $1 ${FILES} ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc
-      ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INDIR1}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100p.nc ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc
-    else
-      echov "Time series for variable $1 at pressure level ${PLEV}  already exists. Skipping..."
-    fi
-    let "NPLEV = NPLEV + 1"
-
-  done
+    while [ ${NPLEV} -lt ${#PLEVS[@]} ]
+    do
+      PASCAL=$(python -c "print(${PLEVS[$NPLEV]} * 100.)")
+      PLEV=$(python -c "print(int(${PLEVS[$NPLEV]}))")
+      FILES="$(ls lffd${CURRENT_DATE}*p.nc )"
+      if [ ${MM} -eq 12 ]
+      then  
+        FILES="$(echo ${FILES}) $(ls lffd${NEXT_DATE}0100p.nc )"
+      fi
+      if [ ! -f ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc ] ||  ${overwrite}
+      then
+        echon "Building time series at pressure level ${PLEV} hPa for variable $1"
+        ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d pressure,${PASCAL},${PASCAL} -v $1 ${FILES} ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc
+        ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INDIR1}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100p.nc ${OUTDIR1}/${YYYY_MM}/${1}${PLEV}p_ts.nc
+      else
+        echov "Time series for variable $1 at pressure level ${PLEV}  already exists. Skipping..."
+      fi
+      let "NPLEV = NPLEV + 1"
+    done
   fi
   }
 
 
-function timeseriesz {
+function timeseriesz {  # building a time series for a given quantity on height levels
+  #MED 20/05/19 NZLEV=1
   NZLEV=0
   cd ${INDIR1}/${CURRDIR}/$2
   if [ ! -f lffd${CURRENT_DATE}*z.nc ]
@@ -81,6 +80,7 @@ function timeseriesz {
     echo "No files for current month found. Skipping month..."
   else
   
+  #MED 20/05/19 while [ ${NZLEV} -le ${#ZLEVS[@]} ]
   while [ ${NZLEV} -lt ${#ZLEVS[@]} ]
   do
     ZLEV=$(python -c "print(int(${ZLEVS[$NZLEV]}))")
@@ -93,6 +93,7 @@ function timeseriesz {
     if [ ! -f ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc ] ||  ${overwrite}
     then
       echon "Building time series at height level ${ZLEV} m for variable $1"
+      #MED 20/05/19: ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d altitude,${ZLEV}.,${ZLEV}. -v $1 ${FILES} ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
       ncrcat -h -O -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -d height,${ZLEV}.,${ZLEV}. -v $1 ${FILES} ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
       ncks -h -A -d rlon,${NBOUNDCUT},${IESPONGE} -d rlat,${NBOUNDCUT},${JESPONGE} -v lon,lat,rotated_pole ${INDIR1}/${CURRDIR}/$2/lffd${CURRENT_DATE}0100z.nc ${OUTDIR1}/${YYYY_MM}/${1}${ZLEV}z_ts.nc
     else
