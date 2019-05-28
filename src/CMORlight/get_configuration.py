@@ -166,4 +166,6 @@ def load_configuration(inifile):
     else:
         CONFIG = configparser.ConfigParser()
 
-    CONFIG.readfp(open(pkg_resources.resource_filename(__name__,inifile)))
+    #MED: CONFIG.readfp(open(pkg_resources.resource_filename(__name__,inifile)))
+    #to fix problem: UnicodeDecodeError: 'ascii' codec can't decode byte 0xc3 in position...
+    CONFIG.readfp(open(pkg_resources.resource_filename(__name__,inifile),encoding="utf-8"))
