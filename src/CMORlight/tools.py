@@ -1229,10 +1229,12 @@ def process_file(params,in_file,var,reslist,year,firstlast):
     time_in_units = time_in.units
 
     # now get the 'new' time/date
+    #MED>>dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
     if in_calendar in ['standard','gregorian','proleptic_gregorian','julian']:
        dt_in = num2date(time_in[:],time_in_units,calendar=in_calendar)
     else:
        dt_in = num2date(time_in[:]+1.e-6,time_in_units,calendar=in_calendar) #to prevent roundoff error due to lack of precision
+    #MED<<
 
     # calculate time difference between first two time steps (in hours)
     a = datetime.datetime.strptime(str(dt_in[0]), settings.FMT)
@@ -1393,13 +1395,17 @@ is here the time resolution of the input data in hours."
 
         #conversion factor            
         conv_factor = params[config.get_config_value('index','INDEX_CONVERT_FACTOR')].strip().replace(',','.')
+        #MED>>if  conv_factor not in ['', '0', '1']:
         if  conv_factor not in ['', '0', '1', '-1']:
+        #MED<<
             #change conversion factor for accumulated variables
             if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
                 conv_factor = str(float(conv_factor) / input_res_hr)
             cmd_mul = ' -mulc,%s ' %  conv_factor
+        #MED>>
         elif conv_factor == '-1':
             cmd_mul = ' -mulc,%s ' %  conv_factor
+        #MED<<
         else:
             cmd_mul = ""
         logger.debug("Multiplicative conversion factor: %s" % cmd_mul)
@@ -1693,7 +1699,7 @@ is here the time resolution of the input data in hours."
             else:
                 logger.warning("Column %s (Level) should be either %s or %s or %s! Got %s." % (config.get_config_value('index','INDEX_MODEL_LEVEL'),config.get_config_value('settings','PModelType'),config.get_config_value('settings','MModelType'),config.get_config_value('settings','ZModelType'),params[config.get_config_value('index','INDEX_MODEL_LEVEL')]))
             #HJP Mar 2019 End
-	else:
+        else:
             coordinates = 'lat lon'
         
         f_var.coordinates = coordinates
