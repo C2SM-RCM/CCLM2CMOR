@@ -27,7 +27,7 @@ YYE= # End year for processing YYYY
 #-------------------------------------------
 # Directory path settings
 
-export BASEDIR=${HOME}/CCLM2CMOR     # directory where the scripts are placed 
+export BASEDIR=/users/${USER}/CCLM2CMOR     # directory where the scripts are placed 
 export DATADIR=${SCRATCH}/CMOR       # directory where all the data will be placed (typically at /scratch/)
 #ARCH_BASE=/store/c2sm/pr04/PRINCIPLES/SIMULATIONS # directory where the raw data of the simulations are archived
 ARCH_BASE=${SCRATCH}/tmp/ECMWF-ERAINT_evaluation_COSMO-crCLIM_EUR11 # directory where the raw data of the simulations are archived
