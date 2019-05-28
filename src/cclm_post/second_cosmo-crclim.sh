@@ -117,6 +117,7 @@ do
         varname=${FILEOUT}
       fi
 
+      #MED 20/05/19>>
       #cut off height level information from FILEOUT to find it in acc_list or inst_list
       if [[ "${FILEOUT: -1}" == "z" ]] 
       then
@@ -125,6 +126,7 @@ do
       else
         varname=${FILEOUT}
       fi
+      #MED<<
 
       #process variable if in proc_list or if proc_all is set
       if [[ ${proc_list} =~ (^|[[:space:]])${varname}($|[[:space:]]) ]] || ${proc_all}
@@ -194,6 +196,7 @@ do
       # extract attribute units from variable time -> REFTIME in seconds since XX-XX-XX ...
       #MED>>RT=$(ncks -m -v time ${FILEIN} | grep -E 'time '|grep -E 'seconds since' | cut -f 13- -d ' ')
       RT=$(ncks -m -v time  ${FILEIN} | grep -E 'time:units' | cut -d '"' -f 2 | cut -d ' ' -f 3-4)
+      #MED<<
       REFTIME="days since "${RT}
       # extract number of timesteps and timestamps
       NT=$(cdo -s ntime ${FILEIN})
@@ -347,10 +350,12 @@ do
     elif [[ ${formula} == "add_sqr" ]]
     then
       formula="${name3}=sqrt(${name1}^2+${name2}^2)"
+    #MED>>
     elif [[ ${formula} == "snow_case" ]]
     then
       #MED: FR_SNOW=Max(0.01,Min(1.,W_SNOW/0.015))*H(x) with H(x)=1 if W_SNOW>0.5E-06, else H(x)=0
       formula="SNOW_flg=float($name1>0.0000005);SNOW=float($name1/0.015);where(SNOW>1.0)SNOW=1.0f;where(SNOW<0.01)SNOW=0.01f;$name3=float(SNOW*SNOW_flg)"
+    #MED<<
     else
       echo "Formula ${formula} not known! Skipping"
       return
@@ -359,20 +364,22 @@ do
     if [[ ${proc_list} =~ (^|[[:space:]])${name3}($|[[:space:]]) ]] || ${proc_all}
     then
       file1=$(ls ${OUTDIR2}/${name1}/${name1}_${YY}${MMA}0100*.nc) 
-      #MED: file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
+      #MED>> file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
       if [[ ${name2} == "" ]]
       then
         file2=""
       else
         file2=$(ls ${OUTDIR2}/${name2}/${name2}_${YY}${MMA}0100*.nc)
       fi
+      #MED<<
       echov "Input files and formula:"
       echov "$file1"
       echov "$file2"
       echov "$formula"
 
-      #MED: if [[ -f ${file1} && -f ${file2} ]] 
+      #MED>> if [[ -f ${file1} && -f ${file2} ]] 
       if [[ -f ${file1} ]]
+      #MED<<
       then
         ((c1 = ${#file1}-23 )) 
         ((c2 = ${#file1}-3 ))
@@ -383,12 +390,16 @@ do
           echon "Create ${name3}"
           [[ -d ${OUTDIR2}/${name3} ]] || mkdir  ${OUTDIR2}/${name3} 
           cp ${file1} temp1_${YY}.nc
+          #MED>>
           if [[ -f ${file2} ]]
           then
             ncks -h --no_abc -A -v ${name2} ${file2} temp1_${YY}.nc
           fi
+          #MED<<
           ncap2 -h -O -s ${formula} temp1_${YY}.nc temp1_${YY}.nc 
+          #MED>>ncks -h -a -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
           ncks -h --no_abc -O -v ${name3},lat,lon,rotated_pole temp1_${YY}.nc ${file3}
+          #MED<<
           ncatted -h -a long_name,${name3},d,, ${file3}
           ncatted -h -a standard_name,${name3},m,c,${standard_name} ${file3}
          #ncatted -h -a long_name,${name3},m,c,"Snow Area Fraction"
@@ -431,8 +442,10 @@ do
     # cloud condensed water content TQW
     create_add_vars "TQC" "TQI" "TQW" "add" "atmosphere_cloud_condensed_water_content"  
 
+    #MED>>
     # Mean snow fraction: FR_SNOW
     create_add_vars "W_SNOW" "" "FR_SNOW" "snow_case" "surface_snow_area_fraction" 
+    #MED<<
   fi
   
   (( YY=YY+1 ))
