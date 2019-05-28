@@ -111,5 +111,5 @@ FR_LAND;FR_LAND;sftlf;;;;100;;;;;;%;;;;;;;;;0;Land Area Fraction;;land_area_frac
 ;ZFCAP;mrsofc;not output by COSMO;;;;;;;;;kg m-2;;;;;;;;;0;Capacity of Soil to Store Water;;soil_moisture_content_at_field_capacity;;land;
 ;ROOTDP;rootd;not constant;;;;;;;;;m;;;;;;;;;0;Maximum Root Depth;;root_depth;;land;
 CAPE_ML;CAPE_ML;cape;;;ModelLevel;1;point;;;;0;J kg-1;8;i;;;;;;;;Convective available potential energy (CAPE);;atmosphere_convective_available_potential_energy_wrt_surface;;atmos;
-U100z;U;ua100m;;derotate;ModelLevel;1;point;;;;100;m s-1;24;i;;;;;;;;Eastward wind at 100 m;;eastward_wind;;atmos;
-V100z;V;va100m;;derotate;ModelLevel;1;point;;;;100;m s-1;24;i;;;;;;;;Northward wind at 100 m;;northward_wind;;atmos;
+U100z;U;ua100m;;derotate;ZLevel;1;point;;;;100;m s-1;24;i;;;;;;;;Eastward wind at 100 m;;eastward_wind;;atmos;
+V100z;V;va100m;;derotate;ZLevel;1;point;;;;100;m s-1;24;i;;;;;;;;Northward wind at 100 m;;northward_wind;;atmos;
