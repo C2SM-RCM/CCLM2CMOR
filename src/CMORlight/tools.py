@@ -137,12 +137,12 @@ def create_outpath(res,var):
         result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
                     (settings.Global_attributes["project_id"],
                      settings.Global_attributes["product"],
-                     settings.Global_attributes["rcm_domain"],
-                     settings.Global_attributes["rcm_institute_id"],
+                     settings.Global_attributes["CORDEX_domain"],
+                     settings.Global_attributes["institute_id"],
                      settings.Global_attributes["driving_model_id"],
                      settings.Global_attributes["experiment_id"],
                      settings.Global_attributes["driving_model_ensemble_member"],
-                     settings.Global_attributes["rcm_model_id"],
+                     settings.Global_attributes["model_id"],
                      settings.Global_attributes["rcm_version_id"],
                      res,
                      var
@@ -219,11 +219,11 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
     secondnestlist = settings.global_attr_list_2ndNest
     if secondnestlist==['None']:
         result = "%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
-                        settings.Global_attributes["rcm_domain"],
+                        settings.Global_attributes["CORDEX_domain"],
                         settings.Global_attributes["driving_model_id"],
                         settings.Global_attributes["experiment_id"],
                         settings.Global_attributes["driving_model_ensemble_member"],
-                        settings.Global_attributes["rcm_model_id"],
+                        settings.Global_attributes["model_id"],
                         settings.Global_attributes["rcm_version_id"],
                         res,
                         trange,
@@ -1218,8 +1218,8 @@ def process_file(params,in_file,var,reslist,year,firstlast):
 
     # get time variable from input
     time_in = f_in.variables['time']
-    
-   # if 'calendar' in time_in.ncattrs():
+     
+    # if 'calendar' in time_in.ncattrs():
     in_calendar = str(time_in.calendar)
     #else:
      #   in_calendar = config.get_sim_value("calendar",exitprog = False)
