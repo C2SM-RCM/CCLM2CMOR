@@ -1,6 +1,6 @@
 #!/bin/bash
 # add -l to /bin/bash (or --login) to execute commands from file /etc/profile
-#SBATCH --account=eth7
+#SBATCH --account=pr04
 #SBATCH --nodes=1
 #SBATCH --partition=xfer
 #SBATCH --time=4:00:00
