@@ -5,7 +5,7 @@ cclm_post/timeseries.sh (for CORDEX_CORE, look at example in timeseries_cosmo-cr
 cclm_post/second.sh
 master_post.sh (ARCH_SUB)
 master_cmor.sh (script_folder)
-CMORlight/control_cmor.ini (DataPath, BasePath)
+CMORlight/control_cmor.ini (DataPath, BasePath): check examples control_cmor_1nest.ini and control_cmor_2nest.ini
 
 
 *** how to submit jobs to CMORize the data (example here for CSCS Piz Daint) ***
