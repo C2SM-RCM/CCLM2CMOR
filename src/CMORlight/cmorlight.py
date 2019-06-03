@@ -318,48 +318,9 @@ def main():
         config.set_config_value('settings','DirDerotated',DirDerotated)
 
     # now read vartable for all variables for this RCM
-
     vartable= config.get_sim_value('vartable')
     settings.init(vartable)
 
-    # create logger
-    LOG_BASE = settings.DirLog
-    if os.path.isdir(LOG_BASE) == False:
-        print("Create logging directory: %s" % LOG_BASE)
-        if not os.path.isdir(LOG_BASE):
-            os.makedirs(LOG_BASE)
-    LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')+config.get_sim_value('driving_model_id')+"_"+config.get_sim_value('experiment_id')+"."
-    logext = datetime.datetime.now().strftime("%d-%m-%Y")+'.log'
-
-    # get logger and assign logging filename (many loggers for multiprocessing)
-    if limit_range and int(options.multi) > 1:
-        #create logger for each processing year
-        for y in range(config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end")+1):
-            logfile=LOG_FILENAME+str(y)+'.'+logext
-            log = init_log.setup_custom_logger("cmorlight_"+str(y),logfile,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
-        #change general logger name
-        LOG_FILENAME+="%s_%s." % (config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end"))
-
-    log = init_log.setup_custom_logger("cmorlight",LOG_FILENAME+logext,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
-
-    if not limit_range and int(options.multi) > 1:
-        print("To use multiprocessing you have to limit the time range by specifying this range over the command line (-s START, -e END)! Exiting...")
-        log.error("To use multiprocessing you have to limit the time range by specifying this range over the command line (-s START, -e END)! Exiting...")
-        sys.exit()
-
-    # creating working directory if not existent
-    if not os.path.isdir(settings.DirWork):
-        log.debug("Working directory does not exist, creating: %s" % (settings.DirWork))
-        if not os.path.isdir(settings.DirWork):
-            os.makedirs(settings.DirWork)
-
-    if not os.path.isdir(settings.DirOut):
-        log.debug("Output directory does not exist, creating: %s" % (settings.DirOut))
-        if not os.path.isdir(settings.DirOut):
-            os.makedirs(settings.DirOut)
-
-    if config.get_config_value('boolean','add_version_to_outpath'):
-        settings.use_version = options.use_version
     varlist = settings.varlist
     if options.all_vars == False:
         if varlist==[] or varlist==[''] :
@@ -396,6 +357,51 @@ def main():
         reslist=list(filter(None,reslist.split(','))) #split string and remove empty strings
     else:
         reslist = options.reslist.split(',')
+
+    #HJP March 2019 Begin: definition of log-file after the setting of varlist and 
+    #extension of log-file name by element "0" of varlist (first entry in varlist), which denotes the CMOR-name of the first variable in the list
+    # create logger
+    LOG_BASE = settings.DirLog
+    if os.path.isdir(LOG_BASE) == False:
+        print("Create logging directory: %s" % LOG_BASE)
+        if not os.path.isdir(LOG_BASE):
+            os.makedirs(LOG_BASE)
+    #LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')+config.get_sim_value('driving_model_id')+"_"+config.get_sim_value('experiment_id')+"."
+    LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')+config.get_sim_value('driving_model_id')+"_"+config.get_sim_value('experiment_id')+"_"+varlist[0]+"."
+    logext = datetime.datetime.now().strftime("%d-%m-%Y")+'.log'
+
+    # get logger and assign logging filename (many loggers for multiprocessing)
+    if limit_range and int(options.multi) > 1:
+        #create logger for each processing year
+        for y in range(config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end")+1):
+            logfile=LOG_FILENAME+str(y)+'.'+logext
+            log = init_log.setup_custom_logger("cmorlight_"+str(y),logfile,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
+        #change general logger name
+        LOG_FILENAME+="%s_%s." % (config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end"))
+
+    log = init_log.setup_custom_logger("cmorlight",LOG_FILENAME+logext,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
+    #HJP March 2019 End  
+
+    #HJP _April 15th Begin: following part must appear after the definition of LOG-Files since messages might be written in these LOG-files; therefore, the files must exist 
+    if not limit_range and int(options.multi) > 1:
+        print("To use multiprocessing you have to limit the time range by specifying this range over the command line (-s START, -e END)! Exiting...")
+        log.error("To use multiprocessing you have to limit the time range by specifying this range over the command line (-s START, -e END)! Exiting...")
+        sys.exit()
+
+    # creating working directory if not existent
+    if not os.path.isdir(settings.DirWork):
+        log.debug("Working directory does not exist, creating: %s" % (settings.DirWork))
+        if not os.path.isdir(settings.DirWork):
+            os.makedirs(settings.DirWork)
+
+    if not os.path.isdir(settings.DirOut):
+        log.debug("Output directory does not exist, creating: %s" % (settings.DirOut))
+        if not os.path.isdir(settings.DirOut):
+            os.makedirs(settings.DirOut)
+
+    if config.get_config_value('boolean','add_version_to_outpath'):
+        settings.use_version = options.use_version
+    #HJP April 15th End    
 
     # if nothing is set: exit the program
 
