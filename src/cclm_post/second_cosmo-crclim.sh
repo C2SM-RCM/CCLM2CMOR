@@ -402,8 +402,6 @@ do
           #MED<<
           ncatted -h -a long_name,${name3},d,, ${file3}
           ncatted -h -a standard_name,${name3},m,c,${standard_name} ${file3}
-         #ncatted -h -a long_name,${name3},m,c,"Snow Area Fraction"
-	 #ncatted -h -a units,${name3},o,c,'1' ${file3}
           chmod ${PERM} ${file3}
           rm temp1_${YY}.nc
         else
