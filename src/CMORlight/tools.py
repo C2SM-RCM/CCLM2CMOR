@@ -137,12 +137,12 @@ def create_outpath(res,var):
         result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
                     (settings.Global_attributes["project_id"],
                      settings.Global_attributes["product"],
-                     settings.Global_attributes["rcm_domain"],
-                     settings.Global_attributes["rcm_institute_id"],
+                     settings.Global_attributes["CORDEX_domain"],
+                     settings.Global_attributes["institute_id"],
                      settings.Global_attributes["driving_model_id"],
                      settings.Global_attributes["experiment_id"],
                      settings.Global_attributes["driving_model_ensemble_member"],
-                     settings.Global_attributes["rcm_model_id"],
+                     settings.Global_attributes["model_id"],
                      settings.Global_attributes["rcm_version_id"],
                      res,
                      var
@@ -219,11 +219,11 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
     secondnestlist = settings.global_attr_list_2ndNest
     if secondnestlist==['None']:
         result = "%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
-                        settings.Global_attributes["rcm_domain"],
+                        settings.Global_attributes["CORDEX_domain"],
                         settings.Global_attributes["driving_model_id"],
                         settings.Global_attributes["experiment_id"],
                         settings.Global_attributes["driving_model_ensemble_member"],
-                        settings.Global_attributes["rcm_model_id"],
+                        settings.Global_attributes["model_id"],
                         settings.Global_attributes["rcm_version_id"],
                         res,
                         trange,
@@ -1218,8 +1218,11 @@ def process_file(params,in_file,var,reslist,year,firstlast):
 
     # get time variable from input
     time_in = f_in.variables['time']
-    
-   # if 'calendar' in time_in.ncattrs():
+    print("in_file=", in_file)
+    print("var=", var)
+    print("reslist=", reslist)
+        
+    # if 'calendar' in time_in.ncattrs():
     in_calendar = str(time_in.calendar)
     #else:
      #   in_calendar = config.get_sim_value("calendar",exitprog = False)
@@ -1239,11 +1242,15 @@ def process_file(params,in_file,var,reslist,year,firstlast):
     # calculate time difference between first two time steps (in hours)
     a = datetime.datetime.strptime(str(dt_in[0]), settings.FMT)
     b = datetime.datetime.strptime(str(dt_in[1]), settings.FMT)
+    print("a=", a)
+    print("b=", b)
     
     time_delta_raw = np.array(time_in)[1]-np.array(time_in)[0]
     time_delta = b-a
+    print("time_delta=", time_delta)
     #input time resolution in hours
     input_res_hr = time_delta.total_seconds() / 3600. 
+    print("input_res_hr=", input_res_hr)
 
     logger.info("First time step in input file: %s" % (str(a)))
     if input_res_hr not in [1.,3.,6.,12.,24]:
@@ -1265,6 +1272,7 @@ def process_file(params,in_file,var,reslist,year,firstlast):
         endmonth = firstlast[1]+1
         
     end_date = num2date(0,"seconds since {}-{:02d}-01".format(endyear,endmonth),calendar=in_calendar)
+    print("params[config.get_config_value('index','INDEX_FRE_AGG')]=", params[config.get_config_value('index','INDEX_FRE_AGG')])
     if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'i':
         end_date -= time_delta
     else:
@@ -1276,6 +1284,7 @@ def process_file(params,in_file,var,reslist,year,firstlast):
     #correct time array
     time_range = np.round(np.arange(start_num ,end_num+time_delta_raw/2, time_delta_raw),5)
     time_in_arr=np.round(np.array(time_in),5)
+    
     if not (set(time_range) <=  set(time_in_arr)):
         cmd = "Time variable of input data is not correct! It has to contain all required time steps between January 1st and \
 December 30th/31st (depending on calendar) of the respective year. The first time step for \
@@ -1287,7 +1296,7 @@ is here the time resolution of the input data in hours."
     #Define time steps which to take from input
     start_in,end_in = np.where(time_in_arr==time_range[0])[0][0], np.where(time_in_arr==time_range[-1])[0][0]
     tsteps = "%s/%s" %(start_in+1,end_in+1)
-    
+
     #change time array
     dt_in = dt_in[start_in:end_in+1]
     time_in = time_in[start_in:end_in+1]
