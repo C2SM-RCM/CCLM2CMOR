@@ -6,7 +6,7 @@ CCLM variable name;CCLM variable name (in model output file);output variable nam
 (not required, however, if included should have the value as in CMIP5)";"cell-method: area
 (optional)"
 T_2M;T_2M;tas;;;ModelLevel;1;point;mean;mean;mean;2;K;24;i;1;24;1;m*24;1;s*24;;Near-Surface Air Temperature;;air_temperature;;atmos;
-T_2M;T_2M;tas;;;ModelLevel;1;mean;;;;2;K;8;24;;;;;;;;Near-Surface Air Temperature;;air_temperature;;atmos;
+T_2M;T_2M;tas;;;ModelLevel;1;mean;;;;2;K;8;i;;;;;;;;Near-Surface Air Temperature;;air_temperature;;atmos;
 TD_2M;TD_2M;tds;;;ModelLevel;1;point;;;;2;K;24;i;;;;;;;;2m Dew Point Temperature;;2m_dew_point_temperature;;atmos;
 TMAX_2M;TMAX_2M;tasmax;;;ModelLevel;1;;maximum;maximum within days time: mean over days;maximum within days time: mean over days;2;K;;a;1;;1;m;1;s;;Daily Maximum Near-Surface Air Temperature;;air_temperature;;atmos;
 TMIN_2M;TMIN_2M;tasmin;;;ModelLevel;1;;minimum;minimum within days time: mean over days;minimum within days time: mean over days;2;K;;a;1;;1;m;1;s;;Daily Minimum Near-Surface Air Temperature;;air_temperature;;atmos;
@@ -18,7 +18,7 @@ QV_2M;QV_2M;huss;;;ModelLevel;1;point;mean;mean;mean;2;1;8;i;1;8;1;m*8;1;s*8;;Ne
 RELHUM_2M;RELHUM_2M;hurs;;;ModelLevel;1;point;mean;mean;mean;2;%;8;i;1;8;1;m*8;1;s*8;;Near-Surface Relative Humidity;;relative_humidity;;atmos;
 SP_10M;SP_10M;sfcWind;(U_10M^2+V_10M^2)^1/2;no;ModelLevel;1;point;mean;mean;mean;10;m s-1;8;i;1;8;1;m*8;1;s*8;;Near-Surface Wind Speed;;wind_speed;;atmos;
 VABSMX_10M;VABSMX_10M;sfcWindmax;;;ModelLevel;1;;maximum;maximum within days time: mean over days;maximum within days time: mean over days;10;m s-1;;a;1;;1;m;1;s;;Daily Maximum Near-Surface Wind Speed;;wind_speed;;atmos;
-CLCT;CLCT;clt;;;ModelLevel;100;mean;mean;mean;mean;0;%;8;24;1;24;1;m*24;1;s*24;;Total Cloud Fraction;;cloud_area_fraction;;atmos;
+CLCT;CLCT;clt;;;ModelLevel;100;mean;mean;mean;mean;0;%;8;i;1;24;1;m*24;1;s*24;;Total Cloud Fraction;;cloud_area_fraction;;atmos;
 DURSUN;DURSUN;sund;;;ModelLevel;1;sum;sum;sum within days time: mean over days;sum within days time: mean over days;0;s;8;a;1;;1;;1;;;Duration of Sunshine;;duration_of_sunshine;;atmos;
 ASWD_S;ASWD_S;rsds;ASWDIR_S + ASWDIFD_S;;ModelLevel;1;mean;mean;mean;mean;0;W m-2;8;a;1;;1;;1;;;Surface Downwelling Shortwave Radiation;;surface_downwelling_shortwave_flux_in_air;down;atmos;
 ATHD_S;ATHD_S;rlds;;;ModelLevel;1;mean;mean;mean;mean;0;W m-2;8;a;1;;1;;1;;;Surface Downwelling Longwave Radiation;;surface_downwelling_longwave_flux_in_air;down;atmos;
@@ -47,7 +47,7 @@ VMAX_10M;VMAX_10M;wsgsmax;;;ModelLevel;1;;maximum;;;10;m s-1;;a;1;;;;;;;Daily Ma
 ;AUMFL_S;tauu;not yet supported on GPU;;;;mean;mean;;;;Pa;4;a;1;;;;;;;Surface Downward Eastward Wind Stress;;surface_downward_eastward_stress;down;atmos;
 ;AVMFL_S;tauv;not yet supported on GPU;;;;mean;mean;;;;Pa;4;a;1;;;;;;;Surface Downward Northward Wind Stress;;surface_downward_northward_stress;down;atmos;
 T_S;T_S;ts;;;ModelLevel;1;point;mean;;;0;K;8;i;1;8;;;;;;Surface Temperature;;surface_temperature;;atmos;
-T_S;T_S;ts;;;ModelLevel;1;mean;;;;0;K;4;8;;;;;;;;Surface Temperature;;surface_temperature;;atmos;
+T_S;T_S;ts;;;ModelLevel;1;mean;;;;0;K;4;i;;;;;;;;Surface Temperature;;surface_temperature;;atmos;
 HPBL;HPBL;zmla;;;ModelLevel;1;point;mean;;;0;m;4;i;1;4;;;;;;Height of Boundary Layer;;atmosphere_boundary_layer_thickness;;atmos;
 TQV;TQV;prw;;;ModelLevel;1;point;mean;;;0;kg m-2;4;i;1;4;;;;;;Water Vapor Path;;atmosphere_water_vapor_content;;atmos;
 TQW;TQW;clwvi;TQC + TQI;;ModelLevel;1;point;mean;;;0;kg m-2;4;i;1;4;;;;;;Condensed Water Path;;atmosphere_cloud_condensed_water_content;;atmos;
@@ -97,9 +97,9 @@ V100p;V;va100;;derotate;PressureLevel;1;point;mean;mean;mean;10000;m s-1;4;i;1;4
 T100p;T;ta100;;;PressureLevel;1;point;mean;mean;mean;10000;K;4;i;1;4;1;m*4;1;s*4;;Air Temperature;;air_temperature;;atmos;
 QV100p;QV;hus100;;;PressureLevel;1;point;mean;mean;mean;10000;1;4;i;1;4;1;m*4;1;s*4;;Specific Humidity;;specific_humidity;;atmos;
 FI100p;FI;zg100;;;PressureLevel;0.1019716213;point;mean;mean;mean;10000;m;4;i;1;4;1;m*4;1;s*4;;Geopotential Height;geopotential_height_at_200hPa;geopotential_height;;atmos;
-CLCH;CLCH;clh;;;ModelLevel;100;mean;mean;;;0;%;4;24;1;24;;;;;;High Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
-CLCM;CLCM;clm;;;ModelLevel;100;mean;mean;;;0;%;4;24;1;24;;;;;;Mid Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
-CLCL;CLCL;cll;;;ModelLevel;100;mean;mean;;;0;%;4;24;1;24;;;;;;Low Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
+CLCH;CLCH;clh;;;ModelLevel;100;mean;mean;;;0;%;4;i;1;24;;;;;;High Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
+CLCM;CLCM;clm;;;ModelLevel;100;mean;mean;;;0;%;4;i;1;24;;;;;;Mid Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
+CLCL;CLCL;cll;;;ModelLevel;100;mean;mean;;;0;%;4;i;1;24;;;;;;Low Level Cloud Fraction;;cloud_area_fraction_in_atmosphere_layer;;atmos;
 FR_SNOW;FR_SNOW;snc;Max(0.01,Min(1.,W_SNOW/0.015))*H(x);;ModelLevel;100;point;mean;mean;mean;0;%;4;i;1;4;1;m*4;1;s*4;;Snow Area Fraction;;surface_snow_area_fraction;;landIce land;
 H_SNOW;H_SNOW;snd;;;ModelLevel;1;point;mean;mean;mean;0;m;4;i;1;4;1;m*4;1;s*4;;Snow Depth;;surface_snow_thickness;;landIce land;mean where land
 ;FR_ICE;sic;not allocated in COSMO;;;;;mean;mean;mean;;%;;;1;;1;m;1;s;;Sea Ice Area Fraction;;sea_ice_area_fraction;;seaIce ocean;
