@@ -1218,9 +1218,6 @@ def process_file(params,in_file,var,reslist,year,firstlast):
 
     # get time variable from input
     time_in = f_in.variables['time']
-    print("in_file=", in_file)
-    print("var=", var)
-    print("reslist=", reslist)
      
     # if 'calendar' in time_in.ncattrs():
     in_calendar = str(time_in.calendar)
@@ -1242,15 +1239,11 @@ def process_file(params,in_file,var,reslist,year,firstlast):
     # calculate time difference between first two time steps (in hours)
     a = datetime.datetime.strptime(str(dt_in[0]), settings.FMT)
     b = datetime.datetime.strptime(str(dt_in[1]), settings.FMT)
-    print("a=", a)
-    print("b=", b)
     
     time_delta_raw = np.array(time_in)[1]-np.array(time_in)[0]
     time_delta = b-a
-    print("time_delta=", time_delta)
     #input time resolution in hours
     input_res_hr = time_delta.total_seconds() / 3600. 
-    print("input_res_hr=", input_res_hr)
 
     logger.info("First time step in input file: %s" % (str(a)))
     if input_res_hr not in [1.,3.,6.,12.,24]:
@@ -1272,7 +1265,6 @@ def process_file(params,in_file,var,reslist,year,firstlast):
         endmonth = firstlast[1]+1
         
     end_date = num2date(0,"seconds since {}-{:02d}-01".format(endyear,endmonth),calendar=in_calendar)
-    print("params[config.get_config_value('index','INDEX_FRE_AGG')]=", params[config.get_config_value('index','INDEX_FRE_AGG')])
     if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'i':
         end_date -= time_delta
     else:
