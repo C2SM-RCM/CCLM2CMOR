@@ -1221,7 +1221,7 @@ def process_file(params,in_file,var,reslist,year,firstlast):
     print("in_file=", in_file)
     print("var=", var)
     print("reslist=", reslist)
-        
+     
     # if 'calendar' in time_in.ncattrs():
     in_calendar = str(time_in.calendar)
     #else:
@@ -1284,7 +1284,6 @@ def process_file(params,in_file,var,reslist,year,firstlast):
     #correct time array
     time_range = np.round(np.arange(start_num ,end_num+time_delta_raw/2, time_delta_raw),5)
     time_in_arr=np.round(np.array(time_in),5)
-    
     if not (set(time_range) <=  set(time_in_arr)):
         cmd = "Time variable of input data is not correct! It has to contain all required time steps between January 1st and \
 December 30th/31st (depending on calendar) of the respective year. The first time step for \
@@ -1296,7 +1295,7 @@ is here the time resolution of the input data in hours."
     #Define time steps which to take from input
     start_in,end_in = np.where(time_in_arr==time_range[0])[0][0], np.where(time_in_arr==time_range[-1])[0][0]
     tsteps = "%s/%s" %(start_in+1,end_in+1)
-
+    
     #change time array
     dt_in = dt_in[start_in:end_in+1]
     time_in = time_in[start_in:end_in+1]
