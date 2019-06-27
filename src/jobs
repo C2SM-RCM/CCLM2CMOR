@@ -27,6 +27,11 @@ sbatch master_post.sh -x historical -g ICHEC-EC-EARTH -s 1950 -e 2005
 module load daint-gpu CDO/1.9.5-CrayGNU-18.08 netcdf-python/1.4.1-CrayGNU-18.08-python3 NCO
 export IGNORE_ATT_COORDINATES=1
 
+Warning regarding Daint:
+At 12km resolution, the file CMORlight/Config/coordinates_cordex_eur11.nc is too big to be read from $HOME through the batch system. It has to be put on /scratch. If the same problem occurs at other resolution, change 'DirConfig' into the explicit path on /scratch in the line: 'coordinates_file = ("%s/%s" % (DirConfig,config.get_sim_value('coordinates_file')))' in CMORlight/settings.py
+Example: coordinates_file = ("%s/%s" % ('/scratch/snx3000/demorym/CCLM2CMOR/src/CMORlight/Config',config.get_sim_value('coordinates_file')))
+CSCS is investigating the problem but has not found any other solution so far.
+
 #to test submission, do: ksh master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -M 24 -s 1979 -e 1979
 sbatch master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -M 24 -s 1979 -e 2010
 sbatch master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -M 24 -s 1979 -e 2010 -V -O #for verbose mode and overwrite
@@ -39,6 +44,7 @@ sbatch master_cmor.sh -X historical -E r12i1p1 -G ICHEC-EC-EARTH --all -M 24 -s 
 sbatch master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all -c -s 1979 -e 2010
 
 #chunking with '--remove' to remove the annual files:
+sbatch master_cmor.sh -X evaluation -E r1i1p1 -G ECMWF-ERAINT --all --remove -c -s 1979 -e 2010
 sbatch master_cmor.sh -X historical -E r1i1p1 -G MOHC-HadGEM2-ES --all --remove -c -s 194912 -e 2005
 sbatch master_cmor.sh -X historical -E r12i1p1 -G ICHEC-EC-EARTH --all --remove -c -s 194912 -e 2005
 sbatch master_cmor.sh -X historical -E r1i1p1 -G MIROC-MIROC5 --all --remove -c -s 194912 -e 2005
