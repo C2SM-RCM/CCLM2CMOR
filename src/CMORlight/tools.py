@@ -67,7 +67,7 @@ def get_var_lists():
     lst = []
     for row in sorted(settings.param):
         var=settings.param[row][config.get_config_value('index','INDEX_VAR')]
-        if not var in lst: #to not append variables twice as they appear twice in params
+        if not var in lst: #do not append variables twice as they appear twice in params
             lst.append(var)
     return sorted(lst)
 
@@ -551,10 +551,14 @@ def check_resolution(params,res,process_table_only):
     '''
     Check whether resolution "res" is declared in specific row of variables table "param".
     '''
+    #MED>> add additional subdaily resolution 
     if res in ["1hr","3hr","6hr","12hr"]:
         res_hr=(float(res[:-2])) #extract time resolution in hours
-        freq_table=params[config.get_config_value('index','INDEX_FRE_SUB')]
         freq=24./res_hr
+        freq_table=params[config.get_config_value('index','INDEX_FRE_ASU')]
+        if (freq_table=="" or float(freq_table) != freq) and process_table_only:
+            freq_table=params[config.get_config_value('index','INDEX_FRE_SUB')]	
+    #MED<<
     elif res=="day":
         freq_table=params[config.get_config_value('index','INDEX_FRE_DAY')]
         freq=1. #requested samples per day
@@ -1345,9 +1349,18 @@ is here the time resolution of the input data in hours."
     # process all requested resolutions
     
     for res in reslist:
+        #MED>> add additional subdaily resolution
+        #if res in ["1hr","3hr","6hr","12hr"]:
+        #    res_hr = float(res[:-2]) #extract time resolution in hours
+        #    cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SUB')]
         if res in ["1hr","3hr","6hr","12hr"]:
             res_hr = float(res[:-2]) #extract time resolution in hours
-            cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SUB')]
+            freq=24./res_hr
+            freq_table=params[config.get_config_value('index','INDEX_FRE_ASU')]
+            cm_type = params[config.get_config_value('index','INDEX_VAR_CM_ASU')]
+            if (cm_type=="" or float(freq_table) != freq):
+                cm_type = params[config.get_config_value('index','INDEX_VAR_CM_SUB')]
+        #MED<<
         elif res=="day":
             res_hr=24.
             cm_type = params[config.get_config_value('index','INDEX_VAR_CM_DAY')]
@@ -1361,7 +1374,7 @@ is here the time resolution of the input data in hours."
             new_reslist.remove(res)
             continue
 
-        # process only if cell method is definded in input matrix
+        # process only if cell method is defined in input matrix
         if cm_type == '':
             cmd = "No cell method set for this variable (%s) and time resolution (%s)." % (var,res)
             logger.warning(cmd)
@@ -1629,7 +1642,8 @@ is here the time resolution of the input data in hours."
         #HJP April 2019 Begin
         #set all predefined global attributes for 2nd Nest if necessary
         if settings.Global_attributes_2ndNest=={}:
-            logger.error("List of global attributes for 2nd Nest is empty!")
+            #logger.error("List of global attributes for 2nd Nest is empty!")
+            logger.info("List of global attributes for 2nd Nest is empty!")
         else:
             f_out.setncatts(settings.Global_attributes_2ndNest)
             logger.info("Global attributes 2nd Nest set!")
