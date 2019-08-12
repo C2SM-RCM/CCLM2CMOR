@@ -7,7 +7,7 @@ CCLM variable name;CCLM variable name (in model output file);output variable nam
 (not required, however, if included should have the value as in CMIP5)";"cell-method: area
 (optional)"
 T_2M;T_2M;tas;;;ModelLevel;1;;point;mean;mean;mean;2;K;;8;i;1;8;1;m*8;1;s*8;;Near-Surface Air Temperature;;air_temperature;;atmos;
-;TD_2M;tds;;;ModelLevel;1;;point;;;;2;K;;24;i;;;;;;;;2m Dew Point Temperature;;2m_dew_point_temperature;;atmos;
+;TD_2M;tds;;;ModelLevel;1;;point;;;;2;K;;24;i;;;;;;;;2m Dew Point Temperature;;dew_point_temperature;;atmos;
 TMAX_2M;TMAX_2M;tasmax;;;ModelLevel;1;;;maximum;maximum within days time: mean over days;maximum within days time: mean over days;2;K;;;a;1;;1;m;1;s;;Daily Maximum Near-Surface Air Temperature;;air_temperature;;atmos;
 TMIN_2M;TMIN_2M;tasmin;;;ModelLevel;1;;;minimum;minimum within days time: mean over days;minimum within days time: mean over days;2;K;;;a;1;;1;m;1;s;;Daily Minimum Near-Surface Air Temperature;;air_temperature;;atmos;
 TOT_PREC;TOT_PREC;pr;;;ModelLevel;0,000277778;;mean;mean;mean;mean;0;kg m-2 s-1;;8;a;1;;1;;1;;;Precipitation;;precipitation_flux;;atmos;
