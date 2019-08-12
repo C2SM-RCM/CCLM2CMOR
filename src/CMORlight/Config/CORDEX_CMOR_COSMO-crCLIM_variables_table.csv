@@ -6,8 +6,8 @@ CCLM variable name;CCLM variable name (in model output file);output variable nam
 [1/sem]";ag;fx;long_name;description (CORDEX ADD);standard_name;direction of positive fluxes;"realm
 (not required, however, if included should have the value as in CMIP5)";"cell-method: area
 (optional)";
-T_2M;T_2M;tas;;;ModelLevel;1;point;mean;mean;mean;mean;2;K;24;8;i;1;24;1;m*24;1;s*24;;Near-Surface Air Temperature;;air_temperature;;atmos;;
-TD_2M;TD_2M;tds;;;ModelLevel;1;;point;;;;2;K;;24;i;;;;;;;;2m Dew Point Temperature;;2m_dew_point_temperature;;atmos;;
+T_2M;T_2M;tas;;;ModelLevel;1;point;point;mean;mean;mean;2;K;24;8;i;1;24;1;m*24;1;s*24;;Near-Surface Air Temperature;;air_temperature;;atmos;;
+TD_2M;TD_2M;tds;;;ModelLevel;1;;point;;;;2;K;;24;i;;;;;;;;2m Dew Point Temperature;;dew_point_temperature;;atmos;;
 TMAX_2M;TMAX_2M;tasmax;;;ModelLevel;1;;;maximum;maximum within days time: mean over days;maximum within days time: mean over days;2;K;;;a;1;;1;m;1;s;;Daily Maximum Near-Surface Air Temperature;;air_temperature;;atmos;;
 TMIN_2M;TMIN_2M;tasmin;;;ModelLevel;1;;;minimum;minimum within days time: mean over days;minimum within days time: mean over days;2;K;;;a;1;;1;m;1;s;;Daily Minimum Near-Surface Air Temperature;;air_temperature;;atmos;;
 TOT_PREC;TOT_PREC;pr;;;ModelLevel;0,000277778;mean;mean;mean;mean;mean;0;kg m-2 s-1;24;8;a;1;;1;;1;;;Precipitation;;precipitation_flux;;atmos;;
@@ -43,7 +43,7 @@ V_10M;V_10M;vas;;derotate;ModelLevel;1;;point;mean;mean;mean;10;m s-1;;4;i;1;4;1
 VMAX_10M;VMAX_10M;wsgsmax;;;ModelLevel;1;;;maximum;;;10;m s-1;;;a;1;;;;;;;Daily Maximum Near-Surface Wind Speed of Gust;;wind_speed_of_gust;;atmos;;
 ;AUMFL_S;tauu;not yet supported on GPU;;;;;mean;mean;;;;Pa;;4;a;1;;;;;;;Surface Downward Eastward Wind Stress;;surface_downward_eastward_stress;down;atmos;;
 ;AVMFL_S;tauv;not yet supported on GPU;;;;;mean;mean;;;;Pa;;4;a;1;;;;;;;Surface Downward Northward Wind Stress;;surface_downward_northward_stress;down;atmos;;
-T_S;T_S;ts;;;ModelLevel;1;point;mean;mean;;;0;K;8;4;i;1;8;;;;;;Surface Temperature;;surface_temperature;;atmos;;
+T_S;T_S;ts;;;ModelLevel;1;point;point;mean;;;0;K;8;4;i;1;8;;;;;;Surface Temperature;;surface_temperature;;atmos;;
 HPBL;HPBL;zmla;;;ModelLevel;1;;point;mean;;;0;m;;4;i;1;4;;;;;;Height of Boundary Layer;;atmosphere_boundary_layer_thickness;;atmos;;
 TQV;TQV;prw;;;ModelLevel;1;;point;mean;;;0;kg m-2;;4;i;1;4;;;;;;Water Vapor Path;;atmosphere_water_vapor_content;;atmos;;
 TQW;TQW;clwvi;TQC + TQI;;ModelLevel;1;;point;mean;;;0;kg m-2;;4;i;1;4;;;;;;Condensed Water Path;;atmosphere_cloud_condensed_water_content;;atmos;;
