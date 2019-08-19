@@ -109,17 +109,9 @@ do
       fi
       
       #cut off pressure level information from FILEOUT to find it in acc_list or inst_list
-      if [[ "${FILEOUT: -1}" == "p" ]] 
-      then
-        (( c2 = ${#FILEOUT}-4 ))
-        varname=$(echo ${FILEOUT} | cut -c1-${c2})
-      else
-        varname=${FILEOUT}
-      fi
-
       #MED 20/05/19>>
-      #cut off height level information from FILEOUT to find it in acc_list or inst_list
-      if [[ "${FILEOUT: -1}" == "z" ]] 
+      #and cut off height level information from FILEOUT to find it in acc_list or inst_list
+      if [[ "${FILEOUT: -1}" == "p" || "${FILEOUT: -1}" == "z" ]] 
       then
         (( c2 = ${#FILEOUT}-4 ))
         varname=$(echo ${FILEOUT} | cut -c1-${c2})
