@@ -117,7 +117,8 @@ then
     for stream in ${outstream}
     do
 	mkdir  ${OUTDIR}/${startyear}/output/${stream}
-        tar -xf ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}/${startyear}/output/${stream} --strip-components=3 output/${stream}/${startyear} 
+        #MED>> tar -xf ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}/${startyear}/output/${stream} --strip-components=3 output/${stream}/${startyear} 
+        tar xfm ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}/${startyear}/output/${stream} --strip-components=3 output/${stream}/${startyear} 
    done
 #    tar -xf ${ARCHDIR}/*${startyear}.tar -C ${OUTDIR}  output/out??/${startyear} 
   else
