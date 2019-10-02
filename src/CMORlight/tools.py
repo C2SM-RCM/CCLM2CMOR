@@ -148,7 +148,13 @@ def create_outpath(res,var):
                      var
                     )
     else:
-        result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
+#
+# HJP August 2019 Begin
+#  for ESGF conformal pathname the CLMcom suggestions cannot be applied
+#  CLMcom suggestions have been commented
+#
+#       result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
+        result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
                     (settings.Global_attributes["project_id"],
                      settings.Global_attributes_2ndNest["product"],
                      settings.Global_attributes_2ndNest["cprcm_domain"],
@@ -156,14 +162,15 @@ def create_outpath(res,var):
                      settings.Global_attributes["driving_model_id"],
                      settings.Global_attributes["experiment_id"],
                      settings.Global_attributes["driving_model_ensemble_member"],
-                     settings.Global_attributes["rcm_model_id"],
-                     settings.Global_attributes["rcm_domain"],
-                     settings.Global_attributes["rcm_version_id"],
+#                    settings.Global_attributes["rcm_model_id"],
+#                    settings.Global_attributes["rcm_domain"],
+#                    settings.Global_attributes["rcm_version_id"],
                      settings.Global_attributes_2ndNest["cprcm_model_id"],
                      settings.Global_attributes_2ndNest["cprcm_nesting_information"],
                      res,
                      var
                     )
+# HJP August 2019 End  
     #HJP March 2019 End
 
     if settings.use_version!="":
@@ -229,19 +236,28 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
                         trange,
                 )
     else:
-        result = "%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
+#
+# HJP August 2019 Begin
+# HJP August 2019 Begin
+#  for ESGF conformal pathname the CLMcom suggestions cannot be applied
+#  CLMcom suggestions have been commented
+#
+# 
+#       result = "%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
+        result = "%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
                         settings.Global_attributes_2ndNest["cprcm_domain"],
                         settings.Global_attributes["driving_model_id"],
                         settings.Global_attributes["experiment_id"],
                         settings.Global_attributes["driving_model_ensemble_member"],
-                        settings.Global_attributes["rcm_model_id"],
-                        settings.Global_attributes["rcm_domain"],
-                        settings.Global_attributes["rcm_version_id"],
+#                       settings.Global_attributes["rcm_model_id"],
+#                       settings.Global_attributes["rcm_domain"],
+#                       settings.Global_attributes["rcm_version_id"],
                         settings.Global_attributes_2ndNest["cprcm_model_id"],
                         settings.Global_attributes_2ndNest["cprcm_nesting_information"],
                         res,
                         trange,
                 )
+# HJP August 2019 End
     #HJP March 2019 End  
 
     return result
@@ -844,6 +860,15 @@ def process_file_fix(params,in_file):
     # set all predefined global attributes
     f_out.setncatts(settings.Global_attributes)
     log.info("Global attributes set!")
+
+#HJP Augst 2019 Begin
+        #set all predefined global attributes for 2nd Nest if necessary
+    if settings.Global_attributes_2ndNest=={}:
+       log.info("List of global attributes for 2nd Nest is empty since not necessary")
+    else:
+       f_out.setncatts(settings.Global_attributes_2ndNest)
+       log.info("Global attributes 2nd Nest set!")
+#HJP August 2019 End
 
     # add lon/lat variables if not yet present
     add_coordinates(f_out)
