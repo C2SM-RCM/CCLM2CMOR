@@ -158,7 +158,7 @@ def create_outpath(res,var):
                     (settings.Global_attributes["project_id"],
                      settings.Global_attributes_2ndNest["product"],
                      settings.Global_attributes_2ndNest["cprcm_domain"],
-                     settings.Global_attributes["rcm_institute_id"],
+                     settings.Global_attributes_2ndNest["cprcm_institute_id"],
                      settings.Global_attributes["driving_model_id"],
                      settings.Global_attributes["experiment_id"],
                      settings.Global_attributes["driving_model_ensemble_member"],
