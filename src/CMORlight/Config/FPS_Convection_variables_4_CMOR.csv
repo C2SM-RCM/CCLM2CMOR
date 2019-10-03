@@ -70,9 +70,10 @@ RUNOFF_S;RUNOFF_S;mrros;;;ModelLevel;0.000277778;;mean;mean;mean;mean;0;kg m-2 s
 RUNOFF_T;RUNOFF_T;mrro;RUNOFF_G + RUNOFF_S;;ModelLevel;0.000277778;;mean;mean;mean;mean;0;kg m-2 s-1;;24;a;1;24;1;;1;;;Total Runoff;;runoff_flux;;land;
 W_SO;W_SO;mrso1;W_SO(1);;ModelLevel;1000;;point;mean;mean;mean;0;kg m-2;;4;i;1;4;1;m*4;1;s*4;;Total Water Content of Soil Layer;depth of first soil layer: 0.5 cm;moisture_content_of_soil_layer;;land;
 W_SO;W_SO;mrso;Sum(W_SO(1:8));;ModelLevel;1000;;point;mean;mean;mean;8;kg m-2;;4;i;1;4;1;m*4;1;s*4;;Total Soil Moisture Content;Sum over 8 levels from ground to 2.86 m depth;soil_moisture_content;;land;
-TQV;TQV;prw;;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;1;24;;;;;;Water Vapor Path;;atmosphere_water_vapor_content;;atmos;
-TQW;TQW;clwvi;TQC + TQI;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;1;24;;;;;;Condensed Water Path;;atmosphere_cloud_condensed_water_content;;atmos;
-TQI;TQI;clivi;;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;1;24;;;;;;Ice Water Path;;atmosphere_cloud_ice_content;;atmos;
+TQV;TQV;prw;;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;1;24;1;m*4;1;s*4;;Water Vapor Path;;atmosphere_water_vapor_content;;atmos;
+TQW;TQW;clwvi;TQC + TQI;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;1;24;1;m*4;1;s*4;;Condensed Water Path;;atmosphere_cloud_condensed_water_content;;atmos;
+TQI;TQI;clivi;;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;1;24;1;m*4;1;s*4;;Ice Water Path;;atmosphere_cloud_ice_content;;atmos;
+TQG;TQG;clgvi;;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;1;24;1;m*4;1;s*4;;Vertical integral of mass content of graupel;;atmosphere_mass_content_of_graupel;;atmos;
 HSURF;HSURF;orog;;;;1;;;;;;;m;;;;;;;;;;0;Surface Altitude;;surface_altitude;;atmos;
 FR_LAND;FR_LAND;sftlf;;;;100;;;;;;;%;;;;;;;;;;0;Land Area Fraction;;land_area_fraction;;atmos;
 HPBL;HPBL;zmla;;;ModelLevel;1;;point;mean;mean;mean;0;m;;24;i;1;24;;;;;;Height of Boundary Layer;;atmosphere_boundary_layer_thickness;;atmos;
