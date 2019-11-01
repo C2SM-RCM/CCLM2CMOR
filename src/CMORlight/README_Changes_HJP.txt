@@ -50,7 +50,7 @@ tools.py:
 
 
 CSV-Table:  (which, by default, resides in CCLM2CMOR/src/CMMORlight/Config)
-  the title of column 23 (counting starts with 0) was "description"; entries in this column have not been considered so far
+  the title of column 25 (counting starts with 0) was "description"; entries in this column have not been considered so far
   I changed the title of this column to "comment".
   The idea is that the user now can include explaining comments there; for example, for CMOR variable "mrso", the total soil moisture integrated over a certain number of soli layers,
    one can say that the moisture has been summed over a certain amount of layers, e.g. 8, and what the depth of the deepest layer is
