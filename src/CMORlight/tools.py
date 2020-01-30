@@ -1433,15 +1433,19 @@ is here the time resolution of the input data in hours."
 
         #conversion factor            
         conv_factor = params[config.get_config_value('index','INDEX_CONVERT_FACTOR')].strip().replace(',','.')
-        #MED>>if  conv_factor not in ['', '0', '1']:
-        if  conv_factor not in ['', '0', '1', '-1']:
-        #MED<<
-            #change conversion factor for accumulated variables
-            if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
-                conv_factor = str(float(conv_factor) / input_res_hr)
-            cmd_mul = ' -mulc,%s ' %  conv_factor
+        ##MED>>if  conv_factor not in ['', '0', '1']:
+        #if  conv_factor not in ['', '0', '1', '-1']:
+        ##MED<<
+        #    #change conversion factor for accumulated variables
+        #    if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
+        #        conv_factor = str(float(conv_factor) / input_res_hr)
+        #    cmd_mul = ' -mulc,%s ' %  conv_factor
+        ##MED>>
+        #elif conv_factor == '-1':
+        #    cmd_mul = ' -mulc,%s ' %  conv_factor
+        ##MED<<
         #MED>>
-        elif conv_factor == '-1':
+        if  conv_factor not in ['', '0', '1']:
             cmd_mul = ' -mulc,%s ' %  conv_factor
         #MED<<
         else:
