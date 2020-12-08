@@ -46,12 +46,6 @@ def init(vartable):
     global global_attr_list
     global_attr_list = config.get_config_value('settings','global_attr_list').split(',')
 
-    #HJP March 2019 Begin
-    # consideration of possible 2nd nest information
-    global global_attr_list_2ndNest
-    global_attr_list_2ndNest = config.get_config_value('settings','global_attr_list_2ndNest').split(',')
-    #HJP March 2019 End
-
     global global_attr_file
     global_attr_file = config.get_config_value('settings','global_attr_file',exitprog=False).split(',')
 
@@ -79,12 +73,6 @@ def init(vartable):
     # dictionary for global attributes
     global Global_attributes
     Global_attributes = OrderedDict()
-
-    #HJP April 2019 Begin
-    # dictionary for global attributes of 2nd Nest
-    global Global_attributes_2ndNest
-    Global_attributes_2ndNest = OrderedDict()
-    #HJP April 2019 Begin
 
     # dictionary for additional netcdf atributes
     global netCDF_attributes

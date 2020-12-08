@@ -1,10 +1,7 @@
 #
 # configuration file to control the processing
 #
-# Lists must be comma-separated without spaces
-#
 # 2016,2017 DKRZ, Hans Ramthun, ETHZ Matthias Göbel
-# 2019, IMK-TRO/KIT, H.-J. Panitz
 #
 #
 ################################################################################################
@@ -20,7 +17,7 @@ simulation=CCLM
 DataPath=
 
 #base path for DirConfig and DirLog; leave this empty if you want to specify absolute paths below
-BasePath=/zhome/academic/HLRS/IMK/imkclm1/Bin/CCLM2CMOR/CCLM2CMOR-master/
+BasePath=/zhome/academic/HLRS/IMK/imkclm1/Bin/CCLM2CMOR/Version_102019_V02/CCLM2CMOR-master/
 
 #Paths relative to BasePath
 #where the parameter table, the coordinates file and the vertices file are located
@@ -30,58 +27,48 @@ DirLog=logs/cmorlight
 
 #Paths relative to Dataath:
 #Input directory for processing
-DirIn=/lustre/cray/ws9/5/ws/imkclm1-Daten_20190705/scratch/CMOR/work/Evaluation/input_CMORlight
+DirIn=/lustre/cray/ws9/5/ws/imkclm1-Daten_20200218/scratch/FPS_Convection_CMOR/work/Evaluation/input_CMORlight
 #Output directory
-DirOut=/lustre/cray/ws9/5/ws/imkclm1-Daten_20190705/FPS_Convection/Mandatory_Domain_00275_23GPsponge/CEUR0275_RK25L50ERAINT_KIT/Evaluation/CMOR/OUT
+DirOut=/lustre/cray/ws9/5/ws/imkclm1-Daten_20200218/FPS_Convection/Mandatory_Domain_00275_23GPsponge/CEUR0275_RK25L50ERAINT_KIT/Evaluation/CMOR/OUT
 #directory for temporary files
-DirWork=/lustre/cray/ws9/5/ws/imkclm1-Daten_20190705/scratch/CMOR/temp/Evaluation
+DirWork=/lustre/cray/ws9/5/ws/imkclm1-Daten_20200218/scratch/FPS_Convection_CMOR/temp/Evaluation
 #where the derotated
-DirDerotated=/lustre/cray/ws9/5/ws/imkclm1-Daten_20190705/scratch/CMOR/work//Evaluation/output_derotated
+DirDerotated=/lustre/cray/ws9/5/ws/imkclm1-Daten_20200218/scratch/FPS_Convection_CMOR/work/Evaluation/output_derotated
 
 #######################################################################################################################################################################################
 #
 # IMPORTANT NOTE
-# The following two lists of global attributes are still built for the extended path- and filenames in case of a double nest approach.
-# These extended names follow the suggestions made by CLM-Community and contain information on the intermediate (first) nest as well as information on the fineal (the second) nest.
-# But these extended names are not ESGF conformal.
-# Thus, in order to get ESGF conformal path- and filenames also for the case of a 2-nest run, I changed the script "tools.py" accordingly.
-# However, those elements needed for the extended names are still in the "tools.py" script, but commented out.
+# The following list of global attributes
+# - contain the mandatory attributes necessary according to the CORDEX standard (see latest document on "CORDEX Arcive Desgin", March 2013
+# - additional optional attributes "invented" by Hans-Juergen Panitz
 #
-#  H.-J. Panitz, August 2019
+# This control_ini file cannot be used together with that CCLM2CMOR tool version, which has been built to follow the CLM-Community suggestions
+# for extended directory- and filenmae structures and extended list of global attributes for CMORization of data from a double-nest simulation
+#
+# By the way, the latest official version is that, which gives the possibilty to consider an additional sub-daily frequency, an implementation by Marie-Estelle
+# This is important because the user has to take this into account in his CSV table (input from $DirConfig - see above); this table now must have 30 columns
+#
+#  H.-J. Panitz, September 2020
 #
 ########################################################################################################################################################################################
 
+#HJP March 2019 Begin
 #Global attributes that should be taken from this .ini file
 #----------------------------------------------------------
-# "global_attr_list" 
-# must not be empty, regardless whether the simulation is a 1 Nest approach (direct downscaling) or a 2nd nest run.
-# Mandatory attributes are: project_id,driving_model_id,experiment_id,driving_experiment_name,driving_model_ensemble_member,CORDEX_domain,institute_id,model_id,rcm_version_id,contact
-# They are also used in the case of a 2nd nest run to set the final (not ESGF conformal) directory structure and filename.
+# "global_attr_list"
+# must not be empty
+#
+# Mandatory attributes are:
+# project_id,driving_model_id,experiment_id,driving_experiment_name,driving_model_ensemble_member,CORDEX_domain,institute_id,model_id,rcm_version_id,contact
+#
 # All other attributes are  optional.
 # Entries for listed attributes are defined in section 'settings_CCLM' below; each attribute set in "global_attr_list" needs an entry/"value", otherwise the tool will stop.
 #
-# The attributes set in "global_attr_list" appear first in the global attributes of the final file
+# The attributes set in "global_attr_list" appear in the global attributes of the final file
 # The sequence of appearance in the file is determined by the sequence of their setting in this list
 
-global_attr_list=Conventions,conventionsURL,title,project_id,driving_model_id,driving_experiment_name,experiment_id,driving_experiment,driving_model_ensemble_member,experiment,nesting_levels,rcm_contact,rcm_domain,rcm_institute_id,rcm_institution,rcm_model_id,rcm_version_id,rcm_config_cclm,rcm_config_int2lm,comment,source,references
-
-#HJP March 2019 Begin
-# If the current simulation is the 2nd nest of a double nest approach, set list of global attributes that characterize the 2nd nest simulation.
-# Mandatory attributes are: cprcm_domain, cprcm_model_id and cprcm_nesting_information, which are also used to set the final directory structure and filename.
-# All other attributes are  optional.
-# Entries for listed attributes are defined in section 'settings_CCLM' below; each attribute needs an entry/"value", otherwise the tool will stop.
+global_attr_list=Conventions,conventionsURL,title,project_id,CORDEX_domain,driving_model_id,driving_experiment_name,experiment_id,driving_experiment,driving_model_ensemble_member,experiment,model_id,institute_id,institution,rcm_version_id,contact,nesting_levels,comment_nesting,comment_1stNest,comment_2ndNest,comment,rcm_config_cclm,rcm_config_int2lm,source,references
 #
-# In the final file, the attributes set in "global_attr_list_2ndNest" appear after the global attributes set in "global_attr_list" above
-# The sequence of appearance in the file is determined by the sequence of their setting in this list
-
-#######################################################################################################################
-#  IMPORTANT: 
-#  global_attr_list_2ndNest=None 
-#   if the current simulation is a 1-Nest approach.
-#   in this case all settings for the 2nd nest in section 'settings_CCLM' will be ignored; there is no need to comment them out
-#######################################################################################################################
-
-global_attr_list_2ndNest=None
 #HJP March 2019 End
 
 #global attributes that should be taken from .nc files if present; will overwrite settings from global_attr_list!
@@ -118,7 +105,7 @@ cdo_nctype=nc4c
 varlist_reject=pressure,height_2m,height_10m,height_toa,soil1,soil1_bnds,height,plev,nb2,bnds,time_bnds
 
 #time units of output; for CORDEX: days since 1949-12-01 00:00:00 or equivalent
-units=days since 2000-01-01T00:00:00Z
+units=days since 1999-01-01T00:00:00Z
 
 #time units of input if the units attribute is not correct
 alt_units=
@@ -148,6 +135,7 @@ missing_value=1.e+20
 
 ################################################################################################
 [index]
+#column numbers in the variables table
 #column numbers in the variables table
 INDEX_RCM_NAME = 0
 INDEX_RCM_NAME_ORG = 1
@@ -221,14 +209,13 @@ var_list_fixed=orog,sftlf
 #######################
 
 # define the attributes set in  "global_attr_list" (see above)
-# they are needed in case of a 1-nest approach (directs downscaling) or a 2-nest approach
 # please note: ALL elements set in the "global_attr_list" must get a definition here; otherwise the CMOR-Tool will stop with an error message
 
 #mandatory attributes:
 #====================
 # Note that some mandatory global attributes are automatically generated by the CMOR tool: creation_date, frequency, product
 
-project_id=cordex-fpsc
+project_id=CORDEX-FPSCONV
 
 #driving model id: gcm_institute id + '-' + gcm_model_id; usually from http://cordex.dmi.dk/joomla/images/CORDEX/GCMModelName.txt
 driving_model_id=ECMWF-ERAINT 
@@ -243,80 +230,28 @@ driving_experiment_name=evaluation
 driving_model_ensemble_member=r1i1p1
 
 #domain name as provided by CORDEX
-rcm_domain=ALP-3
+CORDEX_domain=ALP-3
 
 #institute id: usually from this list
-rcm_institute_id=CLMCom-KIT
+institute_id=CLMcom-KIT
 
 #rcm_model_id: rcm_institute_id + '-' + rcm_model_acronym; usually from http://cordex.dmi.dk/joomla/images/CORDEX/RCMModelName.txt
-rcm_model_id=CLMcom-KIT-CCLM5-0-14
+model_id=CLMcom-KIT-CCLM5-0-14
+
+#contact: email address
+contact=hans-juergen.panitz@kit.edu / gerd.schaedler@kit.edu
 
 #rcm_version_id: identifies reruns with perturbed parameters or smaller RCM release upgrades;...
 #...differences between different rcm_version_id should be explained in the comments attribute or referred to in the source attribute
-rcm_version_id=x0n1v1
+rcm_version_id=fpsconv-x2yn2-v1
 
-#contact: email address
-rcm_contact=hans-juergen.panitz@kit.edu / gerd.schaedler@kit.edu
-
-
-#recommended attributes:
-#======================
-# Note that some recommended global attributes are automatically generated by the CMOR tool: tracking_id
-
-driving_experiment=ECMWF-ERAINT, evaluation, r1i1p1  
-
-experiment=Evaluation run with reanalysis forcing
-
-#Conventions: used version of CF conventions
-Conventions=CF-1.4
-
-
-#optional attributes:
-#===================
-title=CCLMCom-KIT-CCLM5-0-14 model output prepared for CORDEX FPS Convection Evaluation Run
-
-rcm_institution=IMK-TRO/KIT, Karlsruhe, Germany in collaboration with the MiKLIP community
-
-#rcm_comment: a special comment on the 1. nest could be included
-rcm_comment=following block describes the 1. nest simulation
-
-#rcm_config_cclm: Attribute describing the configuration of CCLM used for this simulation.
-# the configuration files (YUSPECIF, INPUT_ASS, INPUT_DIA, INPUT_DYN, INPUT_INI, INPUT_IO, INPUT_ORG, INPUT_PHY, optional README with further information) 
-# must be provided as tar file (<domain>_<model_id>_X_config.tar) in the overview table on the CLM webpage.
-rcm_config_cclm=ALP-3_x0n1v1_CLMcom-KIT-CCLM5-0-14_config
-
-#rcm_config_int2lm: Attribute describing the configuration of INT2LM used for this simulation. 
-#  The configuration files (OUTPUT, INPUT, optional README with further information) must be provided as tar file (<domain>_<int2lm_id>_X_config.tar) in the overview table on the CLM webpage.
-rcm_config_int2lm=ALP3_x0n1v1_CLMcom-KIT-INT2LM2-0-4_config
-
-
-#===================================
-#Attributes for 2nd nest simulations:
-#===================================
-#it is not necessary to comment them in case of 1-nest approach; the definitions below will be ignored if global_attr_list_2ndNest=None
-# see "global_attr_list_2ndNest" above
-# set information on 1./intermediate nest above if current simulation is a 2-nest approach
+# rcm_nesting_information within "rcm_version_id": 
+#  the contents of the mandatory attribute can be chosen freely.
+#  here, we an example for data from the Convections FPS, therefore the additionsl prefix "fpsconv"
+#  The whole structure is accoridng to agreements within the FPSC Community
 #
-# NOTE: if there is no second nest (ony a direct downscaling) there is no need to comment out the cprcm_# elements
-#  provided that that "global_attr_list_2ndNest" has been set correctly: global_attr_list_2ndNest=None
-
-#mandatory attributes for 2nd Nest:
-#=================================
-#
-cprcm_contact=hans-juergen.panitz@kit.edu / gerd.schaedler@kit.edu
-
-#domain name as provided by CORDEX or other projects: ALP-3
-cprcm_domain=ALP-3
-
-#institute id: usually from this list
-cprcm_institute_id=CLMCom-KIT
-
-#cprcm model id: cprcm_institute id + '-' + cprcm_model_version; usually from http://cordex.dmi.dk/joomla/images/CORDEX/RCMModelName.txt
-cprcm_model_id=CLMcom-KIT-CCLM5-0-14
-
-# cprcm_nesting_information: 
 #  Element describing the number of nesting levels (n)
-#  and possible differences between simulation setups for the different nesting levels which can not be indicated otherwise (x2)
+#  and possible differences between simulation setups for different nesting levels which can not be indicated otherwise (x2)
 #  if such setup differences exist, his calls for extra flags, which is designated by a letter(s), being y,z,j or k
 #  The reason for the extra flags associated with “x2” is due to the possibility that a model team may
 #  run more than one simulation with differences between nesting levels. In this case, without an extra
@@ -326,51 +261,65 @@ cprcm_model_id=CLMcom-KIT-CCLM5-0-14
 #  updated version of the either the intermediate model or the cprcm
 #
 #  THE SPECIAL CASE OF DIRECT DOWNSCALING (1-nest approach)i TO CP SCALES N.B.!
-#   Use “x0n1v1”. The nesting flag is self-explanatory while the “x0” is maybe redundant but signifies
+#   Use “x0n1-v1”. The nesting flag is self-explanatory while the “x0” is maybe redundant but signifies
 #   that the downscaling is direct from a GCM or Reanalysis product with no intermediate step.
 #
 #   SUMMARY OF NESTING INFORMATION
-#   One nest:                                                   use “x0n1v1”
-#   Two nest, no differences in simulation setups of both runs: use “x1n2v1”
-#   Two nest, differences between setups:                       use “x2yn2v1”
-#   Two nest, additional differences between setups:            use “x2yzn2v1”
+#   One nest:                                                   use “x0n1-v1”
+#   Two nest, no differences in simulation setups of both runs: use “x1n2-v1”
+#   Two nest, differences between setups:                       use “x2yn2-v1”
+#   Two nest, additional differences between setups:            use “x2yzn2-v1”
 #
-cprcm_nesting_information=x2yn2v1
 
-# cprcm_nesting_comment: 
-#  if possible, explain exisitng differences between the setups
-#
-cprcm_nesting_comment=there are a variety of differences between the setups of the first and sencond nest simulations; these differences can be seen by the comparison of the files defined in attributes rcm_config_cclm, rcm__config_int2lm, and cprcm_config_cclm and cprcm_config_intlm2; contact the responsible person for details
+
+#recommended but not mandatory  attributes:
+#======================
+# Note that some recommended global attributes are automatically generated by the CMOR tool: tracking_id
+
+driving_experiment=ECMWF-ERAINT, evaluation, r1i1p1
+
+experiment=Evaluation run with forcing from downscaled ECMWF-ERAINT 1st-nest run
+
+#Conventions: used version of CF conventions
+Conventions=CF-1.4
+
 
 #optional attributes:
 #===================
-nesting_levels=direct_downscaling
+title=CCLMcom-KIT-CCLM5-0-14 model output prepared for CORDEX FPS Convection Evaluation Run
 
-cprcm_comment=following block describes the 2. nest simulation
+institution=IMK-TRO/KIT, Karlsruhe, Germany in collaboration with the CCLM community
 
-cprcm_institution=IMK-TRO/KIT, Karlsruhe, Germany in collaboration with the CLM-Community
-
-parent_experiment=MIKLIP-II EUR-22 ECMWF-ERAINT driven evaluation run using model version CLMcom-KIT_CCLM5-0-10
-
-#cprcm_config_cclm: Attribute describing the configuration of CCLM used for this simulation.
+#nesting_levels: indicates the number of nests applied for the current simulation
+#nesting_levels=1: only on nest; corresponds to a direct downscaling approach
+#nesting_levels=2: 2 nest-approach; current simulation (= 2nd nest) is foreced by results of a first nest
+nesting_levels=2
+#
+comment_nesting=these are results of the 2nd nest of a 2-nest-approach; there are a variety of differences between the setups of the first and second nest simulations; configuration files of the 2nd nest run are denoted in rcm_config_cclm and rcm_config_int2lm; contact the responsible person for details
+#
+comment_1stNest=ERA-Interim driven simulation (direct downscaling) for EUR-22 domain; corresponds to CCLM_5-0-10 evaluation run performed in frame of German MiKlip Program, phase 2
+#
+comment_2ndNest=actual convection permitting FPS simulation using CCLM5-0-14 for mandatory domain ALP-3; forcing derived from 1st-Nest results
+#
+comment=Please use the following reference for this climate data: CORDEX FPS Convection Evaluation using RCM CCLM performed by KIT Karlsruhe in collaboration with the CLM-Community
+#
+#rcm_config_cclm: Attribute describing the configuration of CCLM used for this simulation.
 # the configuration files (YUSPECIF, INPUT_ASS, INPUT_DIA, INPUT_DYN, INPUT_INI, INPUT_IO, INPUT_ORG, INPUT_PHY, optional README with further information) 
-# must be provided as tar file (<domain>_<model_id>_X_config.tar) in the overview table on the CLM webpage.
-cprcm_config_cclm=ALP3_CLMcom-KIT-CCLM5-0-14_config
+# should be provided as tar file (<domain>_<model_id>_X_config.tar) in the overview table on the CLM webpage.
+rcm_config_cclm=ALP3_CLMcom-KIT-CCLM5-0-14_config
 
-#cprcm_config_int2lm: Attribute describing the configuration of INT2LM used for this simulation. 
+#rcm_config_int2lm: Attribute describing the configuration of INT2LM used for this simulation. 
 #  The configuration files (OUTPUT, INPUT, optional README with further information) must be provided as tar file (<domain>_<int2lm_id>_X_config.tar) in the overview table on the CLM webpage.
-cprcm_config_int2lm=ALP3_CLMcom-KIT-INT2LM2-0-4_config
+rcm_config_int2lm=ALP3_CLMcom-KIT-INT2LM2-0-4_config
 
 
-#further optional global attributes being independent of the nesting approach
+#further optional global attributes
 #============================================================================
 conventionsURL=http://www.cfconventions.org
 
 source=Climate Limited-area Modelling Community (CLM-Community)
 
 references=http://cordex.clm-community.eu/
-
-comment=Please use the following reference for this climate data: CORDEX FPS Convection Evaluation performed by KIT Karlsruhe in collaboration with the CLM-Community
 
 table_id=
 modeling_realm=
