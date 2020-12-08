@@ -9,8 +9,8 @@ from netCDF4 import Dataset
 from netCDF4 import num2date
 from netCDF4 import date2num
 #MED Apr 2019: netcdftime package no longer included in netCDF4, try 'import netcdftime' or use the package "utime" depending on your Python installation.
-import netcdftime
-#from cftime import utime
+#import netcdftime
+from cftime import utime
 
 from collections import OrderedDict
 import tempfile
@@ -83,27 +83,9 @@ def set_attributes(params):
         except:
             raise("Global attribute %s is in global_attr_list but is not defined in the configuration file!")
 
-    #HJP April 2019 Begin
-    # get global attributes for 2nd Nest from ini-file, if necessary
-    secondnestlist = settings.global_attr_list_2ndNest
-
-    if secondnestlist!=['None']:
-    # get global attributes from file
-        for name in settings.global_attr_list_2ndNest :
-            try:
-                settings.Global_attributes_2ndNest[name.strip()] = config.get_sim_value(name.strip())
-            except:
-                raise("Global attribute 2nd Nest %s is in global_attr_list_2ndNest but is not defined in the configuration file!")
-    #HJP April 2019 End 	
-
     #Invariant attributes
-    #HJP April 2019 Begin
     #settings.Global_attributes['project_id']="CORDEX" #global attribute "project_id" should be variable, thus defined in the ini-file
-    if secondnestlist==['None']:
-        settings.Global_attributes['product']="output"
-    else:
-        settings.Global_attributes_2ndNest['product']="output"
-    #HJP April 2019 End  
+    settings.Global_attributes['product']="output"
 
     # set addtitional netcdf attributes
     settings.netCDF_attributes['RCM_NAME'] = params[config.get_config_value('index','INDEX_VAR')]
@@ -130,48 +112,19 @@ def create_outpath(res,var):
     '''
     Create and return the output path string from global attributes and dependent on resolution res and variable var
     '''
-    #HJP March 2019 Begin
-    #put information of intermediate nest into the directory structure
-    secondnestlist = settings.global_attr_list_2ndNest
-    if secondnestlist==['None']:
-        result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
-                    (settings.Global_attributes["project_id"],
-                     settings.Global_attributes["product"],
-                     settings.Global_attributes["rcm_domain"],
-                     settings.Global_attributes["rcm_institute_id"],
-                     settings.Global_attributes["driving_model_id"],
-                     settings.Global_attributes["experiment_id"],
-                     settings.Global_attributes["driving_model_ensemble_member"],
-                     settings.Global_attributes["rcm_model_id"],
-                     settings.Global_attributes["rcm_version_id"],
-                     res,
-                     var
-                    )
-    else:
-#
-# HJP August 2019 Begin
-#  for ESGF conformal pathname the CLMcom suggestions cannot be applied
-#  CLMcom suggestions have been commented
-#
-#       result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
-        result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
-                    (settings.Global_attributes["project_id"],
-                     settings.Global_attributes_2ndNest["product"],
-                     settings.Global_attributes_2ndNest["cprcm_domain"],
-                     settings.Global_attributes_2ndNest["cprcm_institute_id"],
-                     settings.Global_attributes["driving_model_id"],
-                     settings.Global_attributes["experiment_id"],
-                     settings.Global_attributes["driving_model_ensemble_member"],
-#                    settings.Global_attributes["rcm_model_id"],
-#                    settings.Global_attributes["rcm_domain"],
-#                    settings.Global_attributes["rcm_version_id"],
-                     settings.Global_attributes_2ndNest["cprcm_model_id"],
-                     settings.Global_attributes_2ndNest["cprcm_nesting_information"],
-                     res,
-                     var
-                    )
-# HJP August 2019 End  
-    #HJP March 2019 End
+    result = "%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s" % \
+                (settings.Global_attributes["project_id"],
+                 settings.Global_attributes["product"],
+                 settings.Global_attributes["CORDEX_domain"],
+                 settings.Global_attributes["institute_id"],
+                 settings.Global_attributes["driving_model_id"],
+                 settings.Global_attributes["experiment_id"],
+                 settings.Global_attributes["driving_model_ensemble_member"],
+                 settings.Global_attributes["model_id"],
+                 settings.Global_attributes["rcm_version_id"],
+                 res,
+                 var
+                )
 
     if settings.use_version!="":
         result += "/" + settings.use_version
@@ -221,44 +174,16 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
 
     logger.debug("Filename start/stop: %s, %s" % (dt_start,dt_stop))
 
-    #HJP March 2019 Begin
-    #put information of intermediate nest into the filename structure
-    secondnestlist = settings.global_attr_list_2ndNest
-    if secondnestlist==['None']:
-        result = "%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
-                        settings.Global_attributes["rcm_domain"],
-                        settings.Global_attributes["driving_model_id"],
-                        settings.Global_attributes["experiment_id"],
-                        settings.Global_attributes["driving_model_ensemble_member"],
-                        settings.Global_attributes["rcm_model_id"],
-                        settings.Global_attributes["rcm_version_id"],
-                        res,
-                        trange,
+    result = "%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
+                  settings.Global_attributes["CORDEX_domain"],
+                  settings.Global_attributes["driving_model_id"],
+                  settings.Global_attributes["experiment_id"],
+                  settings.Global_attributes["driving_model_ensemble_member"],
+                  settings.Global_attributes["model_id"],
+                  settings.Global_attributes["rcm_version_id"],
+                  res,
+                  trange,
                 )
-    else:
-#
-# HJP August 2019 Begin
-# HJP August 2019 Begin
-#  for ESGF conformal pathname the CLMcom suggestions cannot be applied
-#  CLMcom suggestions have been commented
-#
-# 
-#       result = "%s_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
-        result = "%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
-                        settings.Global_attributes_2ndNest["cprcm_domain"],
-                        settings.Global_attributes["driving_model_id"],
-                        settings.Global_attributes["experiment_id"],
-                        settings.Global_attributes["driving_model_ensemble_member"],
-#                       settings.Global_attributes["rcm_model_id"],
-#                       settings.Global_attributes["rcm_domain"],
-#                       settings.Global_attributes["rcm_version_id"],
-                        settings.Global_attributes_2ndNest["cprcm_model_id"],
-                        settings.Global_attributes_2ndNest["cprcm_nesting_information"],
-                        res,
-                        trange,
-                )
-# HJP August 2019 End
-    #HJP March 2019 End  
 
     return result
 
@@ -308,8 +233,11 @@ def set_attributes_create(outpath,res=None,year=0,logger=log):
         f_out.sync()
         # close output file
         f_out.close()
+        logger.info("File: %s" % outpath)
+        logger.info("final attributes created")
     else:
-        logger.error("File does not exist: (%s)" % outpath)
+#       logger.error("File does not exist: (%s)" % outpath)
+        logger.error("File does not exist: %s" % outpath)
 
 # -----------------------------------------------------------------------------
 def set_coord_attributes(f_var,f_out):
@@ -789,14 +717,17 @@ def process_file_fix(params,in_file):
     else:
         log.info("NO COMPRESS")
     for var_name, variable in f_in.variables.items():
+        mulc_fac = mulc_factor
         if var_name in settings.varlist_reject or var_name == 'time':
             continue
         var_in = f_in.variables[var_name]
         # create output variable
         if var_name in ['rlon','rlat','lon','lat','time']:
             data_type = 'd'
+            mulc_fac = 1.0
         elif var_name == 'rotated_pole':
             data_type = 'c'
+            mulc_fac = 1.0
         elif var_name in [settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME']]:
             data_type = 'f'
         else:
@@ -818,8 +749,12 @@ def process_file_fix(params,in_file):
                     dimensions=var_dims,fill_value=settings.netCDF_attributes['missing_value'])
 
         else:
+#
+#HJP, Nov 2020 Begin
+# there might be mulc_factors different from 1 also for fx-fields, e.g. sftlf that has to be given in %
             #no conversion factor needed
-            mulc_factor = 1.0
+#           mulc_factor = 1.0
+#HJP, Nov 2020 END
             if config.get_config_value('boolean','nc_compress') == True:
                 var_out = f_out.createVariable(var_name,datatype=data_type,dimensions=var_dims,complevel=4)
             else:
@@ -846,7 +781,7 @@ def process_file_fix(params,in_file):
 
         # copy content to new datatype
         try:
-            var_out[:] = mulc_factor * var_in[:]
+            var_out[:] = mulc_fac * var_in[:]
         except TypeError:
             pass
 
@@ -860,15 +795,6 @@ def process_file_fix(params,in_file):
     # set all predefined global attributes
     f_out.setncatts(settings.Global_attributes)
     log.info("Global attributes set!")
-
-#HJP Augst 2019 Begin
-        #set all predefined global attributes for 2nd Nest if necessary
-    if settings.Global_attributes_2ndNest=={}:
-       log.info("List of global attributes for 2nd Nest is empty since not necessary")
-    else:
-       f_out.setncatts(settings.Global_attributes_2ndNest)
-       log.info("Global attributes 2nd Nest set!")
-#HJP August 2019 End
 
     # add lon/lat variables if not yet present
     add_coordinates(f_out)
@@ -1087,12 +1013,21 @@ def proc_seasonal(params,year):
                 # create outpath to store
                 outfile = create_filename(var,res,dt_start,dt_stop,logger=logger)
                 outpath = "%s/%s" % (outdir,outfile)
+                logger.info("Output for seasonal processing: %s" % (outpath))
                 # move temp file to output file
                 retval = shell("mv %s %s" % (ftmp_name,outpath))
+#               retval = shell("cp %s %s" % (ftmp_name,outpath))
 
                 # set attributes
                 set_attributes_create(outpath,res,year,logger=logger)
                 
+#HJP
+                help_file = "%s/help-pole_%s.nc" % (outdir,outfile)
+                cmd="ncap2 -h -O -s 'rotated_pole=char(rotated_pole)' %s %s" % (outpath,help_file)
+                shell(cmd,logger=logger)
+                os.remove(outpath)
+                shell ("mv %s %s" % (help_file, outpath),logger=logger)
+#HJP
                 # compress output
                 if config.get_config_value('boolean','nc_compress') == True:
                     compress_output(outpath,year,logger=logger)
@@ -1431,26 +1366,32 @@ is here the time resolution of the input data in hours."
                 logger.info("Overwriting..")
         logger.debug("Output to: %s" % (outpath))
 
-        #conversion factor            
+# HJP Feb 2020 Begin of change
+#  Note: the conversion factors possibly defined in the CSV-table must not be divided by the time resolution of the input data
+#        the correct value for this factor, if it is needed, is in the responsibility of the user
+#        therefore, the follwing lines are commented out
+        #conversion factor
+#       conv_factor = params[config.get_config_value('index','INDEX_CONVERT_FACTOR')].strip().replace(',','.')
+#       if  conv_factor not in ['', '0', '1', '-1']:
+#           #change conversion factor for accumulated variables
+#           if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
+#               conv_factor = str(float(conv_factor) / input_res_hr)
+#           cmd_mul = ' -mulc,%s ' %  conv_factor
+#       elif conv_factor == '-1':
+#           cmd_mul = ' -mulc,%s ' %  conv_factor
+#       else:
+#           cmd_mul = ""
+#       logger.debug("Multiplicative conversion factor: %s" % cmd_mul)
+#
+#  now the change starts; the factor won't be divided by the time resolution anymore
+        #conversion factor
         conv_factor = params[config.get_config_value('index','INDEX_CONVERT_FACTOR')].strip().replace(',','.')
-        ##MED>>if  conv_factor not in ['', '0', '1']:
-        #if  conv_factor not in ['', '0', '1', '-1']:
-        ##MED<<
-        #    #change conversion factor for accumulated variables
-        #    if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
-        #        conv_factor = str(float(conv_factor) / input_res_hr)
-        #    cmd_mul = ' -mulc,%s ' %  conv_factor
-        ##MED>>
-        #elif conv_factor == '-1':
-        #    cmd_mul = ' -mulc,%s ' %  conv_factor
-        ##MED<<
-        #MED>>
         if  conv_factor not in ['', '0', '1']:
             cmd_mul = ' -mulc,%s ' %  conv_factor
-        #MED<<
         else:
             cmd_mul = ""
         logger.debug("Multiplicative conversion factor: %s" % cmd_mul)
+# HJP Feb 2020 End   of change
 
         ftmp_name = "%s/%s-%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()),var)
 
@@ -1668,16 +1609,6 @@ is here the time resolution of the input data in hours."
             f_out.setncatts(settings.Global_attributes)
             logger.info("Global attributes set!")
 
-        #HJP April 2019 Begin
-        #set all predefined global attributes for 2nd Nest if necessary
-        if settings.Global_attributes_2ndNest=={}:
-            #logger.error("List of global attributes for 2nd Nest is empty!")
-            logger.info("List of global attributes for 2nd Nest is empty!")
-        else:
-            f_out.setncatts(settings.Global_attributes_2ndNest)
-            logger.info("Global attributes 2nd Nest set!")
-        #HJP April 2019 End   
-
         # commit changes
         f_out.sync()
 
@@ -1789,6 +1720,15 @@ is here the time resolution of the input data in hours."
             #add coordinates attribute
             cmd="ncatted -a coordinates,%s,o,c,'%s' %s" % (var,coordinates,outpath)
             shell(cmd,logger=logger)    
+
+#HJP
+        help_file = "%s/help-pole-%s-%s-%s.nc" % (settings.DirWork,year,var,str(uuid.uuid1()))
+        cmd="ncap2 -h -O -s 'rotated_pole=char(rotated_pole)' %s %s" % (outpath,help_file)
+        shell(cmd,logger=logger)
+        os.remove(outpath)
+        shell ("mv %s %s" % (help_file, outpath),logger=logger)
+#HJP
+
 
         # ncopy file to correct output format
         if config.get_config_value('boolean','nc_compress') == True:
