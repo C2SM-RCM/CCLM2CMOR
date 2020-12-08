@@ -3,7 +3,7 @@ WRF variable name;WRF variable name (in model output file);output variable name;
 [1/day]";ag;"Daily frq
 [1/day]";ag;"Monthly frq
 [1/mon]";ag;"Seasonal frq
-[1/sem]";ag;fx;long_name;description (CORDEX ADD);standard_name;direction of positive fluxes;"realm
+[1/sem]";ag;fx;long_name;comment;standard_name;direction of positive fluxes;"realm
 (not required, however, if included should have the value as in CMIP5)";"cell-method: area
 (optional)"
 T2;T2;tas;;;ModelLevel;;;point;mean;mean;mean;2;K;;8;i;1;8;1;m*8;1;s*8;;Near-Surface Air Temperature;;air_temperature;;atmos;
