@@ -1,5 +1,24 @@
 Changes by H.-J. Panitz, IMK-TRO/KIT; look for "HJP" in scripts being changed
-You find the scrpits that I changed in CCLM2CMOR/src/CMMORlight (if you did not change the standard diretory structure of the CCLM2CMOR package)
+You find the scripts that I changed in CCLM2CMOR/src/CMMORlight (if you did not change the standard diretory structure of the CCLM2CMOR package)
+
+December, 2020
+
+affected script
+  - tools.py, see "#HJP Dec 2020"
+    def compress_output:
+      change nccopy command to deflation rate 1, but using shuffling;
+      this change reduces the size of a file by about 47% compared to the previous compression;
+      of course, results will no be changed
+
+    def derotate_uv:
+     in case of derotation of u and v wind-components, which uses the CDO-method,
+     the Environment variable IGNORE_ATT_COORDINATES will always get the required value 1,
+     in order to avoid a crash of the tool if the value is wrong
+     It will be checked whether the variable exist or not, and if yes, which value it has; this already set value will be stored
+     Then, the value will be set to 1 in any case
+     At the end of "derotate_uv" the value of IGNORE_ATT_COORDINATES will be
+     - kept, if the Envrionment variable had not been defined before
+     - put back to the stored original value, if the variable had already been defined before 
 
 November, 2020
 
@@ -10,13 +29,13 @@ affected script:
 
 October 2020
 
-Include Directory "Batch" in CCLM2CMOR-master.
+Include Directory "Batch" in CCLM2CMOR.
 Offers the opportunity to run the CMOR-process and subsequent chunking as batch-jobs.
-It is an alternative to the schedular "job" in CCLM2CMOR-master/src
-Infos are given in "README_Batch.rst" in Directory CCLM2CMOR-master/Documentaion.
+It is an alternative to the schedular "job" in CCLM2CMOR/src
+Infos are given in "README_Batch.rst" in Directory CCLM2CMOR/Documentaion.
 
-Include a PDF that explains the CSV-Table.
-Look into Directory CCLM2CMOR-master/Documentation.
+Include a PDF that explains the CSV-Table located in CCLM2CMOR/src/CMORlight/Config.
+Look into Directory CCLM2CMOR/Documentation.
 Name of the PDF: Explaining_CSV_table.pdf
 
 
@@ -69,7 +88,7 @@ we should keep both version of the tool, respectively of script "tools.py",
 
 February 2020
 Changes by H.-J. Panitz, IMK-TRO/KIT; look for "HJP" in scripts being changed
-Change has also be implemented in most recent GITHUB Version by Marie-Estelle
+Change has also been implemented in most recent GITHUB Version by Marie-Estelle
 
 
 tools.py:
@@ -78,17 +97,14 @@ tools.py:
     therefore, the follwing lines are commented out
         #conversion factor
 #       conv_factor = params[config.get_config_value('index','INDEX_CONVERT_FACTOR')].strip().replace(',','.')
-#       #MED>>if  conv_factor not in ['', '0', '1']:
+#       #if  conv_factor not in ['', '0', '1']:
 #       if  conv_factor not in ['', '0', '1', '-1']:
-#       #MED<<
 #           #change conversion factor for accumulated variables
 #           if params[config.get_config_value('index','INDEX_FRE_AGG')] == 'a':
 #               conv_factor = str(float(conv_factor) / input_res_hr)
 #           cmd_mul = ' -mulc,%s ' %  conv_factor
-#       #MED>>
 #       elif conv_factor == '-1':
 #           cmd_mul = ' -mulc,%s ' %  conv_factor
-#       #MED<<
 #       else:
 #           cmd_mul = ""
 #       logger.debug("Multiplicative conversion factor: %s" % cmd_mul)
