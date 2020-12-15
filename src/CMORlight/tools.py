@@ -194,7 +194,10 @@ def compress_output(outpath,year=0,logger=log):
     '''
     if os.path.exists(outpath):
         ftmp_name = "%s/%s-%s.nc" % (settings.DirWork,year,str(uuid.uuid1()))
-        cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
+#HJP Dev 2020 Begin
+#       cmd = "nccopy -k 4 -d 4 %s %s" % (outpath,ftmp_name)
+        cmd = "nccopy -d 1 -s %s %s" % (outpath,ftmp_name)
+#HJP Dev 2020 End
         retval=shell(cmd,logger=logger) 
         # remove help file
         os.remove(outpath)
@@ -1049,7 +1052,15 @@ def derotate_uv(params,in_file,var,logger=log):
     Derotate input file if this is declared for the variable in the variables table (generally for wind speed variables)
     '''
     logger.info("Derotating file")
-    #set environment variable correct
+    #set environment variable IGNORE_ATT_COORDINATES=1
+#HJP Dec 2020 Begin
+    if "IGNORE_ATT_COORDINATES" in os.environ:
+        envvar = os.getenv('IGNORE_ATT_COORDINATES')
+        os.environ["IGNORE_ATT_COORDINATES"] = "1"
+    else:
+        os.environ["IGNORE_ATT_COORDINATES"] = "1"
+        envvar = os.getenv('IGNORE_ATT_COORDINATES')
+#HJP Dec 2020 End
 
     if var not in get_derotate_vars():
         logger.warning("Variable not derotated as this was not declared in parameter table!")
@@ -1141,6 +1152,10 @@ def derotate_uv(params,in_file,var,logger=log):
             os.remove(out_file)
         if os.path.isfile(out_file_derotate):
             os.remove(out_file_derotate)
+#HJP Dec 2020 Begin
+    #set environment variable IGNORE_ATT_COORDINATES back to its original value or keep 1
+    os.environ["IGNORE_ATT_COORDINATES"] = envvar
+#HJP Dec 2020 End
 
     return out_file_u, out_file_v
 
