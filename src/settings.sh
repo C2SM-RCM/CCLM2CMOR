@@ -54,6 +54,7 @@ NBOUNDCUT=13   # number of boundary lines to be cut off in the time series data
 IE_TOT=132     # number of gridpoints in longitudinal direction?
 JE_TOT=129     # number of gridpoints in latitudinal direction
 PLEVS=(200. 500. 850. 925.) # list of pressure levels to output IF NOT set in timeseries.sh. The list must be the same as or a subset	of the list in the specific GRIBOUT. 
+ZLEVS=(100.) # list of height levels to output IF NOT set in timeseries.sh.
 
 #-------------------------------------------
 # Special settings for second step
