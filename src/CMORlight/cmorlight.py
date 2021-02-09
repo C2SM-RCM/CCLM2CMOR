@@ -377,7 +377,7 @@ def main():
             logfile=LOG_FILENAME+str(y)+'.'+logext
             log = init_log.setup_custom_logger("cmorlight_"+str(y),logfile,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
         #change general logger name
-        LOG_FILENAME+="%s_%s." % (config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end"))
+        LOG_FILENAME+="%s-%s." % (config.get_config_value("integer","proc_start"),config.get_config_value("integer","proc_end"))
 
     log = init_log.setup_custom_logger("cmorlight",LOG_FILENAME+logext,config.get_config_value('boolean','propagate_log'),options.normal_log,options.verbose_log,options.append_log)
     #HJP March 2019 End  

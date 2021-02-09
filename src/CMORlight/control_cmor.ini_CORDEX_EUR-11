@@ -1,0 +1,361 @@
+#
+# configuration file to control the processing
+#
+# Lists must be comma-separated without spaces
+#
+# 2016,2017 DKRZ, Hans Ramthun, ETHZ Matthias Göbel
+#
+#
+################################################################################################
+[settings]
+#tag used as extension for the simulation specific settings (e.g. settings_CCLM) lower down
+simulation=CCLM
+
+
+# path settings
+#change DataPath and BasePath; the other paths can be left as they are
+
+#base path for DirIn, DirOut, DirWork and DirDerotated; leave this empty if you want to specify absolute paths below
+#DataPath=
+DataPath=${SCRATCH}/CMOR
+
+#base path for DirConfig and DirLog; leave this empty if you want to specify absolute paths below
+#BasePath=/zhome/academic/HLRS/IMK/imkclm1/Bin/CCLM2CMOR/Version_102019_V02/CCLM2CMOR-master/
+BasePath=${HOME}/CCLM2CMOR
+
+#Paths relative to BasePath
+#where the parameter table, the coordinates file and the vertices file are located
+DirConfig=src/CMORlight/Config
+#for logging
+DirLog=logs/cmorlight
+
+#Paths relative to Dataath:
+#Input directory for processing
+#DirIn=/lustre/cray/ws9/5/ws/imkclm1-Daten_20200218/scratch/FPS_Convection_CMOR/work/Evaluation/input_CMORlight
+DirIn=work/input_CMORlight
+#Output directory
+#DirOut=/lustre/cray/ws9/5/ws/imkclm1-Daten_20200218/FPS_Convection/Mandatory_Domain_00275_23GPsponge/CEUR0275_RK25L50ERAINT_KIT/Evaluation/CMOR/OUT
+DirOut=OUT
+#directory for temporary files
+#DirWork=/lustre/cray/ws9/5/ws/imkclm1-Daten_20200218/scratch/FPS_Convection_CMOR/temp/Evaluation
+DirWork=temp
+#where the derotated
+#DirDerotated=/lustre/cray/ws9/5/ws/imkclm1-Daten_20200218/scratch/FPS_Convection_CMOR/work/Evaluation/output_derotated
+DirDerotated=work/output_derotated
+
+#######################################################################################################################################################################################
+#
+# IMPORTANT NOTE
+# The following list of global attributes
+# - contain the mandatory attributes necessary according to the CORDEX standard (see latest document on "CORDEX Arcive Desgin", March 2013
+# - additional optional attributes "invented" by Hans-Juergen Panitz
+#
+# This control_ini file cannot be used together with that CCLM2CMOR tool version, which has been built to follow the CLM-Community suggestions
+# for extended directory- and filenmae structures and extended list of global attributes for CMORization of data from a double-nest simulation
+#
+# By the way, the latest official version is that, which gives the possibilty to consider an additional sub-daily frequency, an implementation by Marie-Estelle
+# This is important because the user has to take this into account in his CSV table (input from $DirConfig - see above); this table now must have 30 columns
+#
+#  H.-J. Panitz, September 2020
+#
+########################################################################################################################################################################################
+
+#HJP March 2019 Begin
+#Global attributes that should be taken from this .ini file
+#----------------------------------------------------------
+# "global_attr_list" must not be empty.
+#
+# Mandatory attributes are:
+# project_id,driving_model_id,experiment_id,driving_experiment_name,driving_model_ensemble_member,CORDEX_domain,institute_id,model_id,rcm_version_id,contact
+#
+# All other attributes are  optional.
+# Entries for listed attributes are defined in section 'settings_CCLM' below; each attribute set in "global_attr_list" needs an entry/"value", otherwise the tool will stop.
+#
+# The attributes set in "global_attr_list" appear in the global attributes of the final file
+# The sequence of appearance in the file is determined by the sequence of their setting in this list
+
+global_attr_list=Conventions,conventionsURL,title,project_id,CORDEX_domain,driving_model_id,driving_experiment_name,experiment_id,driving_experiment,driving_model_ensemble_member,experiment,model_id,institute_id,institution,rcm_version_id,contact,nesting_levels,comment_nesting,comment_1stNest,comment_2ndNest,comment,rcm_config_cclm,rcm_config_int2lm,source,references
+#
+#HJP March 2019 End
+
+#global attributes that should be taken from .nc files if present; will overwrite settings from global_attr_list!
+global_attr_file=
+
+#list of variables to process if not specified in terminal
+varlist=
+
+#Supported output resolution : 1hr, 3hr, 6hr, day, mon, sem, fx
+#The desired output resolutions can be chosen by the option "-r". However, the "governing" setting comes from the CSV-table
+reslist=1hr,3hr,6hr,day,mon,sem,fx
+
+#list of variables to exclude from processing
+var_skip_list=
+
+#Subdirectory to put chunked files into, if not specified: chunks are placed in same folder as input files for chunking
+chunk_into=
+
+#For CCLM usually no need to change the following options
+
+#name of the level type in the variables table if the variable is on pressure levels
+PModelType=PressureLevel
+#name of the level type in the variables table if the variable is on model levels
+MModelType=ModelLevel
+#HJP Mar 2010 Begin
+#name of the level type in the variables table if the variable is on Z levels
+ZModelType=ZLevel
+#HJP Mar 2010 End
+
+# type of cdo netcdf format
+cdo_nctype=nc4c
+
+#dimensions that should no be copied to output files
+varlist_reject=pressure,height_2m,height_10m,height_toa,soil1,soil1_bnds,height,plev,nb2,bnds,time_bnds
+
+#time units of output; for CORDEX: days since 1949-12-01 00:00:00 or equivalent
+#units=days since 1999-01-01T00:00:00Z
+units=days since 1949-12-01 00:00:00
+
+#time units of input if the units attribute is not correct
+#alt_units=
+alt_units=days since 1950-01-01 00:00:00
+
+
+
+################################################################################################
+[boolean]
+#if True: add /driving_model_id/driving_experiment_name (as defined below or given in function call) to the DirIn path
+extend_DirIn=False
+
+#Add version (default: current date; other values can be set in command line) to output path to not overwrite previously processed data
+add_version_to_outpath=False
+
+# compression of netcdf file: requested by CORDEX
+nc_compress=True
+
+# add vertices from extra file
+add_vertices=False
+
+# use different units for input data than written in units attribute (from entry 'alt_units' (in this file))
+use_alt_units=False
+################################################################################################
+[float]
+#value to set as missing value in output; should be 1.e+20
+missing_value=1.e+20
+
+################################################################################################
+[index]
+#column numbers in the variables table
+INDEX_RCM_NAME = 0
+INDEX_RCM_NAME_ORG = 1
+INDEX_VAR = 2
+INDEX_VAR_ROTATE = 4
+INDEX_MODEL_LEVEL = 5
+INDEX_CONVERT_FACTOR = 6
+#MED>> create column 7 for hourly information
+INDEX_VAR_CM_ASU = 7
+#MED<<
+INDEX_VAR_CM_SUB = 8
+INDEX_VAR_CM_DAY = 9
+INDEX_VAR_CM_MON = 10
+INDEX_VAR_CM_SEM = 11
+INDEX_VAL_LEV_MAX = 12
+INDEX_SOIL_LEV_CNT = 12
+INDEX_VAL_PLEV = 12
+INDEX_VAL_HEIGHT = 12
+INDEX_VAL_LEV = 12
+INDEX_UNIT = 13
+#MED>> create columns 14 and 15 for hourly frequency and aggregation method
+INDEX_FRE_ASU = 14
+#MED<<
+INDEX_FRE_SUB = 15
+INDEX_FRE_AGG = 16
+INDEX_FRE_DAY = 17
+INDEX_FRE_MON = 19
+INDEX_FRE_SEM = 21
+INDEX_FX=23
+INDEX_VAR_LONG_NAME = 24
+#HJP March 2019 Begin
+#Create index name for column 25 of CSV-table where one can include some explaining comment for a variable.
+#This explanation will be included in the output files as variables's attribute "comment".
+INDEX_VAR_COMMENT = 25
+#HJP March 2019 End
+INDEX_VAR_STD_NAME = 26
+INDEX_UP_DOWN = 27
+INDEX_REALM = 28
+INDEX_CM_AREA = 29
+
+
+################################################################################################
+[integer]
+
+# number of years in chunks for daily,monthly and seasonal resolution; the default values (5,10 and 10) are recommended
+#AGG_DAY must be 5 or less:
+AGG_DAY = 5
+#AGG_MON and AGG_SEM must be 10 or less
+AGG_MON = 10
+AGG_SEM = 10
+
+################################################################################################
+
+#simulation specific settings
+[settings_CCLM]
+
+# file with lon/lat [and perhaps vertices]
+#coordinates_file=coordinates_FPSC_alp3.nc
+coordinates_file=coordinates_cordex_eur11.nc
+
+# file with vertices [and perhaps lon/lat]
+vertices_file=
+
+#variables table
+#vartable=FPS_Convection_variables_4_CMOR.csv
+vartable=CORDEX_CMOR_CCLM_variables_table.csv
+
+#list of constant varibles
+var_list_fixed=orog,sftlf
+
+#######################
+# global attributes CCLM
+#######################
+
+# define the attributes set in  "global_attr_list" (see above)
+# please note: ALL elements set in the "global_attr_list" must get a definition here; otherwise the CMOR-Tool will stop with an error message
+
+#mandatory attributes:
+#====================
+# Note that some mandatory global attributes are automatically generated by the CMOR tool: creation_date, frequency, product
+
+#project_id=CORDEX-FPSCONV
+project_id=CORDEX
+
+#driving model id: gcm_institute id + '-' + gcm_model_id; usually from http://cordex.dmi.dk/joomla/images/CORDEX/GCMModelName.txt
+driving_model_id=ECMWF-ERAINT 
+
+#experiment_id: evaluation, historical, rcp85
+experiment_id=evaluation 
+
+#driving_experiment_name: evaluation or the experiment_id of the used CMIP experiment
+driving_experiment_name=evaluation
+
+#ensemble member of the driving CMIP experiment; r1i1p1 for evaluation runs
+driving_model_ensemble_member=r1i1p1
+
+#domain name as provided by CORDEX
+#CORDEX_domain=ALP-3
+CORDEX_domain=EUR-11
+
+#institute id: usually from this list
+#institute_id=CLMcom-KIT
+institute_id=CLMcom-ETH
+
+#model_id: rcm_institute_id + '-' + rcm_model_acronym; usually from http://cordex.dmi.dk/joomla/images/CORDEX/RCMModelName.txt
+#model_id=CLMcom-KIT-CCLM5-0-14
+model_id=CLMcom-ETH-CCLM5-0-6
+
+#contact: email address
+#contact=hans-juergen.panitz@kit.edu / gerd.schaedler@kit.edu
+rcm_contact=cordex-eth@env.ethz.ch
+
+#rcm_version_id: identifies reruns with perturbed parameters or smaller RCM release upgrades;...
+#...differences between different rcm_version_id should be explained in the comments attribute or referred to in the source attribute
+#rcm_version_id=fpsconv-x2yn2-v1
+rcm_version_id=x0n1-v1
+
+# rcm_nesting_information within "rcm_version_id": 
+#  the contents of the mandatory attribute can be chosen freely.
+#  here, we give an example for data from the Convections FPS, therefore the additionsl prefix "fpsconv"
+#  The whole structure is according to agreements within the FPSC Community
+#
+#  Element describing the number of nesting levels (n)
+#  and possible differences between simulation setups for different nesting levels which cannot be indicated otherwise (x2)
+#  if such setup differences exist, this calls for extra flags, which is designated by a letter(s), being y,z,j or k
+#  The reason for the extra flags associated with x2 is due to the possibility that a model team may
+#  run more than one simulation with differences between nesting levels. In this case, without an extra
+#  flag, the filenames would be the same and this is not permitted.
+#
+#  v signifies the version of the simulation. This can be changed in the event of a rerun with an
+#  updated version of either the intermediate model or the cprcm
+#
+#  THE SPECIAL CASE OF DIRECT DOWNSCALING (1-nest approach) TO CP SCALES N.B.!
+#   Use x0n1-v1. The nesting flag is self-explanatory while the x0 is maybe redundant but signifies
+#   that the downscaling is direct from a GCM or Reanalysis product with no intermediate step.
+#
+#   SUMMARY OF NESTING INFORMATION
+#   One nest:                                                   use x0n1-v1
+#   Two nest, no differences in simulation setups of both runs: use x1n2-v1
+#   Two nest, differences between setups:                       use x2yn2-v1
+#   Two nest, additional differences between setups:            use x2yzn2-v1
+#
+
+
+#recommended but not mandatory  attributes:
+#======================
+# Note that some recommended global attributes are automatically generated by the CMOR tool: tracking_id
+
+driving_experiment=ECMWF-ERAINT, evaluation, r1i1p1
+
+#experiment=Evaluation run with forcing from downscaled ECMWF-ERAINT 1st-nest run
+experiment=Evaluation run with reanalysis forcing
+
+#Conventions: used version of CF conventions
+Conventions=CF-1.4
+
+
+#optional attributes:
+#===================
+#title=CCLMcom-KIT-CCLM5-0-14 model output prepared for CORDEX FPS Convection Evaluation Run
+title=CLMcom-ETH-CCLM5-0-6 model output prepared for CORDEX
+
+#institution=IMK-TRO/KIT, Karlsruhe, Germany in collaboration with the CCLM community
+institution=ETH Zurich, Zurich, Switzerland in collaboration with the CLM-Community
+
+#nesting_levels: indicates the number of nests applied for the current simulation
+#nesting_levels=1: only on nest; corresponds to a direct downscaling approach
+#nesting_levels=2: 2 nest-approach; current simulation (= 2nd nest) is foreced by results of a first nest
+#nesting_levels=2
+nesting_levels=1
+#
+#comment_nesting=these are results of the 2nd nest of a 2-nest-approach; there are a variety of differences between the setups of the first and second nest simulations; configuration files of the 2nd nest run are denoted in rcm_config_cclm and rcm_config_int2lm; contact the responsible person for details
+comment_nesting=
+#
+#comment_1stNest=ERA-Interim driven simulation (direct downscaling) for EUR-22 domain; corresponds to CCLM_5-0-10 evaluation run performed in frame of German MiKlip Program, phase 2
+comment_1stNest=ERA-Interim driven simulation (direct downscaling) for EUR-11 domain
+#
+#comment_2ndNest=actual convection permitting FPS simulation using CCLM5-0-14 for mandatory domain ALP-3; forcing derived from 1st-Nest results
+comment_2ndNest=
+#
+#comment=Please use the following reference for this climate data: CORDEX FPS Convection Evaluation using RCM CCLM performed by KIT Karlsruhe in collaboration with the CLM-Community
+comment=Please use the following reference for this climate data: CORDEX climate projection performed by ETH Zurich in collaboration with the CLM-Community
+#
+#rcm_config_cclm: Attribute describing the configuration of CCLM used for this simulation.
+# the configuration files (YUSPECIF, INPUT_ASS, INPUT_DIA, INPUT_DYN, INPUT_INI, INPUT_IO, INPUT_ORG, INPUT_PHY, optional README with further information) 
+# should be provided as tar file (<domain>_<model_id>_X_config.tar) in the overview table on the CLM webpage.
+#rcm_config_cclm=ALP3_CLMcom-KIT-CCLM5-0-14_config
+rcm_config_cclm=EUR-11_CLMcom-ETH-CCLM5-0-6_01_config
+
+#rcm_config_int2lm: Attribute describing the configuration of INT2LM used for this simulation. 
+#  The configuration files (OUTPUT, INPUT, optional README with further information) must be provided as tar file (<domain>_<int2lm_id>_X_config.tar) in the overview table on the CLM webpage.
+#rcm_config_int2lm=ALP3_CLMcom-KIT-INT2LM2-0-4_config
+rcm_config_int2lm=EUR-11_CLMcom-ETH-INT2LM2-0-4_config
+
+#further optional global attributes
+#==================================
+conventionsURL=http://www.cfconventions.org
+
+source=Climate Limited-area Modelling Community (CLM-Community)
+
+references=http://cordex.clm-community.eu/
+
+table_id=
+modeling_realm=
+initialization_method=
+physics_version=
+parent_id=
+
+#calendar: to specify calendar attribute of time variable IF NOT present or not correct in input files
+#calendar=360_day
+
+
+[settings_WRF]
+
+####
