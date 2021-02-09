@@ -113,7 +113,11 @@ do
       #and cut off height level information from FILEOUT to find it in acc_list or inst_list
       if [[ "${FILEOUT: -1}" == "p" || "${FILEOUT: -1}" == "z" ]] 
       then
-        (( c2 = ${#FILEOUT}-4 ))
+        if [[ ${FILEOUT} == *1000* ]]; then
+          (( c2 = ${#FILEOUT}-5 ))
+        else
+          (( c2 = ${#FILEOUT}-4 ))
+        fi
         varname=$(echo ${FILEOUT} | cut -c1-${c2})
       else
         varname=${FILEOUT}
