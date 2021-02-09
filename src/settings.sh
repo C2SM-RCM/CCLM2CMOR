@@ -58,6 +58,6 @@ PLEVS=(200. 500. 850. 925.) # list of pressure levels to output IF NOT set in ti
 #-------------------------------------------
 # Special settings for second step
 
-proc_list="AEVAP_S" # which variables to process (set proc_all=false for this to take effect); separated by spaces
+proc_list=" AEVAP_S " # which variables to process (set proc_all=false for this to take effect); separated by spaces
 proc_all=true       # process all available variables (not only those in proc_list)
 LFILE=0             # set LFILE=1 IF ONLY primary fields (given out by COSMO) should be created and =2 for only secondary fields (additionally calculated for CORDEX); for any other number both types of fields are calculated
