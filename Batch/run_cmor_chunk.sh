@@ -106,12 +106,12 @@ STOP_PERIOD=2016
 #
 # Settings for Chunking
 # Total list FPSC
-# VAR_LIST=(tasmax tasmin tas ts pr wsgsmax sfcWindmax huss ps psl rsds rlds hfls hfss rsus rlus evspsbl clt snc snd mrros mrro mrso1 mrso prw clivi clwvi orog sftlf zmla CAPE CIN ua1000 ua925 ua850 ua700 ua500 ua200 va1000 va925 va850 va700 va500 va200 ua100m va100m uas vas wa1000 wa925 wa850 wa700 wa500 wa200 ta1000 ta925 ta850 ta700 ta500 ta200 zg1000 zg925 zg850 zg700 zg500 zg200 hus1000 hus925 hus850 hus700 hus500 hus200)
+# VAR_LIST=(tasmax tasmin tas ts pr wsgsmax sfcWindmax huss ps psl rsds rlds hfls hfss rsus rlus evspsbl clt snc snd mrros mrro mrsol mrso prw clivi clwvi orog sftlf zmla CAPE CIN ua1000 ua925 ua850 ua700 ua500 ua200 va1000 va925 va850 va700 va500 va200 ua100m va100m uas vas wa1000 wa925 wa850 wa700 wa500 wa200 ta1000 ta925 ta850 ta700 ta500 ta200 zg1000 zg925 zg850 zg700 zg500 zg200 hus1000 hus925 hus850 hus700 hus500 hus200)
 #
 # FPSC Var-list separated
 VAR_LIST=(tasmax tasmin)
 #VAR_LIST=(tasmax tasmin tas ts pr wsgsmax sfcWindmax)
-#VAR_LIST=(huss ps psl rsds rlds hfls hfss rsus rlus evspsbl clt snc snd mrros mrro mrso1 mrso prw clivi clwvi zmla CAPE CIN)
+#VAR_LIST=(huss ps psl rsds rlds hfls hfss rsus rlus evspsbl clt snc snd mrros mrro mrsol mrso prw clivi clwvi zmla CAPE CIN)
 #VAR_LIST=(ua1000 ua925 ua850 ua700 ua500 ua200 va1000 va925 va850 va700 va500 va200 ua100m va100m uas vas)
 #VAR_LIST=(wa1000 wa925 wa850 wa700 wa500 wa200 ta1000 ta925 ta850 ta700 ta500 ta200 zg1000 zg925 zg850 zg700 zg500 zg200 hus1000 hus925 hus850 hus700 hus500 hus200)
 FREQ_LIST_CHUNK="-r 1hr,3hr,6hr,day,mon,sem,fx" # remove to get all frequencies for a variable

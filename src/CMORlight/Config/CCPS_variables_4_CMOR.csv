@@ -120,7 +120,7 @@ FR_SNOW;FR_SNOW;snc;Max(0.01,Min(1.,W_SNOW/0.015))*H(x);;ModelLevel;100;;point;m
 H_SNOW;H_SNOW;snd;;;ModelLevel;1;;point;mean;mean;mean;0;m;;4;i;1;4;1;m*4;1;s*4;;Snow Depth;;surface_snow_thickness;;landIce land;
 RUNOFF_S;RUNOFF_S;mrros;;;ModelLevel;0.000277778;;mean;mean;mean;mean;0;kg m-2 s-1;;24;a;1;24;1;;1;;;Surface Runoff;;surface_runoff_flux;;land;
 RUNOFF_T;RUNOFF_T;mrro;RUNOFF_G + RUNOFF_S;;ModelLevel;0.000277778;;mean;mean;mean;mean;0;kg m-2 s-1;;24;a;1;24;1;;1;;;Total Runoff;;runoff_flux;;land;
-W_SO;W_SO;mrso1;W_SO(1);;ModelLevel;1000;;point;mean;mean;mean;0;kg m-2;;4;i;1;4;1;m*4;1;s*4;;Total Water Content of Soil Layer;depth of first soil layer: 1.0 cm;moisture_content_of_soil_layer;;land;
+W_SO;W_SO;mrsol;W_SO(1);;ModelLevel;1000;;point;mean;mean;mean;0;kg m-2;;4;i;1;4;1;m*4;1;s*4;;Total Water Content of Soil Layer;depth of first soil layer: 1.0 cm;moisture_content_of_soil_layer;;land;
 W_SO;W_SO;mrso;Sum(W_SO(1:8));;ModelLevel;1000;;point;mean;mean;mean;8;kg m-2;;4;i;1;4;1;m*4;1;s*4;;Total Soil Moisture Content;Sum over 8 levels from ground to 3.82 m depth;soil_moisture_content;;land;
 TQV;TQV;prw;;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;1;24;1;m*4;1;s*4;;Water Vapor Path;;atmosphere_water_vapor_content;;atmos;
 TQW;TQW;clwvi;TQC + TQI;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;1;24;1;m*4;1;s*4;;Condensed Water Path;;atmosphere_cloud_condensed_water_content;;atmos;

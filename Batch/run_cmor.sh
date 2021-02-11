@@ -119,11 +119,11 @@ START_PERIOD=2000      #    Start year for processing,e.g. 1999. If start month 
 STOP_PERIOD=2001      # end year of the period to process
 USE_VERSION="v20200801"     # vYYYYMMDD for directory structure
 # Total list FPSC
-# VAR_LIST=(tasmax tasmin tas ts pr wsgsmax sfcWindmax huss ps psl rsds rlds hfls hfss rsus rlus evspsbl clt snc snd mrros mrro mrso1 mrso prw clivi clwvi orog sftlf zmla CAPE CIN ua1000 ua925 ua850 ua700 ua500 ua200 va1000 va925 va850 va700 va500 va200 ua100m va100m uas vas wa1000 wa925 wa850 wa700 wa500 wa200 ta1000 ta925 ta850 ta700 ta500 ta200 zg1000 zg925 zg850 zg700 zg500 zg200 hus1000 hus925 hus850 hus700 hus500 hus200)
+# VAR_LIST=(tasmax tasmin tas ts pr wsgsmax sfcWindmax huss ps psl rsds rlds hfls hfss rsus rlus evspsbl clt snc snd mrros mrro mrsol mrso prw clivi clwvi orog sftlf zmla CAPE CIN ua1000 ua925 ua850 ua700 ua500 ua200 va1000 va925 va850 va700 va500 va200 ua100m va100m uas vas wa1000 wa925 wa850 wa700 wa500 wa200 ta1000 ta925 ta850 ta700 ta500 ta200 zg1000 zg925 zg850 zg700 zg500 zg200 hus1000 hus925 hus850 hus700 hus500 hus200)
 #
 # FPSC Var-list separated
 #daily
-#VAR_LIST=(CAPE CIN mrso mrso1 sfcWindmax wsgsmax snc snd tasmax tasmin)
+#VAR_LIST=(CAPE CIN mrso mrsol sfcWindmax wsgsmax snc snd tasmax tasmin)
 #
 #6hr
 #VAR_LIST=(ps psl zg1000 zg200 zg500 zg700 zg850 zg925)

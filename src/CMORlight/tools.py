@@ -1280,8 +1280,8 @@ is here the time resolution of the input data in hours."
     dt_stop_in = dt_stop_in[:dt_stop_in.index(' ')].replace('-','')
 
     #HJP Mar 2019 Begin
-    # for mrso1: select only the first soil level
-    if var in ['mrso1']:
+    # for mrsol: select only the first soil level
+    if var in ['mrsol']:
         f_in.close()
 
         f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)

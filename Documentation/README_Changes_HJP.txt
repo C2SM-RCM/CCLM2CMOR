@@ -148,8 +148,8 @@ tools.py:
 - include consideration of variables on Z-Level:
     include variable "height" and its attributes
 
-- include consideration of mrso1, total moisture content of uppermost soil level
-    for mrso1 select only the first soil level from W_SO
+- include consideration of mrsol, total moisture content of uppermost soil level
+    for mrsol select only the first soil level from W_SO
 
 - package "netcdftime" might not exist in the used python-Installation (for example, at HLRS, Stuttgart)
     then comment the line 

@@ -24,7 +24,7 @@ QV_2M;QV_2M;huss;;;ModelLevel;1;;point;mean;mean;mean;2;1;;24;i;;;;;;;;Near-Surf
 RUNOFF_T;RUNOFF_T;mrro;RUNOFF_G + RUNOFF_S;;ModelLevel;0.000277778;;mean;mean;mean;mean;0;kg m-2 s-1;;24;a;;;;;;;;Total Runoff;;runoff_flux;;land;
 RUNOFF_S;RUNOFF_S;mrros;;;ModelLevel;0.000277778;;mean;mean;mean;mean;0;kg m-2 s-1;;24;a;;;;;;;;Surface Runoff;;surface_runoff_flux;;land;
 W_SO;W_SO;mrso;Sum(W_SO(1:8));;ModelLevel;1000;;point;mean;mean;mean;8;kg m-2;;;i;1;4;;;;;;Total Soil Moisture Content;Sum over 8 levels from ground to 3.82 m depth;soil_moisture_content;;land;
-W_SO;W_SO;mrso1;W_SO(1);;ModelLevel;1000;;point;mean;mean;mean;0;kg m-2;;;i;1;4;;;;;;Total Water Content of Soil Layer;depth of first soil layer: 1.0 cm;moisture_content_of_soil_layer;;land;
+W_SO;W_SO;mrsol;W_SO(1);;ModelLevel;1000;;point;mean;mean;mean;0;kg m-2;;;i;1;4;;;;;;Total Water Content of Soil Layer;depth of first soil layer: 1.0 cm;moisture_content_of_soil_layer;;land;
 HSURF;HSURF;orog;;;;1;;;;;;;m;;;;;;;;;;0;Surface Altitude;;surface_altitude;;atmos;
 TOT_PREC;TOT_PREC;pr;;;ModelLevel;0.000277778;;mean;mean;mean;mean;0;kg m-2 s-1;;24;a;;;;;;;;Precipitation;;precipitation_flux;;atmos;
 TQV;TQV;prw;;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;;;;;;;;Water Vapor Path;;atmosphere_water_vapor_content;;atmos;
