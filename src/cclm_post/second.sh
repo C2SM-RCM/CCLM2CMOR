@@ -108,22 +108,7 @@ do
         FILEOUT=${FILE} 
       fi
       
-      #cut off pressure level information from FILEOUT to find it in acc_list or inst_list
-      #MED 20/05/19>>
-      #and cut off height level information from FILEOUT to find it in acc_list or inst_list
-      if [[ "${FILEOUT: -1}" == "p" || "${FILEOUT: -1}" == "z" ]] 
-      then
-        if [[ ${FILEOUT} == *1000* ]]; then
-          (( c2 = ${#FILEOUT}-5 ))
-        else
-          (( c2 = ${#FILEOUT}-4 ))
-        fi
-        varname=$(echo ${FILEOUT} | cut -c1-${c2})
-      else
-        varname=${FILEOUT}
-      fi
-      #MED<<
-
+      varname=${FILEOUT} 
       #process variable if in proc_list or if proc_all is set
       if [[ ${proc_list} =~ (^|[[:space:]])${varname}($|[[:space:]]) ]] || ${proc_all}
       then
@@ -148,7 +133,19 @@ do
         continue
       fi
       
-
+      #cut off pressure level information from FILEOUT to find it in acc_list or inst_list
+      #MED 20/05/19>>
+      #and cut off height level information from FILEOUT to find it in acc_list or inst_list
+      if [[ "${FILEOUT: -1}" == "p" || "${FILEOUT: -1}" == "z" ]]
+      then
+        if [[ ${FILEOUT} == *1000* ]]; then
+          (( c2 = ${#FILEOUT}-5 ))
+        else
+          (( c2 = ${#FILEOUT}-4 ))
+        fi
+        varname=$(echo ${FILEOUT} | cut -c1-${c2})
+      fi
+      #MED<<
 
       # determine if current variable is an accumulated or instantaneous quantity
       if [[ ${accu_list} =~ (^|[[:space:]])${varname}($|[[:space:]]) ]]
