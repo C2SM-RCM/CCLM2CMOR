@@ -10,7 +10,7 @@ from netCDF4 import num2date
 from netCDF4 import date2num
 #MED Apr 2019: netcdftime package no longer included in netCDF4, try 'import netcdftime' or use the package "utime" depending on your Python installation.
 #import netcdftime
-from cftime import utime
+import cftime
 
 from collections import OrderedDict
 import tempfile
@@ -81,7 +81,7 @@ def set_attributes(params):
         try:
             settings.Global_attributes[name.strip()] = config.get_sim_value(name.strip())
         except:
-            raise("Global attribute %s is in global_attr_list but is not defined in the configuration file!")
+            raise Exception("Global attribute " + name + " is in global_attr_list but is not defined in the configuration file!")
 
     #Invariant attributes
     #settings.Global_attributes['project_id']="CORDEX" #global attribute "project_id" should be variable, thus defined in the ini-file
@@ -1279,19 +1279,9 @@ is here the time resolution of the input data in hours."
     dt_stop_in = str(dt_in[-1])
     dt_stop_in = dt_stop_in[:dt_stop_in.index(' ')].replace('-','')
 
-    #HJP Mar 2019 Begin
-    # for mrsol: select only the first soil level
-    if var in ['mrsol']:
-        f_in.close()
-
-        f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
-        retval = shell("cdo -f %s sellevidx,1 %s %s" %(config.get_config_value('settings', 'cdo_nctype'),in_file,f_hlp.name),logger=logger)
-        in_file = f_hlp.name
-        f_in = Dataset(in_file,"r")
-        #os.remove(f_hlp.name)
-    #HJP Mar 2019 End 
-
-    # for mrso and mrfso sum up desired soil levels
+    ## AD, RP Sept 2022 Begin (CORDEX-CMIP6 adaptations)
+    # for mrsol and mrsfl: provide an extraction of layers in a 3D field -> done later due to running time
+    # for mrso and mrfso: sum up all soil layers which are hydrologically active (control those by variables table)
     if var in ['mrso','mrfso']:
         f_in.close()
 
@@ -1299,27 +1289,41 @@ is here the time resolution of the input data in hours."
         idx_from = 1
         # take stop soil layer from table
         idx_to = int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip())
-        arr = {}
-        for i in range(idx_from,idx_to+1):
-            f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
-            arr[i] = f_hlp.name
-            retval = shell("cdo -f %s sellevidx,%d %s %s" %(config.get_config_value('settings', 'cdo_nctype'),i,in_file,arr[i]),logger=logger)
 
-        # now calculate the sum
         f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
-        #write files of arr into str with whitespace separation for cdo command
-        files_str=" ".join(arr.values())
-        cmd = "cdo enssum %s %s" % (files_str,f_hlp.name)
-        retval = shell(cmd,logger=logger)
-        
-        # remove all help files
-        for i in range(idx_from,idx_to):
-            os.remove(arr[i])
+#AD Version retval = shell("cdo -f %s vertsum %s %s" %(config.get_config_value('settings', 'cdo_nctype'),in_file,f_hlp.name),logger=logger)
+        #Ronny Version:
+        retval = shell("cdo -f %s vertsum -sellevidx,%d/%d %s %s" %(config.get_config_value('settings', 'cdo_nctype'),idx_from,idx_to,in_file,f_hlp.name),logger=logger)
+
+        # switch from original in_file to the new in_file
+        in_file = f_hlp.name
+        f_in = Dataset(in_file,"r")
+
+    # for mrsos and mrfsos: sum up top 10 cm (number of layers defined in variables table)
+    if var in ['mrsos','mrfsos']:
+        f_in.close()
+
+        # use start soil layer 1 
+        idx_from = 1
+        # take stop soil layer from table
+        idx_to = int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip())
+
+        f_hlp = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=year)
+        retval = shell("cdo -f %s vertsum -sellevidx,%d/%d %s %s" %(config.get_config_value('settings', 'cdo_nctype'),idx_from,idx_to,in_file,f_hlp.name),logger=logger)
             
         # switch from original in_file to the new in_file
         in_file = f_hlp.name
         f_in = Dataset(in_file,"r")
-    
+
+    # for mrsol and mrsfl: store the range from the variable definition table
+    if var in ['mrsol','mrsfl']:
+        # use start soil layer 1 
+        idx_soillev_from = 1
+        # take stop soil layer from table
+        idx_soillev_to = int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip())
+    ##
+    ## AD, RP sept 2022 End
+
     new_reslist=list(reslist) #remove resolutions from this list that are higher than the input data resolution
     # process all requested resolutions
     
@@ -1457,17 +1461,21 @@ is here the time resolution of the input data in hours."
         f_out = Dataset(outpath,'w')
 
         # create dimensions in target file
+        # RP adopt to the needs of additional dimensions in case of mrsol and mrsfl
         for name, dimension in f_tmp.dimensions.items():
-            # skip some dimensions
-            if name in settings.varlist_reject:
-                continue
-            else:
+            # skip some dimensions (be aware of W_SO and soil1)
+            if (name not in settings.varlist_reject): 
                 f_out.createDimension(name, len(dimension) if not dimension.isunlimited() else None)
+            elif ( var in ['mrsol','mrsfl'] and name == 'soil1' ):
+                f_out.createDimension(name, idx_soillev_to-idx_soillev_from+1)
+            else:
+                continue
+        # END RP
+
         # set dimension vertices only if set to True in settings file
         if config.get_config_value('boolean','add_vertices') == True:
             f_out.createDimension('vertices',4)
             logger.info("Add vertices")
-
         # copy variables from temp file
         for var_name in f_tmp.variables.keys():
 
@@ -1485,14 +1493,16 @@ is here the time resolution of the input data in hours."
             if config.get_config_value('boolean','nc_compress') == True:
                 logger.debug("COMPRESS variable: %s" % (var_name))
 
+            # RP adopt to the needs of additional dimensions in case of mrsol and mrsfl
             dim_lst = []
             for dim in var_in.dimensions:
-                if str(dim) not in settings.varlist_reject:
+                if (str(dim) not in settings.varlist_reject) or (var in ['mrsol','mrsfl'] and str(dim) == 'soil1'):
                     dim_lst.append(dim)
+            # END RP
             var_dims = tuple(dim_lst)
             logger.debug("Dimensions (of variable %s): %s" % (var_name,str(var_dims)))
             logger.debug("Attributes (of variable %s): %s" % (var_name,var_in.ncattrs()))
-            
+
             if var_name in [settings.netCDF_attributes['RCM_NAME_ORG'],settings.netCDF_attributes['RCM_NAME']]:
                 if config.get_config_value('boolean','nc_compress') == True:
                     var_out = f_out.createVariable(var,datatype=data_type,
@@ -1527,7 +1537,11 @@ is here the time resolution of the input data in hours."
             # copy content to new datatype
             logger.debug("Copy data from tmp file: %s" % (var_out.name))
             if var_name not in ['rotated_latitude_longitude','rotated_pole']:
-                var_out[:] = var_in[:]
+                if var_out.name in ['mrsol','mrsfl']:
+                    ##asumes the soil-dimension to be on second place
+                    var_out[:] = var_in[:,(idx_soillev_from-1):idx_soillev_to,:,:] 
+                else:
+                    var_out[:] = var_in[:]
 
 
         # copy lon/lat and rlon/rlat from input if needed:
@@ -1561,7 +1575,7 @@ is here the time resolution of the input data in hours."
         # get time variable from output
         time = f_out.variables['time']
         # create time_bnds for averaged variables
-        if cm != 'point':
+        if ( cm != 'point' ):
             f_out.createDimension('bnds',size=2)
             time_bnds = f_out.createVariable('time_bnds',datatype="d",dimensions=('time','bnds'))
             time.bounds = 'time_bnds'
@@ -1613,6 +1627,8 @@ is here the time resolution of the input data in hours."
         # commit changes
         f_out.sync()
 
+        #from IPython import embed
+        #embed()
         ###################################
         # do some additional settings
         ###################################
@@ -1650,7 +1666,8 @@ is here the time resolution of the input data in hours."
         #HJP Mar 2019 End
 
         #create pressure/height variables for variables which are not at the surface
-        if int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip()) > 0 and not var in ['mrfso','mrso']:
+        if (int(params[config.get_config_value('index','INDEX_VAL_LEV')].strip()) > 0) and \
+            (var not in ['mrsos','mrfsos','mrso','mrfso']):
             if params[config.get_config_value('index','INDEX_MODEL_LEVEL')] == config.get_config_value('settings','PModelType'):
                 if not 'plev' in f_out.variables:
                     var_out = f_out.createVariable('plev',datatype='d')
@@ -1690,6 +1707,33 @@ is here the time resolution of the input data in hours."
             #HJP Mar 2019 End
         else:
             coordinates = 'lat lon'
+
+        # AD, RP Sept 2022 Begin (CORDEX-CMIP6 adaptations)
+        # copy soil depth variable for mrsol and mrsfl
+        if var in ['mrsol','mrsfl']:
+            if ( not 'soil1' in f_out.variables ) and ( not 'soil1_bnds' in f_out.variables ):
+                soil_in = f_in.variables['soil1']
+                soilbnds_in = f_in.variables['soil1_bnds']
+                ## create an additional dimension to handle soil_bnds 
+                f_out.createDimension('dim_sbounds', 2)
+                # create soil1 variable and attributes
+                var_outs = f_out.createVariable('soil1',datatype="f",dimensions='soil1')
+                var_outsbnd = f_out.createVariable('soil1_bnds',datatype="f",dimensions=('soil1','dim_sbounds'))
+                var_outs.units = "m"
+                var_outsbnd.units = "m"
+                var_outs.axis = "Z"
+                var_outs.positive = "down"
+                var_outs.long_name = "depth of soil layers"
+                var_outsbnd.long_name = "boundaries of soil layers"
+                var_outs.standard_name = "depth"
+                var_outs.bounds = "soil1_bnds"
+                # copy soil values
+                var_outs[:] = soil_in[(idx_soillev_from-1):idx_soillev_to]
+                var_outsbnd[:] = soilbnds_in[(idx_soillev_from-1):idx_soillev_to,:] ##assuming that the first dimension is soil1
+                coordinates = 'lat lon'
+                logger.debug("Copy from input: %s" % (var_out.name))
+        # AD, RP sept 2022 End
+        
         
         f_var.coordinates = coordinates
         
@@ -1753,7 +1797,7 @@ is here the time resolution of the input data in hours."
         set_attributes_create(outpath,res,year,logger=logger)
     
     # delete help file
-    if var in ['mrso','mrfso'] and os.path.isfile(f_hlp.name):
+    if var in ['mrsos','mrfsos','mrso','mrfso'] and os.path.isfile(f_hlp.name):
         os.remove(f_hlp.name)
 
     if config.get_config_value('boolean','use_alt_units'): 
