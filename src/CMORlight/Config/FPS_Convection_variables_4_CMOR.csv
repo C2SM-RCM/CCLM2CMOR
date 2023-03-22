@@ -75,6 +75,6 @@ FI1000p;FI;zg1000;;;PressureLevel;0.101971621;;point;mean;mean;mean;100000;m;;4;
 FI200p;FI;zg200;;;PressureLevel;0.101971621;;point;mean;mean;mean;20000;m;;4;i;;;;;;;;Geopotential Height;;geopotential_height;;atmos;
 FI500p;FI;zg500;;;PressureLevel;0.101971621;;point;mean;mean;mean;50000;m;;4;i;;;;;;;;Geopotential Height;;geopotential_height;;atmos;
 FI700p;FI;zg700;;;PressureLevel;0.101971621;;point;mean;mean;mean;70000;m;;4;i;;;;;;;;Geopotential Height;;geopotential_height;;atmos;
-FI850p;FI;zg850;;;PressureLevel;0.101971621;;point;mean;mean;mean;80000;m;;4;i;;;;;;;;Geopotential Height;;geopotential_height;;atmos;
+FI850p;FI;zg850;;;PressureLevel;0.101971621;;point;mean;mean;mean;85000;m;;4;i;;;;;;;;Geopotential Height;;geopotential_height;;atmos;
 FI925p;FI;zg925;;;PressureLevel;0.101971621;;point;mean;mean;mean;92500;m;;4;i;;;;;;;;Geopotential Height;;geopotential_height;;atmos;
 HPBL;HPBL;zmla;;;ModelLevel;1;;point;mean;mean;mean;0;m;;24;i;;;;;;;;Height of Boundary Layer;;atmosphere_boundary_layer_thickness;;atmos;
