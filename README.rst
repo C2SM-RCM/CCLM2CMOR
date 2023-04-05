@@ -1,4 +1,12 @@
 =====================================================================================
+This is the CORDEX-CMIP6 adaptation of the CCLM2CMOR tool !!! IN DEVELOPMENT !!!
+=====================================================================================
+
+Please feel free to branch or fork and issue pull requests in case you want to participate in the development!
+You can also send an email with your changes to andreas.dobler@met.no
+
+Some more information:
+=====================================================================================
 CCLM2CMOR - Climate model output rewriting of COSMO-CLM climate model data for CORDEX
 =====================================================================================
  
@@ -405,8 +413,8 @@ or create an issue yourself if you found one.
 Contact
 =======
 
-Currently the tool is administrated by Silje Sørland (ETH Zürich). You can contact her at:
-silje.soerland@env.ethz.ch
+Currently the tool is administrated by Andreas Dobler (MET Norway). You can contact him at:
+andreas.dobler@met.no
 
 Involved people
 ===============
