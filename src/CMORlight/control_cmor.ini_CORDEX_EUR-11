@@ -209,7 +209,7 @@ vertices_file=
 
 #variables table
 #vartable=FPS_Convection_variables_4_CMOR.csv
-vartable=CORDEX_CMOR_CCLM_variables_table.csv
+vartable=CORDEX6_CMOR_CCLM_variables_table.csv
 
 #list of constant varibles
 var_list_fixed=orog,sftlf
