@@ -91,7 +91,7 @@ def process_resolution(params,reslist,nvar,nfiles,currfile):
 
         i=0
         for f in sorted(filenames):
-            if f[-3:] != ".nc":
+            if (f[-3:] != ".nc") and (f[-4:] != ".ncz" ):
                 continue
 
             if var not in settings.var_list_fixed:
