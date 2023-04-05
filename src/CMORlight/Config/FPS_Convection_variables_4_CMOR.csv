@@ -49,7 +49,7 @@ T500p;T;ta500;;;PressureLevel;1;point;mean;mean;mean;50000;K;8;i;1;8;1;m*8;1;s*8
 T200p;T;ta200;;;PressureLevel;1;point;mean;mean;mean;20000;K;8;i;1;8;1;m*8;1;s*8;;Air Temperature;;air_temperature;;atmos;
 FI1000p;FI;zg1000;;;PressureLevel;0.101971621;point;mean;mean;mean;100000;m;4;i;1;4;1;m*4;1;s*4;;Geopotential Height;;geopotential_height;;atmos;
 FI925p;FI;zg925;;;PressureLevel;0.101971621;point;mean;mean;mean;92500;m;4;i;1;4;1;m*4;1;s*4;;Geopotential Height;;geopotential_height;;atmos;
-FI850p;FI;zg850;;;PressureLevel;0.101971621;point;mean;mean;mean;80000;m;4;i;1;4;1;m*4;1;s*4;;Geopotential Height;;geopotential_height;;atmos;
+FI850p;FI;zg850;;;PressureLevel;0.101971621;point;mean;mean;mean;85000;m;4;i;1;4;1;m*4;1;s*4;;Geopotential Height;;geopotential_height;;atmos;
 FI700p;FI;zg700;;;PressureLevel;0.101971621;point;mean;mean;mean;70000;m;4;i;1;4;1;m*4;1;s*4;;Geopotential Height;;geopotential_height;;atmos;
 FI500p;FI;zg500;;;PressureLevel;0.101971621;point;mean;mean;mean;50000;m;4;i;1;4;1;m*4;1;s*4;;Geopotential Height;;geopotential_height;;atmos;
 FI200p;FI;zg200;;;PressureLevel;0.101971621;point;mean;mean;mean;20000;m;4;i;1;4;1;m*4;1;s*4;;Geopotential Height;;geopotential_height;;atmos;
