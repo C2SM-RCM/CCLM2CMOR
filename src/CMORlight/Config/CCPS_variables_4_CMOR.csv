@@ -128,5 +128,5 @@ TQI;TQI;clivi;;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;1;24;1;m*4;1;s
 HSURF;HSURF;orog;;;;1;;;;;;;m;;;;;;;;;;0;Surface Altitude;;surface_altitude;;atmos;
 FR_LAND;FR_LAND;sftlf;;;;100;;;;;;;%;;;;;;;;;;0;Land Area Fraction;;land_area_fraction;;atmos;
 HPBL;HPBL;zmla;;;ModelLevel;1;;point;mean;mean;mean;0;m;;24;i;1;24;;;;;;Height of Boundary Layer;;atmosphere_boundary_layer_thickness;;atmos;
-CAPE_ML;CAPE_ML;CAPE;;;ModelLevel;1;;point;maximum;;;0;J kg-1;;24;i;1;24;;;;;;2-D convective available potential energy;;atmosphere_convective_inhibition_wrt_surface;;atmos;
-CIN_ML;CIN_ML;CIN;;;ModelLevel;1;;point;maximum;;;0;J kg-1;;24;i;1;24;;;;;;2-D convective inhibition;;atmosphere_convective_inhibition_wrt_surface;;atmos;
+CAPE_ML;CAPE_ML;CAPE;;;ModelLevel;1;;point;maximum;;;0;J kg-1;;24;i;1;24;;;;;;2-D Maximum convective available potential energy;;atmosphere_convective_inhibition_wrt_surface;;atmos;
+CIN_ML;CIN_ML;CIN;;;ModelLevel;1;;point;maximum;;;0;J kg-1;;24;i;1;24;;;;;;2-D Maximum convective inhibition;;atmosphere_convective_inhibition_wrt_surface;;atmos;
