@@ -137,4 +137,4 @@ DD_10M;DD_10M;sfcWinddir;(45.0/atan(1.0)*atan2(U_10M,V_10M)+180.0);;ModelLevel;1
 LAI;LAI;lai;;;ModelLevel;1;;;maximum;;;0;1;;;i;1;;;;;;;Leave Area Index;;leave_area_index;;;
 PLCOV;PLCOV;plantFrac;;;ModelLevel;1;;;maximum;;;0;%;;;i;1;;;;;;;Percentage Cover by Plant;;percentage_cover_by_plant;;;
 CAPE_ML;CAPE_ML;cape;;;ModelLevel;1;;;maximum;;;0;J kg-1;;;a;1;;;;;;;2-D Convective Available Potential Energy;;atmosphere_convective_available_potential_energy_wrt_surface;;atmos;
-CIN_ML;CIN_ML;cin;;;ModelLevel;1;;;maximum;;;0;J kg-1;;;a;1;;;;;;;2-D Convevtive Inhibition;;atmosphere_convective_inhibition_wrt_surface;;atmos;
+CIN_ML;CIN_ML;cin;;;ModelLevel;1;;;maximum;;;0;J kg-1;;;a;1;;;;;;;2-D Convective Inhibition;;atmosphere_convective_inhibition_wrt_surface;;atmos;
