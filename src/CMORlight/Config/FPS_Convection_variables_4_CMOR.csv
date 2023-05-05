@@ -5,8 +5,8 @@ CCLM variable name;CCLM variable name (in model output file);output variable nam
 [1/sem]";ag;fx;long_name;comment;standard_name;direction of positive fluxes;"realm
 (not required, however, if included should have the value as in CMIP5)";"cell-method: area
 (optional)"
-CAPE_ML;CAPE_ML;CAPE;;;ModelLevel;1;;point;maximum;;;0;J kg-1;;;i;1;24;;;;;;2-D convective available potential energy;CAPE based on a parcel with thermodynamical properties of a 50hPa deep mixed layer in the PBL;atmosphere_convective_available_potential_energy_wrt_surface;;atmos;
-CIN_ML;CIN_ML;CIN;;;ModelLevel;1;;point;maximum;;;0;J kg-1;;;i;1;24;;;;;;2-D convective inhibition;CIN based on a parcel with thermodynamical properties of a 50hPa deep mixed layer in the PBL;atmosphere_convective_inhibition_wrt_surface;;atmos;
+CAPE_ML;CAPE_ML;CAPE;;;ModelLevel;1;;point;maximum;;;0;J kg-1;;;i;1;24;;;;;;2-D Maximum convective available potential energy;CAPE based on a parcel with thermodynamical properties of a 50hPa deep mixed layer in the PBL;atmosphere_convective_available_potential_energy_wrt_surface;;atmos;
+CIN_ML;CIN_ML;CIN;;;ModelLevel;1;;point;maximum;;;0;J kg-1;;;i;1;24;;;;;;2-D Maximum convective inhibition;CIN based on a parcel with thermodynamical properties of a 50hPa deep mixed layer in the PBL;atmosphere_convective_inhibition_wrt_surface;;atmos;
 TQG;TQG;clgvi;;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;;;;;;;;Vertical integral of mass content of graupel;;atmosphere_mass_content_of_graupel;;atmos;
 TQI;TQI;clivi;;;ModelLevel;1;;point;mean;mean;mean;0;kg m-2;;24;i;;;;;;;;Ice Water Path;;atmosphere_cloud_ice_content;;atmos;
 CLCT_AV;CLCT_AV;clt;;;ModelLevel;100;;mean;mean;mean;mean;0;%;;24;a;;;;;;;;Total Cloud Fraction;;cloud_area_fraction;;atmos;
