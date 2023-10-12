@@ -122,7 +122,7 @@ alt_units=days since 1950-01-01 00:00:00
 
 ################################################################################################
 [boolean]
-#if True: add /driving_model_id/driving_experiment_name (as defined below or given in function call) to the DirIn path
+#if True: add /driving_source_id/driving_experiment_id (as defined below or given in function call) to the DirIn path
 extend_DirIn=False
 
 #Add version (default: current date; other values can be set in command line) to output path to not overwrite previously processed data
