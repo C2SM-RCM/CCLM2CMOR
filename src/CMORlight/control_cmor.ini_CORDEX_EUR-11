@@ -66,7 +66,7 @@ DirDerotated=work/output_derotated
 # "global_attr_list" must not be empty.
 #
 # Mandatory attributes are:
-# project_id,driving_model_id,experiment_id,driving_experiment_name,driving_model_ensemble_member,CORDEX_domain,institute_id,model_id,rcm_version_id,contact
+# project_id,mip_era,activity_id,driving_model_id,experiment_id,driving_experiment_name,driving_model_ensemble_member,CORDEX_domain,institute_id,model_id,rcm_version_id,contact
 #
 # All other attributes are  optional.
 # Entries for listed attributes are defined in section 'settings_CCLM' below; each attribute set in "global_attr_list" needs an entry/"value", otherwise the tool will stop.
@@ -74,7 +74,7 @@ DirDerotated=work/output_derotated
 # The attributes set in "global_attr_list" appear in the global attributes of the final file
 # The sequence of appearance in the file is determined by the sequence of their setting in this list
 
-global_attr_list=Conventions,conventionsURL,title,project_id,CORDEX_domain,driving_model_id,driving_experiment_name,experiment_id,driving_experiment,driving_model_ensemble_member,experiment,model_id,institute_id,institution,rcm_version_id,contact,nesting_levels,comment_nesting,comment_1stNest,comment_2ndNest,comment,rcm_config_cclm,rcm_config_int2lm,source,references
+global_attr_list=Conventions,conventionsURL,title,project_id,mip_era,activity_id,CORDEX_domain,driving_model_id,driving_experiment_name,experiment_id,driving_experiment,driving_model_ensemble_member,experiment,model_id,institute_id,institution,rcm_version_id,contact,comment,source,references
 #
 #HJP March 2019 End
 
@@ -227,6 +227,13 @@ var_list_fixed=orog,sftlf
 
 #project_id=CORDEX-FPSCONV
 project_id=CORDEX
+
+#mip_era: determines what cycle of CMIP defines experiment and data specifications (“CMIP6” is the only option)
+mip_era=CMIP6
+
+#activity_id: an identifier of different CORDEX activities such as dynamical downscaling (RCM), empirical-statistical
+#             downscaling (ESD), Flagship Pilot Study (FPS) and bias adjustment (Adjust).
+activity_id=RCM
 
 #driving model id: gcm_institute id + '-' + gcm_model_id; usually from http://cordex.dmi.dk/joomla/images/CORDEX/GCMModelName.txt
 driving_model_id=ECMWF-ERAINT 
