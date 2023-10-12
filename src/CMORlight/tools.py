@@ -676,7 +676,7 @@ def process_file_fix(params,in_file):
         if name in settings.global_attr_file: #only take attribute from file if in this list
             settings.Global_attributes[name] = str(f_in.getncattr(name))
 
-    settings.Global_attributes["driving_model_ensemble_member"] = 'r0i0p0'
+    settings.Global_attributes["driving_variant_label"] = 'r0i0p0f0'
     
     # out directory
     outdir = get_out_dir(var,'fx')
@@ -955,7 +955,7 @@ def proc_seasonal(params,year):
                     cmd = "cdo -f %s selmon,1/11 %s %s" % (config.get_config_value('settings', 'cdo_nctype'),f,f_hlp1_11.name)
                     retval = shell(cmd,logger=logger)
 
-                    # now concatenate all 12 montha
+                    # now concatenate all 12 months
                     f_hlp12_11 = tempfile.NamedTemporaryFile(dir=settings.DirWork,delete=False,suffix=str(year)+"sem")
                     cmd = "ncrcat -h -O %s %s %s" % (f_hlp12.name,f_hlp1_11.name,f_hlp12_11.name)
                     retval = shell(cmd,logger=logger)
@@ -1658,7 +1658,7 @@ is here the time resolution of the input data in hours."
         f_var.cell_methods = "time: %s" % (cm_type)
 
         #HJP Mar 2019 Begin
-        #include variable's attribute "comment" if the corresponding entry in the ini-file is not empty
+        #include variable's attribute "comment" if the corresponding entry in the csv-file is not empty	
         comment = params[config.get_config_value('index','INDEX_VAR_COMMENT')]
         if comment !='':
             settings.netCDF_attributes['comment'] = params[config.get_config_value('index','INDEX_VAR_COMMENT')]
