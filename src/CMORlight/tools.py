@@ -116,13 +116,13 @@ def create_outpath(res,var):
                 (settings.Global_attributes["project_id"],
                  settings.Global_attributes["mip_era"],
                  settings.Global_attributes["activity_id"],
-                 settings.Global_attributes["CORDEX_domain"],
-                 settings.Global_attributes["institute_id"],
-                 settings.Global_attributes["driving_model_id"],
-                 settings.Global_attributes["experiment_id"],
-                 settings.Global_attributes["driving_model_ensemble_member"],
-                 settings.Global_attributes["model_id"],
-                 settings.Global_attributes["rcm_version_id"],
+                 settings.Global_attributes["domain_id"],
+                 settings.Global_attributes["institution_id"],
+                 settings.Global_attributes["driving_source_id"],
+                 settings.Global_attributes["driving_experiment_id"],
+                 settings.Global_attributes["driving_variant_label"],
+                 settings.Global_attributes["source_id"],
+                 settings.Global_attributes["version_realisation"],
                  res,
                  var
                 )
@@ -175,13 +175,14 @@ def create_filename(var,res,dt_start,dt_stop,logger=log):
 
     logger.debug("Filename start/stop: %s, %s" % (dt_start,dt_stop))
 
-    result = "%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
-                  settings.Global_attributes["CORDEX_domain"],
-                  settings.Global_attributes["driving_model_id"],
-                  settings.Global_attributes["experiment_id"],
-                  settings.Global_attributes["driving_model_ensemble_member"],
-                  settings.Global_attributes["model_id"],
-                  settings.Global_attributes["rcm_version_id"],
+    result = "%s_%s_%s_%s_%s_%s_%s_%s_%s%s.nc" % (var,
+		  settings.Global_attributes["domain_id"],
+                  settings.Global_attributes["driving_source_id"],
+                  settings.Global_attributes["driving_experiment_id"],
+                  settings.Global_attributes["driving_variant_label"],
+                  settings.Global_attributes["institution_id"],
+                  settings.Global_attributes["source_id"],
+                  settings.Global_attributes["version_realisation"],
                   res,
                   trange,
                 )
