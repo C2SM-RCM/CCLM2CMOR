@@ -47,10 +47,10 @@ DirDerotated=work/output_derotated
 #
 # IMPORTANT NOTE
 # The following list of global attributes
-# - contain the mandatory attributes necessary according to the CORDEX standard (see latest document on "CORDEX Arcive Desgin", March 2013
+# - contain the mandatory attributes necessary according to the CORDEX-CMIP6 standard (see latest document on "CORDEX-CMIP6 Arcive Desgin", February 2023)
 # - additional optional attributes "invented" by Hans-Juergen Panitz
 #
-# This control_ini file cannot be used together with that CCLM2CMOR tool version, which has been built to follow the CLM-Community suggestions
+# This control_ini file cannot be used together with that CCLM2CMOR tool version built to follow the CLM-Community suggestions
 # for extended directory- and filenmae structures and extended list of global attributes for CMORization of data from a double-nest simulation
 #
 # By the way, the latest official version is that, which gives the possibilty to consider an additional sub-daily frequency, an implementation by Marie-Estelle
@@ -66,7 +66,7 @@ DirDerotated=work/output_derotated
 # "global_attr_list" must not be empty.
 #
 # Mandatory attributes are:
-# project_id,mip_era,activity_id,driving_model_id,experiment_id,driving_experiment_name,driving_model_ensemble_member,CORDEX_domain,institute_id,model_id,rcm_version_id,contact
+# project_id,mip_era,activity_id,driving_source_id,driving_experiment_id,driving_variant_label,driving_institution_id,domain_id,institution_id,source_id,version_realisation,contact
 #
 # All other attributes are  optional.
 # Entries for listed attributes are defined in section 'settings_CCLM' below; each attribute set in "global_attr_list" needs an entry/"value", otherwise the tool will stop.
@@ -74,7 +74,7 @@ DirDerotated=work/output_derotated
 # The attributes set in "global_attr_list" appear in the global attributes of the final file
 # The sequence of appearance in the file is determined by the sequence of their setting in this list
 
-global_attr_list=Conventions,conventionsURL,title,project_id,mip_era,activity_id,CORDEX_domain,driving_model_id,driving_experiment_name,experiment_id,driving_experiment,driving_model_ensemble_member,experiment,model_id,institute_id,institution,rcm_version_id,contact,comment,source,references,nesting_levels,comment_nesting,comment_1stNest,comment_2ndNest,rcm_config_cclm,rcm_config_int2lm
+global_attr_list=Conventions,conventionsURL,title,project_id,mip_era,activity_id,driving_source_id,driving_experiment_id,driving_variant_label,driving_institution_id,domain_id,institution_id,source_id,version_realisation,contact,comment,references,nesting_levels,comment_nesting,comment_1stNest,comment_2ndNest,rcm_config_cclm,rcm_config_int2lm
 #
 #HJP March 2019 End
 
@@ -235,38 +235,33 @@ mip_era=CMIP6
 #             downscaling (ESD), Flagship Pilot Study (FPS) and bias adjustment (Adjust).
 activity_id=RCM
 
-#driving model id: gcm_institute id + '-' + gcm_model_id; usually from http://cordex.dmi.dk/joomla/images/CORDEX/GCMModelName.txt
-driving_model_id=ECMWF-ERAINT 
+#driving model id: gcm_model_id; usually from http://cordex.dmi.dk/joomla/images/CORDEX/GCMModelName.txt
+driving_source_id=ECMWF-ERAINT
 
-#experiment_id: evaluation, historical, rcp85
-experiment_id=evaluation 
+#driving_institution_id: an identifier of the institution that is responsible for the driving CMIP6 simulation
+driving_institution_id=ECMWF
 
-#driving_experiment_name: evaluation or the experiment_id of the used CMIP experiment
-driving_experiment_name=evaluation
+#driving_experiment_id: evaluation or the experiment_id of the used CMIP6 experiment
+driving_experiment_id=historical
 
-#ensemble member of the driving CMIP experiment; r1i1p1 for evaluation runs
-driving_model_ensemble_member=r1i1p1
+#variant label of the driving CMIP6 simulation; r1i1p1f1 for evaluation runs
+driving_variant_label=r1i1p1f2
 
 #domain name as provided by CORDEX
-#CORDEX_domain=ALP-3
-CORDEX_domain=EUR-11
+domain_id=EUR-11
 
-#institute id: usually from this list
-#institute_id=CLMcom-KIT
-institute_id=CLMcom-ETH
+#institution_id: usually from this list
+institution_id=CLMcom-ETH
 
-#model_id: rcm_institute_id + '-' + rcm_model_acronym; usually from http://cordex.dmi.dk/joomla/images/CORDEX/RCMModelName.txt
-#model_id=CLMcom-KIT-CCLM5-0-14
-model_id=CLMcom-ETH-CCLM5-0-6
+#source_id: rcm_model_acronym; usually from http://cordex.dmi.dk/joomla/images/CORDEX/RCMModelName.txt
+source_id=CCLM5-0-6
 
 #contact: email address
 #contact=hans-juergen.panitz@kit.edu / gerd.schaedler@kit.edu
 rcm_contact=cordex-eth@env.ethz.ch
 
-#rcm_version_id: identifies reruns with perturbed parameters or smaller RCM release upgrades;...
-#...differences between different rcm_version_id should be explained in the comments attribute or referred to in the source attribute
-#rcm_version_id=fpsconv-x2yn2-v1
-rcm_version_id=x0n1-v1
+#version_realisation: identifies version of CORDEX datasets and RCM realisations
+version_realisation=v1-r1
 
 # rcm_nesting_information within "rcm_version_id": 
 #  the contents of the mandatory attribute can be chosen freely.
@@ -305,7 +300,7 @@ driving_experiment=ECMWF-ERAINT, evaluation, r1i1p1
 experiment=Evaluation run with reanalysis forcing
 
 #Conventions: used version of CF conventions
-Conventions=CF-1.4
+Conventions=CF-1.10
 
 
 #optional attributes:
@@ -353,11 +348,11 @@ source=Climate Limited-area Modelling Community (CLM-Community)
 
 references=http://cordex.clm-community.eu/
 
-table_id=
-modeling_realm=
-initialization_method=
-physics_version=
-parent_id=
+#table_id=
+#modeling_realm=
+#initialization_method=
+#physics_version=
+#parent_id=
 
 #calendar: to specify calendar attribute of time variable IF NOT present or not correct in input files
 #calendar=360_day
