@@ -200,7 +200,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-X", "--EXP",
                             action="store", dest="exp", default = "",
-                            help="Driving experiment (e.g. historical or rcp85)")
+                            help="Driving experiment (e.g. historical or ssp370)")
     parser.add_argument("-G", "--GCM",
                             action="store", dest="gcm", default = "",
                             help="Driving GCM")
