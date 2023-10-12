@@ -115,7 +115,7 @@ varlist_reject=pressure,height_2m,height_10m,height_toa,soil1,soil1_bnds,height,
 
 #time units of output; for CORDEX: days since 1949-12-01 00:00:00 or equivalent
 #units=days since 1999-01-01T00:00:00Z
-units=days since 1949-12-01 00:00:00
+units=days since 1950-01-01 00:00:00
 
 #time units of input if the units attribute is not correct
 #alt_units=
