@@ -74,7 +74,7 @@ DirDerotated=work/output_derotated
 # The attributes set in "global_attr_list" appear in the global attributes of the final file
 # The sequence of appearance in the file is determined by the sequence of their setting in this list
 
-global_attr_list=Conventions,conventionsURL,title,project_id,mip_era,activity_id,CORDEX_domain,driving_model_id,driving_experiment_name,experiment_id,driving_experiment,driving_model_ensemble_member,experiment,model_id,institute_id,institution,rcm_version_id,contact,comment,source,references,nesting_levels,comment_nesting,comment_1stNest,comment_2ndNest,comment,rcm_config_cclm,rcm_config_int2lm
+global_attr_list=Conventions,conventionsURL,title,project_id,mip_era,activity_id,CORDEX_domain,driving_model_id,driving_experiment_name,experiment_id,driving_experiment,driving_model_ensemble_member,experiment,model_id,institute_id,institution,rcm_version_id,contact,comment,source,references,nesting_levels,comment_nesting,comment_1stNest,comment_2ndNest,rcm_config_cclm,rcm_config_int2lm
 #
 #HJP March 2019 End
 
