@@ -297,11 +297,11 @@ def main():
         config.set_model_value('driving_model_ensemble_member',options.ens)
         change_driv_exp = True 
     if options.exp != "":
-        config.set_model_value('driving_experiment_id',options.exp)        
+        config.set_model_value('driving_experiment_id',options.exp)
         change_driv_exp = True 
   
     if change_driv_exp:
-        config.set_model_value('driving_experiment',"%s, %s, %s" % (config.get_sim_value('driving_source_id'),config.get_sim_value('driving_experiment_id'),config.get_sim_value('driving_model_ensemble_member')))        
+        config.set_model_value('driving_experiment',"%s, %s, %s" % (config.get_sim_value('driving_source_id'),config.get_sim_value('driving_experiment_id'),config.get_sim_value('driving_model_ensemble_member')))
     config.set_config_value('boolean','overwrite',options.overwrite)
     config.set_config_value('boolean','limit_range',limit_range)
     config.set_config_value('boolean','remove_src',options.remove_src)
@@ -311,9 +311,9 @@ def main():
 
     #Extend input path if respective option is set:
     if config.get_config_value('boolean','extend_DirIn')==True:
-        DirIn=config.get_config_value('settings','DirIn')+'/'+ config.get_sim_value('driving_source_id')+'/'+ config.get_sim_value('driving_experiment_id')        
+        DirIn=config.get_config_value('settings','DirIn')+'/'+ config.get_sim_value('driving_source_id')+'/'+ config.get_sim_value('driving_experiment_id')
         config.set_config_value('settings','DirIn',DirIn)    
-        DirDerotated=config.get_config_value('settings','DirDerotated')+'/'+ config.get_sim_value('driving_source_id')+'/'+ config.get_sim_value('driving_experiment_id')        
+        DirDerotated=config.get_config_value('settings','DirDerotated')+'/'+ config.get_sim_value('driving_source_id')+'/'+ config.get_sim_value('driving_experiment_id')
         config.set_config_value('settings','DirDerotated',DirDerotated)
 
     # now read vartable for all variables for this RCM
@@ -366,7 +366,7 @@ def main():
         if not os.path.isdir(LOG_BASE):
             os.makedirs(LOG_BASE)
     #LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')+config.get_sim_value('driving_source_id')+"_"+config.get_sim_value('driving_experiment_id')+"."
-    LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')+config.get_sim_value('driving_source_id')+"_"+config.get_sim_value('driving_experiment_id')+"_"+varlist[0]+"."    
+    LOG_FILENAME = os.path.join(LOG_BASE,'CMORlight.')+config.get_sim_value('driving_source_id')+"_"+config.get_sim_value('driving_experiment_id')+"_"+varlist[0]+"."
     logext = datetime.datetime.now().strftime("%d-%m-%Y")+'.log'
 
     # get logger and assign logging filename (many loggers for multiprocessing)
