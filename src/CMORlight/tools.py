@@ -216,7 +216,7 @@ def set_attributes_create(outpath,res=None,var=None,year=0,logger=log):
         if res:
             f_out.setncattr("frequency",res)
 
-	if var:
+        if var:
             f_out.setncattr("variable_id",var)    
 
         try: #delete unnecessary attribute
