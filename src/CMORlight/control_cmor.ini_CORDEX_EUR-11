@@ -233,8 +233,8 @@ project_id=CORDEX
 #mip_era: determines what cycle of CMIP defines experiment and data specifications (CMIP6 is the only option)
 mip_era=CMIP6
 
-#activity_id: an identifier of different CORDEX activities such as dynamical downscaling (RCM), empirical-statistical downscaling (ESD), Flagship Pilot Study (FPS) and bias adjustment (Adjust).
-activity_id=RCM
+#activity_id: an identifier of different CORDEX activities such as dynamical downscaling (DD), empirical-statistical downscaling (ESD), Flagship Pilot Study (FPS) and bias adjustment (Adjust).
+activity_id=DD
 
 #driving_source_id: gcm_model_id; usually from http://cordex.dmi.dk/joomla/images/CORDEX/GCMModelName.txt
 driving_source_id=CNRM-ESM2-1
@@ -273,8 +273,8 @@ source_id=CCLM5-0-6
 #source: full model name/version and components (aerosol, atmos, land etc.)
 source=COSMO-CLM
 
-#source_type: model configuration (e.g. RCM, RESM)
-source_type=RCM
+#source_type: model configuration (e.g. ARCM, AORCM, AGCM)
+source_type=ARCM
 
 #contact: email address
 contact=cordex-eth@env.ethz.ch
