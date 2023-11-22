@@ -282,8 +282,8 @@ contact=cordex-eth@env.ethz.ch
 #version_realisation: identifies version of CORDEX datasets and RCM realisations
 version_realisation=v1-r1
 
-#license: provides information about the license
-license=http://spdx.org/licenses/CC0-1.0 (CC0-1.0)
+#license: provides information about the license (link to table with information about the license for all CORDEX-CMIP6 RCMs.)
+license=https://github.com/WCRP-CORDEX/cordex-cmip6-cv/blob/main/CORDEX-CMIP6_license.json
 
 # rcm_nesting_information within "rcm_version_id": 
 #  the contents of the attribute can be chosen freely.
